@@ -1,0 +1,27 @@
+Fitur backend yang sudah 
+- register OK
+- register Google OK (wandy)
+- login OK
+- login Google OK (wandy)
+- logout OK
+- Log aktivitas OK
+- Log Keamanan OK
+- Enkripsi OK (wandy)
+- Kategori(onboarding) OK
+- Beranda OK
+- Algoritma rekomendasi OK
+- Pencarian (Karya,Pemeran,Akun) OK
+- Profil Pengguna OK 
+- Ganti Email OK (wandy)
+- Ganti Password OK (wandy)
+- Ganti Nama OK (wandy)
+- Ganti Foto OK (wandy)
+- Ganti Status Akun OK (wandy)
+- Chat AI OK (wandy)
+- Tambah, Edit, Hapus Pameran OK
+- Tambah, Edit, Hapus Karya OK
+- Instegrasi 3D OK
+
+Fitur backend yang belum selesai setelah ATS (minimal 1 fitur DONE)
+- Jadwal undangan (pesan, tanggal, status, tujuan, waktu, riwayat undangan, logika terima/tolak)
+
