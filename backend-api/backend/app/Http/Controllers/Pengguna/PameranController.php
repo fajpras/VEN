@@ -291,6 +291,10 @@ class PameranController extends Controller
                 'jenis' => 'umum',
             ]);
 
+            $pameran->ruangan()->create([
+                'jenis' => 'privat',
+            ]);
+
             $defaultCategory = \App\Models\Kategori::first();
 
             if (!empty($items)) {
