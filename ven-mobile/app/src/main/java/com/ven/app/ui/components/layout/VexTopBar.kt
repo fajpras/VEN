@@ -112,7 +112,7 @@ object VexTopBar {
                         ) {
                             VexIcon(
                                 id = VexIcons.Back,
-                                contentDescription = "Back",
+                                contentDescription = stringResource(R.string.common_back),
                                 size = VexSize.icon,
                                 tint = colors.text,
                             )

@@ -12,7 +12,6 @@ dependencies {
 
 android {
     namespace "com.unity3d.player"
-    ndkPath "C:/Program Files/Unity/Hub/Editor/6000.3.25f1/Editor/Data/PlaybackEngines/AndroidPlayer/NDK"
     ndkVersion "27.2.12479018"
     compileSdk 36
     buildToolsVersion "36.0.0"
@@ -151,7 +150,10 @@ def getUnityNdkPath() {
     if (android.hasProperty("ndkPath") && android.ndkPath != null) {
         return android.ndkPath
     }
-    return System.getenv("ANDROID_NDK_ROOT") ?: System.getenv("ANDROID_NDK_HOME") ?: "C:/Program Files/Unity/Hub/Editor/6000.3.25f1/Editor/Data/PlaybackEngines/AndroidPlayer/NDK"
+    if (android.hasProperty("ndkDirectory") && android.ndkDirectory != null) {
+        return android.ndkDirectory.absolutePath
+    }
+    return System.getenv("ANDROID_NDK_ROOT") ?: System.getenv("ANDROID_NDK_HOME") ?: ""
 }
 
 def getUnitySdkPath() {

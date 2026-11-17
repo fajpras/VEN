@@ -116,7 +116,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     // Unity dependencies
-    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation(libs.androidx.appcompat)
     implementation("androidx.games:games-activity:4.4.0")
 
     // Google Sign-In
