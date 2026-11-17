@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.ven.app.R
 import com.ven.app.ui.components.ui.Avatar
 import com.ven.app.ui.components.ui.AvatarSize
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.components.ui.VexBottomSheet
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonVariant
@@ -83,12 +84,22 @@ fun RequestDetailSheet(
                     .aspectRatio(16f / 9f)
                     .clip(RoundedCornerShape(VexRadius.md)),
             ) {
-                Image(
-                    painter = painterResource(id = request.bannerRes),
-                    contentDescription = request.requesterName,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                )
+                val bitmap = rememberAsyncImageBitmap(request.bannerUrl)
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = request.requesterName,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = request.bannerRes),
+                        contentDescription = request.requesterName,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(VexSpace.s5))
@@ -118,6 +129,7 @@ fun RequestDetailSheet(
                 Avatar(
                     initials = request.requesterName.take(2).uppercase(),
                     imageRes = request.requesterAvatarRes,
+                    imageUrl = request.requesterAvatarUrl,
                     size = AvatarSize.Sm,
                     contentDescription = request.requesterName,
                 )

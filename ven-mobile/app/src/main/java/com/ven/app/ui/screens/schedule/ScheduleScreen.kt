@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,6 +29,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
 import com.ven.app.ui.components.feature.EventListItem
 import com.ven.app.ui.components.feature.RequestListItem
@@ -40,17 +43,25 @@ import com.ven.app.ui.screens.schedule.components.RequestDetailSheet
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
+import com.ven.app.util.UnityLauncher
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
     onTabSelected: (BottomNavTab) -> Unit,
     modifier: Modifier = Modifier,
-    initialUiState: ScheduleUiState = dummyScheduleUiState,
+    viewModel: ScheduleViewModel = viewModel(),
+    onJoinRoom: ((exhibitId: String?) -> Unit)? = null,
 ) {
     val context = LocalContext.current
-    var uiState by remember { mutableStateOf(initialUiState) }
-    var isRefreshing by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uiState.userFeedbackMessage) {
+        uiState.userFeedbackMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.clearFeedbackMessage()
+        }
+    }
 
     AppScaffold(
         currentTab = BottomNavTab.Schedule,
@@ -59,77 +70,24 @@ fun ScheduleScreen(
     ) { innerPadding ->
         ScheduleContent(
             uiState = uiState,
-            isRefreshing = isRefreshing,
-            onRefresh = {
-                isRefreshing = true
-                uiState = dummyScheduleUiState
-                isRefreshing = false
-            },
-            onTabSelected = { tab ->
-                uiState = uiState.copy(selectedTab = tab)
-            },
-            onSearchQueryChange = { query ->
-                uiState = uiState.copy(searchQuery = query)
-            },
-            onEventClick = { event ->
-                uiState = uiState.copy(activeEventDetail = event)
-            },
-            onRequestClick = { request ->
-                uiState = uiState.copy(activeRequestDetail = request)
-            },
-            onDismissDetail = {
-                uiState = uiState.copy(
-                    activeEventDetail = null,
-                    activeRequestDetail = null,
-                )
-            },
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = viewModel::refresh,
+            onTabSelected = viewModel::selectTab,
+            onSearchQueryChange = viewModel::setSearchQuery,
+            onEventClick = viewModel::selectEventDetail,
+            onRequestClick = viewModel::selectRequestDetail,
+            onDismissDetail = viewModel::dismissDetail,
             onJoinRoom = { event ->
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.schedule_action_join_room_sim),
-                    Toast.LENGTH_SHORT,
-                ).show()
-                uiState = uiState.copy(activeEventDetail = null)
+                if (onJoinRoom != null) {
+                    onJoinRoom(event.exhibitId)
+                } else {
+                    val targetId = event.exhibitId?.ifBlank { "4" } ?: "4"
+                    UnityLauncher.launchViewer(context, targetId)
+                }
+                viewModel.dismissDetail()
             },
-            onApproveRequest = { request ->
-                val approvedEvent = ScheduleEventItem(
-                    id = "approved_${request.id}",
-                    title = request.requesterName,
-                    dateText = request.dateText,
-                    timeText = request.timeText,
-                    fullDateFormatted = request.fullDateFormatted,
-                    bannerRes = request.bannerRes,
-                    isApproved = true,
-                )
-                val updatedRequests = uiState.requestItems.filterNot { it.id == request.id }
-                val updatedApproved = listOf(approvedEvent) + uiState.approvedItems
-
-                uiState = uiState.copy(
-                    requestItems = updatedRequests,
-                    approvedItems = updatedApproved,
-                    activeRequestDetail = null,
-                )
-
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.schedule_action_approved_success),
-                    Toast.LENGTH_SHORT,
-                ).show()
-            },
-            onRejectRequest = { request ->
-                val updatedRequests = uiState.requestItems.filterNot { it.id == request.id }
-
-                uiState = uiState.copy(
-                    requestItems = updatedRequests,
-                    activeRequestDetail = null,
-                )
-
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.schedule_action_rejected_success),
-                    Toast.LENGTH_SHORT,
-                ).show()
-            },
+            onApproveRequest = viewModel::approveRequest,
+            onRejectRequest = viewModel::rejectRequest,
             modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
         )
     }
@@ -180,6 +138,7 @@ fun ScheduleContent(
                     ScheduleTab.Approved -> stringResource(R.string.schedule_tab_approved)
                     ScheduleTab.Waiting -> stringResource(R.string.schedule_tab_waiting)
                     ScheduleTab.Request -> stringResource(R.string.schedule_tab_request)
+                    ScheduleTab.History -> stringResource(R.string.schedule_tab_history)
                 }
             },
         )
@@ -251,6 +210,24 @@ fun ScheduleContent(
                                 RequestListItem(
                                     entry = item,
                                     onClick = { onRequestClick(item) },
+                                )
+                            }
+                        }
+                    }
+
+                    ScheduleTab.History -> {
+                        val items = uiState.filteredHistoryItems
+                        if (items.isEmpty()) {
+                            item {
+                                EmptyScheduleView(
+                                    message = stringResource(R.string.schedule_empty_history),
+                                )
+                            }
+                        } else {
+                            items(items, key = { it.id }) { item ->
+                                EventListItem(
+                                    entry = item,
+                                    onClick = { onEventClick(item) },
                                 )
                             }
                         }

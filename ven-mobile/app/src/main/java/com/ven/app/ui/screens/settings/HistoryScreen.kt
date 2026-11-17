@@ -34,6 +34,7 @@ import com.ven.app.R
 import com.ven.app.ui.components.feature.HistoryEntry
 import com.ven.app.ui.components.feature.HistoryListItem
 import com.ven.app.ui.components.layout.VexTopBar
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.components.ui.VexBottomSheet
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
@@ -103,12 +104,22 @@ fun HistoryScreen(
                             .clip(RoundedCornerShape(VexRadius.md))
                             .background(colors.surfaceInput),
                     ) {
-                        Image(
-                            painter = painterResource(id = entry.bannerRes),
-                            contentDescription = entry.title,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop,
-                        )
+                        val bitmap = rememberAsyncImageBitmap(entry.bannerUrl)
+                        if (bitmap != null) {
+                            Image(
+                                bitmap = bitmap,
+                                contentDescription = entry.title,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(id = entry.bannerRes),
+                                contentDescription = entry.title,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(VexSpace.s5))

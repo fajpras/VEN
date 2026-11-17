@@ -156,4 +156,67 @@ object DateFormatter {
 
         return if (args.isEmpty()) fallback else String.format(Locale.ENGLISH, fallback, *args)
     }
+
+    /**
+     * Mem-parsing string tanggal ISO / SQL datetime ke epoch millis.
+     */
+    fun parseIsoToMillis(dateString: String?): Long? {
+        if (dateString.isNullOrBlank()) return null
+        if (dateString.endsWith("Z", ignoreCase = true)) {
+            for (pattern in utcDatePatterns) {
+                try {
+                    val sdf = SimpleDateFormat(pattern, Locale.ENGLISH).apply {
+                        timeZone = TimeZone.getTimeZone("UTC")
+                    }
+                    val date = sdf.parse(dateString)
+                    if (date != null) return date.time
+                } catch (_: Exception) {
+                }
+            }
+        }
+        for (pattern in localDatePatterns) {
+            try {
+                val sdf = SimpleDateFormat(pattern, Locale.getDefault())
+                val date = sdf.parse(dateString)
+                if (date != null) return date.time
+            } catch (_: Exception) {
+            }
+        }
+        return null
+    }
+
+    /**
+     * Mengecek apakah string tanggal/waktu yang diberikan sudah lewat dari waktu saat ini.
+     */
+    fun isPastDateTime(dateString: String?): Boolean {
+        val millis = parseIsoToMillis(dateString) ?: return false
+        return millis < System.currentTimeMillis()
+    }
+
+    /**
+     * Memformat string waktu ke format tanggal ringkas (mis. "24 Sep 2026").
+     */
+    fun formatScheduleDate(dateString: String?): String {
+        val millis = parseIsoToMillis(dateString) ?: return dateString.orEmpty()
+        val sdf = SimpleDateFormat("d MMM yyyy", AppStrings.locale())
+        return sdf.format(java.util.Date(millis))
+    }
+
+    /**
+     * Memformat string waktu ke format jam ringkas (mis. "02:00 PM").
+     */
+    fun formatScheduleTime(dateString: String?): String {
+        val millis = parseIsoToMillis(dateString) ?: return dateString.orEmpty()
+        val sdf = SimpleDateFormat("hh:mm a", Locale.ENGLISH)
+        return sdf.format(java.util.Date(millis))
+    }
+
+    /**
+     * Memformat string waktu ke format lengkap (mis. "Thursday, 24 September 2026 at 02:00 PM").
+     */
+    fun formatScheduleFull(dateString: String?): String {
+        val millis = parseIsoToMillis(dateString) ?: return dateString.orEmpty()
+        val sdf = SimpleDateFormat("EEEE, d MMMM yyyy 'at' hh:mm a", AppStrings.locale())
+        return sdf.format(java.util.Date(millis))
+    }
 }

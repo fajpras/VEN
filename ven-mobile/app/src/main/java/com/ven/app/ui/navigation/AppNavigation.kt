@@ -75,6 +75,7 @@ import com.ven.app.ui.screens.requestmeeting.RequestMeetingEvent
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingScreen
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingViewModel
 import com.ven.app.ui.screens.schedule.ScheduleScreen
+import com.ven.app.ui.screens.schedule.ScheduleViewModel
 import com.ven.app.ui.screens.settings.AccountStatusRoute
 import com.ven.app.ui.screens.settings.ChangeEmailRoute
 import com.ven.app.ui.screens.settings.ChangeEmailViewModel
@@ -567,9 +568,14 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        composable(Screen.RequestMeeting.route) {
+        composable(Screen.RequestMeeting.route) { backStackEntry ->
+            val postId = backStackEntry.arguments?.getString("postId").orEmpty()
             val requestViewModel: RequestMeetingViewModel = viewModel()
             val requestState by requestViewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(postId) {
+                requestViewModel.setTargetId(postId)
+            }
 
             LaunchedEffect(Unit) {
                 requestViewModel.events.collect { event ->
@@ -700,8 +706,30 @@ fun AppNavHost(showExplore: Boolean = false) {
         }
 
         composable(Screen.SettingsHistory.route) {
+            val scheduleViewModel: ScheduleViewModel = viewModel()
+            val scheduleState by scheduleViewModel.uiState.collectAsStateWithLifecycle()
+
+            val historyEntries = remember(scheduleState.historyItems) {
+                if (scheduleState.historyItems.isNotEmpty()) {
+                    scheduleState.historyItems.map { item ->
+                        com.ven.app.ui.components.feature.HistoryEntry(
+                            id = item.id,
+                            title = item.title,
+                            dateText = item.dateText,
+                            timeText = item.timeText,
+                            fullDateFormatted = item.fullDateFormatted,
+                            bannerRes = item.bannerRes,
+                            bannerUrl = item.bannerUrl,
+                            statusText = item.status,
+                        )
+                    }
+                } else {
+                    dummyHistoryEntries
+                }
+            }
+
             HistoryScreen(
-                entries = dummyHistoryEntries,
+                entries = historyEntries,
                 onBackClick = { navController.popBackStack() },
             )
         }
@@ -825,6 +853,9 @@ fun MainHomeScreen(
             BottomNavTab.Schedule -> {
                 ScheduleScreen(
                     onTabSelected = { currentTab = it },
+                    onJoinRoom = { exhibitId ->
+                        onNavigateToExhibitViewer(exhibitId?.ifBlank { "4" } ?: "4")
+                    },
                 )
             }
             BottomNavTab.Ai -> {

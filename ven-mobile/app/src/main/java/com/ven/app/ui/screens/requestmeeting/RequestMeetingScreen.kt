@@ -85,13 +85,26 @@ fun RequestMeetingScreen(
         },
         bottomBar = {
             VexBottomActionBar {
-                VexButton(
-                    text = stringResource(R.string.request_meeting_send_request),
-                    onClick = onSendRequestClick,
-                    variant = VexButtonVariant.Primary,
-                    loading = state.isSending,
-                    enabled = state.hourText.isNotBlank() && state.minuteText.isNotBlank(),
-                )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    state.errorMessage?.let { error ->
+                        Text(
+                            text = error,
+                            color = colors.danger,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = VexSpace.s2),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                    VexButton(
+                        text = stringResource(R.string.request_meeting_send_request),
+                        onClick = onSendRequestClick,
+                        variant = VexButtonVariant.Primary,
+                        loading = state.isSending,
+                        enabled = !state.isSending,
+                    )
+                }
             }
         },
     ) { innerPadding ->

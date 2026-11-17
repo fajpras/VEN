@@ -2,9 +2,13 @@ package com.ven.app.ui.screens.requestmeeting
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ven.app.data.api.ApiUndangan
+import com.ven.app.data.api.models.CreateUndanganRequest
 import com.ven.app.util.DateFormatter
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -18,10 +22,13 @@ sealed interface RequestMeetingEvent {
     data object RequestSuccess : RequestMeetingEvent
 }
 
-class RequestMeetingViewModel : ViewModel() {
+class RequestMeetingViewModel(
+    private val apiUndangan: ApiUndangan = ApiUndangan,
+) : ViewModel() {
 
     private val initialMonth = YearMonth.of(2026, 9)
     private val initialDate = LocalDate.of(2026, 9, 30)
+    private var currentTargetId: String? = null
 
     private val _uiState = MutableStateFlow(
         RequestMeetingUiState(
@@ -36,6 +43,10 @@ class RequestMeetingViewModel : ViewModel() {
 
     private val _events = MutableSharedFlow<RequestMeetingEvent>()
     val events: SharedFlow<RequestMeetingEvent> = _events.asSharedFlow()
+
+    fun setTargetId(targetId: String?) {
+        currentTargetId = targetId
+    }
 
     fun onDaySelected(day: CalendarDay) {
         if (!day.isCurrentMonth) return
@@ -89,18 +100,59 @@ class RequestMeetingViewModel : ViewModel() {
         _uiState.update { it.copy(message = message) }
     }
 
-    fun sendRequest() {
+    fun sendRequest(overrideTargetId: String? = null) {
         val current = _uiState.value
         if (current.hourText.isBlank() || current.minuteText.isBlank()) {
             _uiState.update { it.copy(errorMessage = "Waktu pertemuan harus diisi") }
             return
         }
 
+        val hourVal = current.hourText.toIntOrNull() ?: 0
+        val minuteVal = current.minuteText.toIntOrNull() ?: 0
+        if (hourVal !in 1..12 || minuteVal !in 0..59) {
+            _uiState.update { it.copy(errorMessage = "Jadwal yang dipilih tidak valid") }
+            return
+        }
+
+        var hour24 = hourVal
+        if (!current.isAm && hour24 < 12) hour24 += 12
+        if (current.isAm && hour24 == 12) hour24 = 0
+
+        val scheduledDateTime = current.selectedDate.atTime(hour24, minuteVal)
+
+        if (scheduledDateTime.isBefore(LocalDateTime.now())) {
+            _uiState.update { it.copy(errorMessage = "Jadwal yang dipilih tidak valid") }
+            return
+        }
+
+        val formattedWaktu = scheduledDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        val target = overrideTargetId ?: currentTargetId
+
         viewModelScope.launch {
             _uiState.update { it.copy(isSending = true, errorMessage = null) }
-            kotlinx.coroutines.delay(800)
-            _uiState.update { it.copy(isSending = false, isSuccess = true) }
-            _events.emit(RequestMeetingEvent.RequestSuccess)
+
+            val request = if (target?.toIntOrNull() != null) {
+                CreateUndanganRequest(
+                    idPameran = target.toInt(),
+                    waktu = formattedWaktu,
+                    catatan = current.message.ifBlank { null },
+                )
+            } else {
+                CreateUndanganRequest(
+                    idKarya = target?.ifBlank { null },
+                    waktu = formattedWaktu,
+                    catatan = current.message.ifBlank { null },
+                )
+            }
+
+            val result = apiUndangan.createUndangan(request)
+            if (result.isSuccess) {
+                _uiState.update { it.copy(isSending = false, isSuccess = true) }
+                _events.emit(RequestMeetingEvent.RequestSuccess)
+            } else {
+                val errorMsg = result.exceptionOrNull()?.message ?: "Gagal mengajukan diskusi"
+                _uiState.update { it.copy(isSending = false, errorMessage = errorMsg) }
+            }
         }
     }
 }

@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
@@ -49,7 +50,9 @@ data class HistoryEntry(
     val dateText: String,
     val timeText: String,
     val fullDateFormatted: String,
-    @param:DrawableRes val bannerRes: Int,
+    @param:DrawableRes val bannerRes: Int = R.drawable.poster_1,
+    val bannerUrl: String? = null,
+    val statusText: String? = null,
 )
 
 /**
@@ -87,12 +90,22 @@ fun HistoryListItem(
                 .background(colors.surfaceInput),
             contentAlignment = Alignment.Center,
         ) {
-            Image(
-                painter = painterResource(id = entry.bannerRes),
-                contentDescription = entry.title,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-            )
+            val bitmap = rememberAsyncImageBitmap(entry.bannerUrl)
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = entry.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = entry.bannerRes),
+                    contentDescription = entry.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(VexSpace.s4))

@@ -149,6 +149,7 @@
     <string name="schedule_tab_approved">Approved</string>
     <string name="schedule_tab_waiting">Waiting</string>
     <string name="schedule_tab_request">Request</string>
+    <string name="schedule_tab_history">Riwayat</string>
     <string name="schedule_see_details">Lihat detail</string>
     <string name="schedule_join_room">Join Room</string>
     <string name="schedule_approve">Approve</string>
@@ -161,6 +162,7 @@
     <string name="schedule_empty_approved">Tidak ada jadwal yang disetujui</string>
     <string name="schedule_empty_waiting">Tidak ada permintaan menunggu</string>
     <string name="schedule_empty_request">Tidak ada permintaan masuk</string>
+    <string name="schedule_empty_history">Belum ada riwayat jadwal</string>
     <string name="schedule_action_approved_success">Permintaan disetujui</string>
     <string name="schedule_action_rejected_success">Permintaan ditolak</string>
     <string name="schedule_action_join_room_sim">Memasuki ruang pertemuan...</string>

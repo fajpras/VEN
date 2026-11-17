@@ -4,9 +4,9 @@
 >
 > **Branch aktif:** `main`
 >
-> **Commit terakhir:** `cabe7eb` — `Update: projek logs` (working tree memuat restore AI & Multi-bahasa + fix backend `AIChatController`)
+> **Commit terakhir:** `cabe7eb` — `Update: projek logs` (working tree memuat restore AI/Bahasa + fitur Jadwal Undangan & Request Meeting UC-17 + fix backend)
 >
-> **Perubahan terbaru:** Restorasi modul AI Chat (Gemini live + riwayat persisten) dan Multi-bahasa (English/Indonesian via AppCompat/locales_config) dari commit `6f338e9`/`234c250`; perbaikan bug relasi kategori di `AIChatController` via TDD (79 test backend lulus); verifikasi live emulator untuk login, AI, bahasa, dan Unity 3D viewer.
+> **Perubahan terbaru:** Implementasi penuh modul Jadwal Undangan & Request Meeting (UC-17) terhubung API (`POST/GET/PATCH /api/undangan`); backend diperluas mendukung parameter `id_pameran` & `id_karya` dengan pembuatan otomatis ruangan privat; Schedule 4 tab (Approved, Waiting, Request, History) + aksi Terima/Tolak & Join 3D Viewer; 87 test backend lulus (100%); 70 dari 71 unit test Android lulus.
 >
 > **Lingkungan:** Windows + Laragon, PHP 8.3.30, Laravel 13.34.0, MySQL, Android Gradle 9.6
 
@@ -22,16 +22,16 @@ Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang s
 |---|---|---|
 | Konfigurasi backend | `php artisan about` | ✅ Laravel 13.34.0, PHP 8.3.30, DB MySQL, storage link aktif |
 | Daftar route backend | `php artisan route:list` | ✅ 99 route terdaftar |
-| Test backend | `php artisan test` | ✅ **79 test — 79 lulus** (381 assertion) |
+| Test backend | `php artisan test` | ✅ **87 test — 87 lulus** (406 assertion) |
 | Fallback galat API | `php artisan test --filter=PenanganKesalahanApiTest` | ✅ **9 test lulus** — 401, 403, 404, 405, 422, 500 tanpa kebocoran detail internal + redirect browser & JSON untuk klien API |
 | Halaman galat web | `GET /halaman-tidak-ada` | ✅ Blade 404 minimalis (tanpa kartu/dekorasi), mandiri (tanpa aset Vite), merek "Value Exhibition Network", respons `text/html`, tanpa tautan ke beranda |
 | Akar situs | `GET /` | ✅ HTTP **404** — panel admin tidak terekspos, tidak redirect ke login/beranda |
 | API dibuka dari browser | `GET /api/pameran/25` + `Accept: text/html` | ✅ `302` → `/404`, halaman 404 kustom ditampilkan; klien API (`application/json`, wildcard, tanpa Accept) tetap menerima JSON |
-| Smoke test API live | `artisan serve` + login `fajri@ven.test` | ✅ Login, `/api/pameran`, `/api/karya/rekomendasi`, `/api/profil`, `/api/pencarian`, `/api/ai/tanya` merespons normal |
+| Smoke test API live | `artisan serve` + login `fajri@ven.test` | ✅ Login, `/api/pameran`, `/api/karya/rekomendasi`, `/api/profil`, `/api/pencarian`, `/api/ai/tanya`, `/api/undangan` merespons normal |
 | Admin Web Panel | `GET /admin/login` | ✅ HTTP 200 |
 | Build Android | `.\gradlew.bat assembleDebug` | ✅ **BUILD SUCCESSFUL** |
 | Artefak APK | `app/build/outputs/apk/debug/app-debug.apk` | ✅ Ada, 124.904.951 byte (~124,9 MB) |
-| Test Android | `.\gradlew.bat testDebugUnitTest` | ⚠️ **66 test — 65 lulus, 1 gagal** (`ScreenRouteTest`) |
+| Test Android | `.\gradlew.bat testDebugUnitTest` | ⚠️ **71 test — 70 lulus, 1 gagal** (`ScreenRouteTest`) |
 
 **Catatan lingkungan:** perintah `php` tidak tersedia di PATH. Gunakan path Laragon:
 
@@ -52,7 +52,7 @@ C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe artisan test
 | 3 | Profil & minat | `profil` (GET/PUT), foto, ganti email via OTP, ganti kata sandi, status akun, kategori & minat | ✅ |
 | 4 | Pameran | CRUD `pameran`, template `model-3d`, rekomendasi, upload banner, ruangan, `room-dto`, `exhibitions` (dari Unity) | ✅ |
 | 5 | Karya | CRUD `karya`, upload media, penyajian file bertanda tangan, rekomendasi, update posisi objek | ✅ |
-| 6 | Diskusi & Undangan | `undangan` (index/store/show/status/tanggapi), voice token | ✅ |
+| 6 | Diskusi & Undangan | `undangan` (index/store/show/status/tanggapi), voice token, otomatisasi ruangan privat pameran, pencegahan self-invitation & duplicate active, eager load banner & pengguna | ✅ |
 | 7 | Pencarian terpadu | `pencarian` (akun, karya, pameran) | ✅ |
 | 8 | AI Chat | `ai/tanya` → Google Gemini (`gemini-2.5-flash-lite`), grounding konteks pameran & karya, penolakan out-of-scope | ✅ |
 | 9 | Admin API | pengguna, sanksi (`lockForUpdate`), moderasi karya/pameran, log aktivitas & keamanan | ✅ |
@@ -79,6 +79,9 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 | 9 | AI Chat | `AiChatViewModel` → `ApiAiChat` + `AiChatHistoryPreferences` + drawer riwayat chat persisten, live Gemini | ✅ |
 | 10 | Theme engine | `ThemePreferences`, Material 3 | ✅ |
 | 11 | Multi-bahasa | `AppLanguage`, `VenApplication`, `locales_config.xml`, `AppCompatDelegate`, 321 keys (English default & Indonesian) | ✅ |
+| 12 | Schedule (Jadwal Undangan) | `ScheduleViewModel` → `ApiUndangan` (4 tab: Approved, Waiting, Request, History; aksi Terima/Tolak & Join Room 3D Viewer) | ✅ |
+| 13 | Request Meeting (UC-17) | `RequestMeetingViewModel` → `ApiUndangan.createUndangan`, validasi tanggal/jam lampau, input jam/menit/AM-PM, catatan | ✅ |
+| 14 | Riwayat Undangan di Settings | `HistoryScreen` tersambung ke `ScheduleViewModel` (menampilkan riwayat undangan riil dari API) | ✅ |
 
 ### 2.3 Artefak Pendukung
 
@@ -93,11 +96,8 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 | Fitur | Lokasi | Kondisi |
 |---|---|---|
-| Schedule (Approved / Waiting / Request) | `ven-mobile/.../ui/screens/schedule/ScheduleScreen.kt:47,60,77` (`dummyScheduleUiState`) | 100% data lokal, belum ada ViewModel/API — padahal endpoint `undangan` sudah tersedia |
-| Request Meeting | `.../requestmeeting/RequestMeetingViewModel.kt:104-106` (`delay(800)`) | Pengiriman hanya simulasi, belum memanggil API |
 | Create Post / unggah karya | `.../create/post/CreatePostViewModel.kt:76-78` (`delay(400)`) | Simulasi; belum ada `ApiKarya` di mobile |
 | Publish pameran dari editor Compose | `.../create/exhibit/editor/ExhibitEditorViewModel.kt:156-158` (`delay(800)`) | Simulasi; hanya jalur Unity yang menyimpan ke database |
-| Riwayat aktivitas di Settings | `.../settings/HistoryScreen.kt:153` (`dummyHistoryEntries`) | Belum mengambil log aktivitas dari API |
 | Privacy Policy / Help | `SettingsPlaceholderScreen.kt` | Masih placeholder |
 
 ---
@@ -115,7 +115,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 | No | Kendala | Dampak | Rekomendasi |
 |:--:|---|---|---|
-| 3 | Modul Schedule, Request Meeting, Create Post, dan Publish editor masih simulasi | Fitur terlihat jalan tetapi data tidak tersimpan ke server | Buat `ApiKarya` dan `ApiUndangan`, lalu hubungkan ViewModel ke endpoint yang sudah ada |
+| 3 | Modul Create Post dan Publish editor masih simulasi | Fitur terlihat jalan tetapi data belum tersimpan ke server | Buat `ApiKarya` di mobile, lalu hubungkan ViewModel ke endpoint yang sudah ada |
 | 4 | Source Unity (`.cs`) tidak ada di repo, hanya binary `il2cpp` | Integrasi Unity tidak dapat diaudit dari source; verifikasi butuh perangkat/emulator | Simpan proyek Unity sebagai submodule/folder terpisah atau dokumentasikan prosedur build |
 | 5 | Perubahan binary Unity belum di-commit | `libil2cpp.so` (arm64) termodifikasi dan `compile-data.json` masih untracked | Tinjau ulang lalu commit secara terkontrol (hindari commit binary besar tanpa kebutuhan) |
 
@@ -125,7 +125,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 |:--:|---|---|
 | 6 | `BASE_URL` mobile default `http://10.0.2.2:8000/api/` | Hanya untuk emulator; ubah `ven-mobile/.env` untuk perangkat fisik |
 | 7 | `android:usesCleartextTraffic="true"` aktif | Wajar untuk development; matikan dan gunakan HTTPS untuk rilis |
-| 8 | README menyebut "37 tests passed" | Perbarui angka menjadi 79 test backend / 66 test Android |
+| 8 | README menyebut "37 tests passed" | Perbarui angka menjadi 87 test backend / 71 test Android |
 | 9 | APK berukuran ~124,9 MB karena Unity binary | Pertimbangkan Android App Bundle atau ABI split |
 | 10 | `php` tidak ada di PATH | Gunakan path Laragon (`C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe`) atau tambahkan ke environment variable |
 
@@ -133,7 +133,8 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 | Tanggal | Kendala | Perbaikan | Bukti |
 |---|---|---|---|
-| 18 Nov 2026 | Fitur AI Chat dan Multi-bahasa hilang pasca-merge branch Unity | Merestorasi source dari commit `6f338e9` & `234c250`: `AiChatHistoryPreferences`, `AiChatViewModel`, `AiChatScreen`, `ChatHistoryDrawer`, `AppLanguage`, `VenApplication`, `locales_config.xml`, `DateFormatter`, dan sinkronisasi 321 resource string. Mempertahankan konfigurasi `unityLibrary/build.gradle` (NDK 27.2, CMake 3.22.1) | APK build sukses (`assembleDebug`), Android unit test 65/66 lulus; smoke test emulator membuktikan switch English/Indonesian persisten dan AI Chat live Gemini terhubung |
+| 18 Nov 2026 | Modul Schedule & Request Meeting (UC-17) sebelumnya masih mock/simulasi | Dibuat `ApiUndangan`, `ScheduleViewModel` (4 tab: Approved, Waiting, Request, History; aksi Terima/Tolak & Join Room 3D Viewer), `RequestMeetingViewModel` terhubung ke `POST /api/undangan` dengan validasi jadwal lampau; endpoint `POST /api/undangan` diperluas menerima `id_pameran`/`id_karya` dan otomatis membuat ruangan privat | `tests/Feature/DiskusiUndanganTest.php` 8 test lulus; `ScheduleViewModelTest.kt` 5 test lulus; live smoke test emulator sukses mengajukan undangan ke pameran Alex Pratama dan muncul di tab Waiting |
+| 18 Nov 2026 | Fitur AI Chat dan Multi-bahasa hilang pasca-merge branch Unity | Merestorasi source dari commit `6f338e9` & `234c250`: `AiChatHistoryPreferences`, `AiChatViewModel`, `AiChatScreen`, `ChatHistoryDrawer`, `AppLanguage`, `VenApplication`, `locales_config.xml`, `DateFormatter`, dan sinkronisasi 321 resource string. Mempertahankan konfigurasi `unityLibrary/build.gradle` (NDK 27.2, CMake 3.22.1) | APK build sukses (`assembleDebug`), Android unit test 70/71 lulus; smoke test emulator membuktikan switch English/Indonesian persisten dan AI Chat live Gemini terhubung |
 | 18 Nov 2026 | Endpoint `/api/ai/tanya` menghasilkan **HTTP 500** `Unknown column 'nama' in 'field list'` saat memuat konteks pameran & karya | `AIChatController::buildKonteks`: relasi `kategori` pada tabel `karya` menggunakan nama kolom `kategori`, bukan `nama`. Diperbaiki menjadi `kategori:id_kategori,kategori` dan `$k->kategori->kategori` | Ditambahkan regression test `test_ai_chat_memuat_konteks_karya_dengan_relasi_kategori` di `AIChatGeminiTest.php`; backend suite 79/79 test lulus (381 assertion); uji live emulator menjawab pertanyaan pameran dan menolak pertanyaan out-of-scope |
 | 13 Nov 2026 | Request `/api/*` tanpa header `Accept: application/json` menghasilkan **HTTP 500** `Route [login] not defined.` | `bootstrap/app.php`: `redirectGuestsTo` mengembalikan `null` untuk prefix `api`; `app/Exceptions/PenanganKesalahanApi.php` merender semua galat API sebagai JSON `{data, message}` (401/403/404/405/413/419/422/429/5xx) tanpa membocorkan detail internal. Halaman web 404 memakai Blade kustom `resources/views/errors/404.blade.php` | `tests/Feature/PenanganKesalahanApiTest.php` — 7 test lulus; `tests/Feature/Halaman404Test.php` — 2 test lulus; smoke test live `GET /api/profil` tanpa header → `401 application/json`, `GET /halaman-tidak-ada` → `404 text/html` |
 | 13 Nov 2026 | Membuka endpoint `/api/*` langsung di browser menampilkan **JSON 401 mentah** (membingungkan pengguna), dan halaman 404 masih terlalu ramai (kartu besar + dekorasi) serta memakai nama "Virtual Exhibition Navigator" | `PenanganKesalahanApi` mendeteksi navigasi browser dan mengalihkan ke `/404`; klien API tetap menerima JSON. Blade 404 dirombak menjadi minimalis (logo kecil, angka 404 gradien, satu tombol, footer ringkas) dengan merek **Value Exhibition Network** | `PenanganKesalahanApiTest` — 9 test lulus (termasuk redirect browser dan JSON untuk `application/json`, wildcard, serta tanpa Accept); `Halaman404Test` — 2 test lulus. Smoke test live: browser → `302 /404`; `application/json`/`*/*`/tanpa Accept → `401 application/json`; `/halaman-tidak-ada` → `404 text/html` |
@@ -143,11 +144,11 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 ## 5. Kesimpulan
 
-- **Backend:** 100% test lulus (**79 test, 381 assertion**). Seluruh modul inti (auth, profil, pameran, karya, undangan, pencarian, admin, audit keamanan, backup/restore, AI live Gemini) merespons normal pada smoke test live.
-- **Android:** alur utama selesai dan berhasil di-build (APK debug ~124,9 MB tersedia). Autentikasi, home, explore, profil, settings, create exhibit, AI Chat live, Multi-bahasa (EN/ID), dan viewer Unity sudah aktif.
-- **Belum selesai:** Schedule, Request Meeting, Create Post, publish dari editor Compose, dan riwayat aktivitas.
+- **Backend:** 100% test lulus (**87 test, 406 assertion**). Seluruh modul inti (auth, profil, pameran, karya, undangan, pencarian, admin, audit keamanan, backup/restore, AI live Gemini) merespons normal pada smoke test live.
+- **Android:** alur utama selesai dan berhasil di-build (APK debug ~124,9 MB tersedia). Autentikasi, home, explore, profil, settings, create exhibit, Schedule (Approved, Waiting, Request, History), Request Meeting (UC-17), AI Chat live, Multi-bahasa (EN/ID), dan viewer Unity sudah aktif tersambung API.
+- **Belum selesai:** Create Post (unggah karya dari mobile) dan publish pameran dari editor Compose.
 - **Catatan integrasi Unity:** UnityPlayerGameActivity terbuka normal (room 3D berjalan dengan fallback RoomDto), namun migrasi `id_pameran` pada tabel `objek` belum diterapkan di database aplikasi `ven` (baru di `ven_testing`).
-- **Kegagalan test Android (1 dari 66):** `ScreenRouteTest.kt:20` disebabkan ekspektasi query parameter rute lama pada test case, bukan galat build maupun runtime aplikasi.
+- **Kegagalan test Android (1 dari 71):** `ScreenRouteTest.kt:20` disebabkan ekspektasi query parameter rute lama pada test case, bukan galat build maupun runtime aplikasi.
 
 ---
 
@@ -164,6 +165,7 @@ $php = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe"
 & $php vendor\phpunit\phpunit\phpunit tests/Feature/Halaman404Test.php
 & $php vendor\phpunit\phpunit\phpunit tests/Feature/AdminPanelAksesTest.php
 & $php vendor\phpunit\phpunit\phpunit tests/Feature/AIChatGeminiTest.php
+& $php vendor\phpunit\phpunit\phpunit tests/Feature/DiskusiUndanganTest.php
 
 # Android — build & unit test
 cd ..\..\ven-mobile
@@ -176,6 +178,7 @@ cd ..\backend-api\backend
 & $php artisan serve --host=127.0.0.1 --port=8000
 # Login: POST http://127.0.0.1:8000/api/auth/masuk
 # Body: {"identitas":"fajri@ven.test","kata_sandi":"password123"}
+# Undangan: GET/POST/PATCH http://127.0.0.1:8000/api/undangan (Bearer token)
 # AI Tanya: POST http://127.0.0.1:8000/api/ai/tanya (Bearer token)
 # Halaman 404 web: GET http://127.0.0.1:8000/halaman-tidak-ada
 # Browser membuka API: GET http://127.0.0.1:8000/api/pameran/25 + Accept text/html → 302 /404

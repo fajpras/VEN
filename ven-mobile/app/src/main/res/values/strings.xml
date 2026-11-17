@@ -158,6 +158,7 @@
     <string name="schedule_tab_approved">Approved</string>
     <string name="schedule_tab_waiting">Waiting</string>
     <string name="schedule_tab_request">Request</string>
+    <string name="schedule_tab_history">History</string>
     <string name="schedule_see_details">See details</string>
     <string name="schedule_join_room">Join Room</string>
     <string name="schedule_approve">Approve</string>
@@ -170,6 +171,7 @@
     <string name="schedule_empty_approved">No approved schedules</string>
     <string name="schedule_empty_waiting">No pending requests</string>
     <string name="schedule_empty_request">No incoming requests</string>
+    <string name="schedule_empty_history">No past schedules</string>
     <string name="schedule_action_approved_success">Request approved</string>
     <string name="schedule_action_rejected_success">Request rejected</string>
     <string name="schedule_action_join_room_sim">Entering meeting room...</string>
