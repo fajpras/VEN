@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.LruCache
+import com.ven.app.core.config.AppConfig
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -242,6 +243,18 @@ object ImageCacheManager {
     }
 
     /**
+     * Origin API (skema + host + port) yang diambil dari konfigurasi dasar
+     * aplikasi, dipakai untuk mengabsolutkan URL relatif dari backend.
+     */
+    private val apiOrigin: String by lazy {
+        val base = AppConfig.baseUrl.trim()
+        val schemeEnd = base.indexOf("://")
+        if (schemeEnd < 0) return@lazy ""
+        val pathStart = base.indexOf('/', schemeEnd + 3)
+        if (pathStart < 0) base else base.substring(0, pathStart)
+    }
+
+    /**
      * Memetakan localhost/127.0.0.1 ke host loopback emulator 10.0.2.2.
      */
     fun resolveNetworkUrl(url: String): String {
@@ -249,8 +262,8 @@ object ImageCacheManager {
             url.contains("localhost") -> url.replace("localhost", "10.0.2.2")
             url.contains("127.0.0.1") -> url.replace("127.0.0.1", "10.0.2.2")
             url.startsWith("http://") || url.startsWith("https://") -> url
-            url.startsWith("/") -> "http://10.0.2.2:8000$url"
-            else -> "http://10.0.2.2:8000/storage/" + url.removePrefix("storage/")
+            url.startsWith("/") -> apiOrigin + url
+            else -> "$apiOrigin/storage/" + url.removePrefix("storage/")
         }
     }
 

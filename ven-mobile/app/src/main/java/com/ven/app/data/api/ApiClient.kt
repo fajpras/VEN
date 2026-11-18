@@ -2,6 +2,7 @@ package com.ven.app.data.api
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.ven.app.BuildConfig
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -17,6 +18,11 @@ object ApiClient {
 
     private val gson: Gson by lazy { Gson() }
 
+    /**
+     * Logging level BODY hanya pada build debug. Interceptor ini mencetak
+     * header (termasuk Authorization) dan seluruh body request/respons yang
+     * memuat kata sandi, OTP, dan token — tidak boleh menyala di release.
+     */
     private val loggingInterceptor: HttpLoggingInterceptor by lazy {
         HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
@@ -40,7 +46,11 @@ object ApiClient {
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
-            .addInterceptor(loggingInterceptor)
+            .apply {
+                if (BuildConfig.DEBUG) {
+                    addInterceptor(loggingInterceptor)
+                }
+            }
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -63,6 +73,9 @@ object ApiClient {
 
     fun setBaseUrl(newBaseUrl: String) {
         val formattedUrl = if (newBaseUrl.endsWith("/")) newBaseUrl else "$newBaseUrl/"
+        if (!BuildConfig.DEBUG && !formattedUrl.startsWith("https://", ignoreCase = true)) {
+            throw IllegalArgumentException("Base URL wajib HTTPS pada build release: $formattedUrl")
+        }
         currentBaseUrl = formattedUrl
         retrofit = buildRetrofit(formattedUrl)
     }

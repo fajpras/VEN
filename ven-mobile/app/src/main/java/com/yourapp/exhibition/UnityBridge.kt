@@ -2,6 +2,7 @@ package com.yourapp.exhibition
 
 import android.util.Log
 import com.unity3d.player.UnityPlayer
+import com.ven.app.BuildConfig
 
 /**
  * Bridge class matching Unity's PlayBridge default package and method signatures:
@@ -18,7 +19,7 @@ object UnityBridge {
 
     @JvmStatic
     fun requestRoom() {
-        Log.d(TAG, "Unity requested room data")
+        if (BuildConfig.DEBUG) Log.d(TAG, "Unity requested room data")
         Thread {
             var json = currentRoomJson
             try {
@@ -28,12 +29,12 @@ object UnityBridge {
                     ?: intent?.getStringExtra("room_id")?.takeIf { it.isNotBlank() }
                 val apiBaseUrl = intent?.getStringExtra("apiBaseUrl")?.takeIf { it.isNotBlank() }
                     ?: intent?.getStringExtra("api_base_url")?.takeIf { it.isNotBlank() }
-                    ?: "http://10.0.2.2:8000/api/"
+                    ?: BuildConfig.BASE_URL
                 val authToken = intent?.getStringExtra("authToken").orEmpty()
 
                 if (!roomId.isNullOrBlank() && roomId.all { it.isDigit() }) {
                     val endpoint = apiBaseUrl.trimEnd('/') + "/pameran/$roomId/room-dto"
-                    Log.d(TAG, "Fetching room DTO from: $endpoint")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Fetching room DTO from: $endpoint")
                     val conn = (java.net.URL(endpoint).openConnection() as java.net.HttpURLConnection).apply {
                         requestMethod = "GET"
                         connectTimeout = 5000
@@ -48,7 +49,7 @@ object UnityBridge {
                         if (body.contains("\"roomId\"") && body.contains("\"templateId\"")) {
                             json = body
                             currentRoomJson = body
-                            Log.i(TAG, "Fetched room DTO from backend for room $roomId")
+                            if (BuildConfig.DEBUG) Log.i(TAG, "Fetched room DTO from backend for room $roomId")
                         }
                     } else {
                         Log.w(TAG, "Backend room-dto returned HTTP ${conn.responseCode}")

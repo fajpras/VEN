@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.ven.app.data.api.models.UserModel
+import com.ven.app.util.SecurePrefs
 
 class SessionManager(context: Context) {
 
@@ -12,16 +13,27 @@ class SessionManager(context: Context) {
     private val gson = Gson()
 
     fun saveToken(token: String?) {
-        preferences.edit().putString(KEY_TOKEN, token).apply()
+        preferences.edit().putString(KEY_TOKEN, encryptForStorage(token)).apply()
     }
 
     fun getToken(): String? {
-        return preferences.getString(KEY_TOKEN, null)
+        val stored = preferences.getString(KEY_TOKEN, null) ?: return null
+        val decrypted = SecurePrefs.decrypt(stored)
+        if (decrypted != null) return decrypted
+
+        // Nilai legacy tersimpan plaintext sebelum enkripsi diaktifkan:
+        // kembalikan dan migrasi diam-diam ke bentuk terenkripsi.
+        val migrated = SecurePrefs.encrypt(stored)
+        if (migrated != null) {
+            preferences.edit().putString(KEY_TOKEN, migrated).apply()
+            return stored
+        }
+        return null
     }
 
     fun saveUser(user: UserModel?) {
         val userJson = if (user != null) gson.toJson(user) else null
-        preferences.edit().putString(KEY_USER, userJson).apply()
+        preferences.edit().putString(KEY_USER, encryptForStorage(userJson)).apply()
     }
 
     /**
@@ -41,7 +53,8 @@ class SessionManager(context: Context) {
     }
 
     fun getUser(): UserModel? {
-        val userJson = preferences.getString(KEY_USER, null) ?: return null
+        val stored = preferences.getString(KEY_USER, null) ?: return null
+        val userJson = SecurePrefs.decrypt(stored) ?: stored
         return try {
             gson.fromJson(userJson, UserModel::class.java)
         } catch (e: Exception) {
@@ -55,6 +68,16 @@ class SessionManager(context: Context) {
 
     fun isLoggedIn(): Boolean {
         return !getToken().isNullOrBlank()
+    }
+
+    /**
+     * Mengenkripsi nilai sebelum disimpan. Enkripsi bersifat fail-closed:
+     * bila keystore gagal, nilai tidak disimpan agar token tidak pernah
+     * muncul sebagai plaintext di disk.
+     */
+    private fun encryptForStorage(value: String?): String? {
+        if (value.isNullOrBlank()) return value
+        return SecurePrefs.encrypt(value)
     }
 
     companion object {
