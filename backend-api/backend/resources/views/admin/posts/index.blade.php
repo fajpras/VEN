@@ -75,54 +75,56 @@
 
     @if ($viewMode === 'list')
         {{-- List Rows --}}
-        <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
-            @forelse ($karya as $post)
-                <div class="py-3 flex items-center gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
-                    {{-- Thumbnail --}}
-                    <div class="w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800">
-                        <img src="{{ $post->file_url ?? $post->thumbnail_url ?? 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%203%204%22%3E%3Crect%20width=%223%22%20height=%224%22%20fill=%22%23E5E7EB%22/%3E%3C/svg%3E' }}"
-                             alt="{{ $post->judul }}"
-                             class="w-full h-full object-cover">
-                    </div>
-
-                    {{-- Title --}}
-                    <div class="flex-1 min-w-0">
-                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">title</span>
-                        <span class="block text-sm font-semibold text-[#0F172A] dark:text-white truncate">{{ $post->judul }}</span>
-                    </div>
-
-                    {{-- Author --}}
-                    <div class="min-w-[120px]">
-                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">author</span>
-                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $post->pengguna->nama_panggilan ?? '—' }}</span>
-                    </div>
-
-                    {{-- Category --}}
-                    <div class="min-w-[120px]">
-                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">category</span>
-                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $post->kategori->kategori ?? $post->kategori->nama_kategori ?? '—' }}</span>
-                    </div>
-
-                    {{-- Created --}}
-                    <div class="min-w-[80px]">
-                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">created at</span>
-                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ ! empty($post->created_at) ? $post->created_at->format('d/m/y') : '—' }}</span>
-                    </div>
-
-                    {{-- Action --}}
-                    <div class="flex items-center">
-                        <button type="button"
-                                onclick="openDeleteModal('{{ $post->id_karya }}', '{{ addslashes($post->judul) }}')"
-                                class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
-                            Delete
-                        </button>
-                    </div>
+        <div class="overflow-x-auto">
+            <div class="min-w-[800px]">
+                {{-- Header kolom (satu baris untuk semua post) --}}
+                <div class="grid grid-cols-[56px_minmax(180px,1fr)_130px_130px_90px_minmax(90px,auto)] items-center gap-4 px-2 pb-2 text-xs text-[#94A3B8] dark:text-[#71717A] font-medium">
+                    <span></span>
+                    <span>title</span>
+                    <span>author</span>
+                    <span>category</span>
+                    <span>created at</span>
+                    <span></span>
                 </div>
-            @empty
-                <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
-                    No artwork posts found.
+
+                <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
+                    @forelse ($karya as $post)
+                        <div class="py-3 grid grid-cols-[56px_minmax(180px,1fr)_130px_130px_90px_minmax(90px,auto)] items-center gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
+                            {{-- Thumbnail --}}
+                            <div class="w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800">
+                                <img src="{{ $post->file_url ?? $post->thumbnail_url ?? 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%203%204%22%3E%3Crect%20width=%223%22%20height=%224%22%20fill=%22%23E5E7EB%22/%3E%3C/svg%3E' }}"
+                                     alt="{{ $post->judul }}"
+                                     class="w-full h-full object-cover">
+                            </div>
+
+                            {{-- Title --}}
+                            <span class="min-w-0 text-sm font-semibold text-[#0F172A] dark:text-white truncate">{{ $post->judul }}</span>
+
+                            {{-- Author --}}
+                            <span class="min-w-0 text-sm font-medium text-[#0F172A] dark:text-white truncate">{{ $post->pengguna->nama_panggilan ?? '—' }}</span>
+
+                            {{-- Category --}}
+                            <span class="min-w-0 text-sm font-medium text-[#0F172A] dark:text-white truncate">{{ $post->kategori->kategori ?? $post->kategori->nama_kategori ?? '—' }}</span>
+
+                            {{-- Created --}}
+                            <span class="text-sm font-medium text-[#0F172A] dark:text-white whitespace-nowrap">{{ ! empty($post->created_at) ? $post->created_at->format('d/m/y') : '—' }}</span>
+
+                            {{-- Action --}}
+                            <div class="flex items-center justify-end">
+                                <button type="button"
+                                        onclick="openDeleteModal('{{ $post->id_karya }}', '{{ addslashes($post->judul) }}')"
+                                        class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
+                            No artwork posts found.
+                        </div>
+                    @endforelse
                 </div>
-            @endforelse
+            </div>
         </div>
     @else
         {{-- 2-Column Responsive Card Grid --}}

@@ -23,35 +23,44 @@
 
     @if ($viewMode === 'list')
         {{-- Activity Log List Rows --}}
-        <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
-            @forelse ($logs as $log)
-                <div class="py-3 flex items-center justify-between gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
-                    {{-- Action Description --}}
-                    <div class="flex-1 pr-4">
-                        <p class="text-sm font-normal text-[#0F172A] dark:text-white leading-relaxed">
-                            {{ $log->pesan ?? $log->deskripsi ?? 'Admin action performed on system' }}
-                        </p>
-                    </div>
-
-                    {{-- Date --}}
-                    <div class="text-xs font-medium text-[#94A3B8] dark:text-[#71717A] min-w-[70px] text-right">
-                        {{ $log->waktu ? $log->waktu->format('d/m/y') : ($log->created_at ? $log->created_at->format('d/m/y') : '—') }}
-                    </div>
-
-                    {{-- Detail Link (Purple) --}}
-                    <div class="min-w-[60px] text-right">
-                        <button type="button"
-                                onclick="openDetailModal({{ json_encode($log) }})"
-                                class="text-sm font-medium text-[#BA18F5] hover:text-[#9333EA] transition-colors cursor-pointer">
-                            Detail
-                        </button>
-                    </div>
+        <div class="overflow-x-auto">
+            <div class="min-w-[600px]">
+                {{-- Header kolom (satu baris untuk semua log) --}}
+                <div class="grid grid-cols-[1fr_100px_80px] items-center gap-4 px-2 pb-2 text-xs text-[#94A3B8] dark:text-[#71717A] font-medium">
+                    <span>activity</span>
+                    <span>date</span>
+                    <span></span>
                 </div>
-            @empty
-                <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
-                    No activity logs recorded.
+
+                <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
+                    @forelse ($logs as $log)
+                        <div class="py-3 grid grid-cols-[1fr_100px_80px] items-center gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
+                            {{-- Action Description --}}
+                            <p class="min-w-0 text-sm font-normal text-[#0F172A] dark:text-white leading-relaxed">
+                                {{ $log->pesan ?? $log->deskripsi ?? 'Admin action performed on system' }}
+                            </p>
+
+                            {{-- Date --}}
+                            <span class="text-xs font-medium text-[#94A3B8] dark:text-[#71717A] whitespace-nowrap">
+                                {{ $log->waktu ? $log->waktu->format('d/m/y') : ($log->created_at ? $log->created_at->format('d/m/y') : '—') }}
+                            </span>
+
+                            {{-- Detail Link (Purple) --}}
+                            <div class="flex items-center justify-end">
+                                <button type="button"
+                                        onclick="openDetailModal({{ json_encode($log) }})"
+                                        class="text-sm font-medium text-[#BA18F5] hover:text-[#9333EA] transition-colors cursor-pointer">
+                                    Detail
+                                </button>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
+                            No activity logs recorded.
+                        </div>
+                    @endforelse
                 </div>
-            @endforelse
+            </div>
         </div>
     @else
         {{-- Activity Log Card Grid --}}

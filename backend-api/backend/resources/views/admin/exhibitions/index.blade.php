@@ -23,54 +23,56 @@
 
     @if ($viewMode === 'list')
         {{-- Exhibition List Rows --}}
-        <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
-            @forelse ($pameran as $exhibit)
-                <div class="py-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
-                    {{-- Landscape Banner Thumbnail --}}
-                    <div class="w-full md:w-[150px] h-[75px] flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800">
-                        <img src="{{ $exhibit->banner ? asset('storage/' . $exhibit->banner) : ($exhibit->banner_url ?? 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%202%201%22%3E%3Crect%20width=%222%22%20height=%221%22%20fill=%22%23E5E7EB%22/%3E%3C/svg%3E') }}"
-                             alt="{{ $exhibit->judul }}"
-                             class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
-                    </div>
-
-                    {{-- Title --}}
-                    <div class="min-w-[160px]">
-                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">title</span>
-                        <span class="text-base font-semibold text-[#0F172A] dark:text-white">{{ $exhibit->judul }}</span>
-                    </div>
-
-                    {{-- Owner --}}
-                    <div class="min-w-[130px]">
-                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">owner</span>
-                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $exhibit->pengguna->nama_panggilan ?? '—' }}</span>
-                    </div>
-
-                    {{-- Post --}}
-                    <div class="min-w-[50px]">
-                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">post</span>
-                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $exhibit->karya_count ?? $exhibit->ruangan()->count() }}</span>
-                    </div>
-
-                    {{-- Created At --}}
-                    <div class="min-w-[80px]">
-                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">created at</span>
-                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $exhibit->created_at ? $exhibit->created_at->format('d/m/y') : '—' }}</span>
-                    </div>
-
-                    {{-- Action: Delete Button --}}
-                    <div class="flex items-center">
-                        <button type="button"
-                                onclick="openDeleteExhibitionModal('{{ $exhibit->id_pameran }}', '{{ addslashes($exhibit->judul) }}')"
-                                class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
-                            Delete
-                        </button>
-                    </div>
+        <div class="overflow-x-auto">
+            <div class="min-w-[800px]">
+                {{-- Header kolom (satu baris untuk semua exhibition) --}}
+                <div class="grid grid-cols-[150px_minmax(160px,1fr)_130px_70px_100px_minmax(90px,auto)] items-center gap-4 px-2 pb-2 text-xs text-[#94A3B8] dark:text-[#71717A] font-medium">
+                    <span></span>
+                    <span>title</span>
+                    <span>owner</span>
+                    <span>post</span>
+                    <span>created at</span>
+                    <span></span>
                 </div>
-            @empty
-                <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
-                    No virtual exhibitions found.
+
+                <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
+                    @forelse ($pameran as $exhibit)
+                        <div class="py-3.5 grid grid-cols-[150px_minmax(160px,1fr)_130px_70px_100px_minmax(90px,auto)] items-center gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
+                            {{-- Landscape Banner Thumbnail --}}
+                            <div class="w-full h-[75px] flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800">
+                                <img src="{{ $exhibit->banner ? asset('storage/' . $exhibit->banner) : ($exhibit->banner_url ?? 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%202%201%22%3E%3Crect%20width=%222%22%20height=%221%22%20fill=%22%23E5E7EB%22/%3E%3C/svg%3E') }}"
+                                     alt="{{ $exhibit->judul }}"
+                                     class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                            </div>
+
+                            {{-- Title --}}
+                            <span class="min-w-0 text-base font-semibold text-[#0F172A] dark:text-white truncate">{{ $exhibit->judul }}</span>
+
+                            {{-- Owner --}}
+                            <span class="min-w-0 text-sm font-medium text-[#0F172A] dark:text-white truncate">{{ $exhibit->pengguna->nama_panggilan ?? '—' }}</span>
+
+                            {{-- Post --}}
+                            <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $exhibit->karya_count ?? $exhibit->ruangan()->count() }}</span>
+
+                            {{-- Created At --}}
+                            <span class="text-sm font-medium text-[#0F172A] dark:text-white whitespace-nowrap">{{ $exhibit->created_at ? $exhibit->created_at->format('d/m/y') : '—' }}</span>
+
+                            {{-- Action: Delete Button --}}
+                            <div class="flex items-center justify-end">
+                                <button type="button"
+                                        onclick="openDeleteExhibitionModal('{{ $exhibit->id_pameran }}', '{{ addslashes($exhibit->judul) }}')"
+                                        class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
+                            No virtual exhibitions found.
+                        </div>
+                    @endforelse
                 </div>
-            @endforelse
+            </div>
         </div>
     @else
         {{-- Exhibition Card Grid --}}
