@@ -23,58 +23,57 @@
 
     @if ($viewMode === 'list')
         {{-- Account List --}}
-        <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
-            @forelse ($pengguna as $user)
-                <div class="py-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
-                    {{-- Avatar & Username --}}
-                    <div class="flex items-center gap-4 min-w-[260px]">
-                        <img src="{{ $user->foto_profil ? asset('storage/' . $user->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode($user->nama) . '&background=BA18F5&color=fff' }}"
-                             alt="{{ $user->nama }}"
-                             class="w-11 h-11 rounded-full object-cover border border-gray-100 dark:border-zinc-800 shadow-xs flex-shrink-0">
-                        <div>
-                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">username</span>
-                            <span class="text-sm font-semibold text-[#0F172A] dark:text-white">{{ $user->nama_panggilan }}</span>
+        <div class="overflow-x-auto">
+            <div class="min-w-[900px]">
+                {{-- Header kolom (satu baris untuk semua user, tepat di atas garis) --}}
+                <div class="grid grid-cols-[minmax(240px,1.6fr)_minmax(150px,1.2fr)_80px_110px_110px_minmax(140px,auto)] items-center gap-4 px-2 pb-2 text-xs text-[#94A3B8] dark:text-[#71717A] font-medium">
+                    <span>username</span>
+                    <span>name</span>
+                    <span>post</span>
+                    <span>exhibition</span>
+                    <span>join date</span>
+                    <span></span>
+                </div>
+
+                <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
+                    @forelse ($pengguna as $user)
+                        <div class="py-3.5 grid grid-cols-[minmax(240px,1.6fr)_minmax(150px,1.2fr)_80px_110px_110px_minmax(140px,auto)] items-center gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
+                            {{-- Avatar & Username --}}
+                            <div class="flex items-center gap-4 min-w-0">
+                                <img src="{{ $user->foto_profil ? asset('storage/' . $user->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode($user->nama) . '&background=BA18F5&color=fff' }}"
+                                     alt="{{ $user->nama }}"
+                                     class="w-11 h-11 rounded-full object-cover border border-gray-100 dark:border-zinc-800 shadow-xs flex-shrink-0">
+                                <span class="text-sm font-semibold text-[#0F172A] dark:text-white truncate">{{ $user->nama_panggilan }}</span>
+                            </div>
+
+                            {{-- Name --}}
+                            <span class="min-w-0 text-sm font-medium text-[#0F172A] dark:text-white truncate">{{ $user->nama }}</span>
+
+                            {{-- Post --}}
+                            <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->karya_count ?? $user->karya()->count() }}</span>
+
+                            {{-- Exhibition --}}
+                            <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->pameran_count ?? $user->pameran()->count() }}</span>
+
+                            {{-- Join Date --}}
+                            <span class="text-sm font-medium text-[#0F172A] dark:text-white whitespace-nowrap">{{ $user->created_at ? $user->created_at->format('d/m/y') : '—' }}</span>
+
+                            {{-- Action Button: Suspend (Red Pill) --}}
+                            <div class="flex items-center justify-end">
+                                <button type="button"
+                                        onclick="openSuspendModal('{{ $user->id_pengguna }}', '{{ addslashes($user->nama) }}', '{{ addslashes($user->nama_panggilan) }}')"
+                                        class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
+                                    Suspend
+                                </button>
+                            </div>
                         </div>
-                    </div>
-
-                    {{-- Name --}}
-                    <div class="min-w-[180px]">
-                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">name</span>
-                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->nama }}</span>
-                    </div>
-
-                    {{-- Post --}}
-                    <div class="min-w-[50px]">
-                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">post</span>
-                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->karya_count ?? $user->karya()->count() }}</span>
-                    </div>
-
-                    {{-- Exhibition --}}
-                    <div class="min-w-[60px]">
-                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">exhibition</span>
-                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->pameran_count ?? $user->pameran()->count() }}</span>
-                    </div>
-
-                    {{-- Join Date --}}
-                    <div class="min-w-[80px]">
-                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">join date</span>
-                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->created_at ? $user->created_at->format('d/m/y') : '—' }}</span>
-                    </div>
-
-                    {{-- Action Button: Suspend (Red Pill) --}}
-                    <div class="flex items-center">
-                        <button type="button"
-                                onclick="openSuspendModal('{{ $user->id_pengguna }}', '{{ addslashes($user->nama) }}', '{{ addslashes($user->nama_panggilan) }}')"
-                                class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
-                            Suspend
-                        </button>
-                    </div>
+                    @empty
+                        <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
+                            No user accounts found.
+                        </div>
+                    @endforelse
                 </div>
-            @empty
-                <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
-                    No user accounts found.
-                </div>
-            @endforelse
+            </div>
         </div>
     @else
         {{-- Account Card Grid --}}
