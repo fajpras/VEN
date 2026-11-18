@@ -77,35 +77,35 @@
         </div>
     @else
         {{-- Account Card Grid --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             @forelse ($pengguna as $user)
-                <div class="flex flex-col items-center text-center rounded-2xl p-6 gap-3 bg-white dark:bg-[#1E1E20] border border-[#E5E7EB] dark:border-[#2D2D30] hover:border-[#BA18F5]/50 transition-colors">
+                <div class="flex flex-col items-center text-center rounded-2xl p-4 gap-3 bg-white dark:bg-[#1E1E20] border border-[#E5E7EB] dark:border-[#2D2D30] hover:border-[#BA18F5]/50 transition-colors">
                     <img src="{{ $user->foto_profil ? asset('storage/' . $user->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode($user->nama) . '&background=BA18F5&color=fff' }}"
                          alt="{{ $user->nama }}"
-                         class="w-16 h-16 rounded-full object-cover border border-gray-100 dark:border-zinc-800 shadow-xs flex-shrink-0">
-                    <div>
-                        <h3 class="text-base font-semibold text-[#0F172A] dark:text-white leading-snug">{{ $user->nama }}</h3>
-                        <p class="text-sm text-[#94A3B8] dark:text-[#71717A]">{{ '@' . $user->nama_panggilan }}</p>
-                        <p class="text-xs text-[#94A3B8] dark:text-[#71717A] truncate max-w-[220px]">{{ $user->email ?? '' }}</p>
+                         class="w-14 h-14 rounded-full object-cover border border-gray-100 dark:border-zinc-800 shadow-xs flex-shrink-0">
+                    <div class="w-full min-w-0">
+                        <h3 class="text-sm font-semibold text-[#0F172A] dark:text-white leading-snug truncate">{{ $user->nama }}</h3>
+                        <p class="text-xs text-[#94A3B8] dark:text-[#71717A] truncate">{{ '@' . $user->nama_panggilan }}</p>
+                        <p class="text-[11px] text-[#94A3B8] dark:text-[#71717A] truncate">{{ $user->email ?? '' }}</p>
                     </div>
-                    <div class="flex items-center justify-center gap-6 text-sm py-2">
+                    <div class="grid w-full grid-cols-3 gap-1">
                         <div>
-                            <span class="block text-base font-semibold text-[#0F172A] dark:text-white">{{ $user->karya_count ?? $user->karya()->count() }}</span>
-                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A]">post</span>
+                            <span class="block text-sm font-semibold text-[#0F172A] dark:text-white">{{ $user->karya_count ?? $user->karya()->count() }}</span>
+                            <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">post</span>
                         </div>
                         <div>
-                            <span class="block text-base font-semibold text-[#0F172A] dark:text-white">{{ $user->pameran_count ?? $user->pameran()->count() }}</span>
-                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A]">exhibition</span>
+                            <span class="block text-sm font-semibold text-[#0F172A] dark:text-white">{{ $user->pameran_count ?? $user->pameran()->count() }}</span>
+                            <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">exhibition</span>
                         </div>
                         <div>
-                            <span class="block text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->created_at ? $user->created_at->format('d/m/y') : '—' }}</span>
-                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A]">join date</span>
+                            <span class="block text-xs font-medium text-[#0F172A] dark:text-white whitespace-nowrap">{{ $user->created_at ? $user->created_at->format('d/m/y') : '—' }}</span>
+                            <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">join date</span>
                         </div>
                     </div>
-                    <div class="w-full pt-2 mt-auto">
+                    <div class="w-full pt-1 mt-auto">
                         <button type="button"
                                 onclick="openSuspendModal('{{ $user->id_pengguna }}', '{{ addslashes($user->nama) }}', '{{ addslashes($user->nama_panggilan) }}')"
-                                class="h-9 w-full rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
+                                class="h-8 w-full rounded-full bg-[#FF0000] text-white font-semibold text-[11px] tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
                             Suspend
                         </button>
                     </div>

@@ -55,36 +55,36 @@
         </div>
     @else
         {{-- Activity Log Card Grid --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             @forelse ($logs as $log)
-                <div class="flex flex-col rounded-2xl p-5 gap-3 bg-white dark:bg-[#1E1E20] border border-[#E5E7EB] dark:border-[#2D2D30] hover:border-[#BA18F5]/50 transition-colors">
-                    <div class="p-3 bg-purple-50 dark:bg-purple-950/20 rounded-xl border border-purple-100 dark:border-purple-900/40">
-                        <p class="text-sm font-medium text-[#0F172A] dark:text-white leading-relaxed line-clamp-4">
+                <div class="flex flex-col rounded-2xl p-4 gap-2 bg-white dark:bg-[#1E1E20] border border-[#E5E7EB] dark:border-[#2D2D30] hover:border-[#BA18F5]/50 transition-colors">
+                    <div class="p-2.5 bg-purple-50 dark:bg-purple-950/20 rounded-xl border border-purple-100 dark:border-purple-900/40">
+                        <p class="text-xs font-medium text-[#0F172A] dark:text-white leading-relaxed line-clamp-3">
                             {{ $log->pesan ?? $log->deskripsi ?? 'Admin action performed on system' }}
                         </p>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="grid grid-cols-2 gap-1.5 text-xs">
                         <div>
-                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A]">administrator</span>
+                            <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">administrator</span>
                             <span class="font-medium text-[#0F172A] dark:text-white truncate block">{{ $log->pengguna->nama ?? '—' }}</span>
                         </div>
                         <div>
-                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A]">timestamp</span>
-                            <span class="font-medium text-[#0F172A] dark:text-white">{{ $log->waktu ? $log->waktu->format('d/m/y') : ($log->created_at ? $log->created_at->format('d/m/y') : '—') }}</span>
+                            <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">timestamp</span>
+                            <span class="font-medium text-[#0F172A] dark:text-white whitespace-nowrap">{{ $log->waktu ? $log->waktu->format('d/m/y') : ($log->created_at ? $log->created_at->format('d/m/y') : '—') }}</span>
                         </div>
                         <div>
-                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A]">entity</span>
+                            <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">entity</span>
                             <span class="font-medium text-[#0F172A] dark:text-white truncate block">{{ $log->entitas ?? $log->tipe_entitas ?? '—' }}</span>
                         </div>
                         <div>
-                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A]">action</span>
+                            <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">action</span>
                             <span class="font-medium text-[#0F172A] dark:text-white truncate block">{{ $log->aksi ?? '—' }}</span>
                         </div>
                     </div>
-                    <div class="pt-2 mt-auto">
+                    <div class="pt-1 mt-auto">
                         <button type="button"
                                 onclick="openDetailModal({{ json_encode($log) }})"
-                                class="h-9 w-full rounded-full bg-[#BA18F5] text-white font-semibold text-xs hover:opacity-90 transition-opacity cursor-pointer">
+                                class="h-8 w-full rounded-full bg-[#BA18F5] text-white font-semibold text-[11px] hover:opacity-90 transition-opacity cursor-pointer">
                             Detail
                         </button>
                     </div>
