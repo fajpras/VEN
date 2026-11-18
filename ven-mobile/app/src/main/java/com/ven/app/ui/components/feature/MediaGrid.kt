@@ -111,8 +111,18 @@ fun MediaGridTile(
         if (item.title.isNotBlank()) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .fillMaxWidth()
+                    .align(Alignment.BottomStart)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.50f),
+                                Color.Black.copy(alpha = 0.85f),
+                            ),
+                        )
+                    )
+                    .padding(start = 8.dp, end = 8.dp, top = 22.dp, bottom = 6.dp),
                 contentAlignment = Alignment.BottomStart,
             ) {
                 Text(
@@ -120,9 +130,9 @@ fun MediaGridTile(
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.SemiBold,
                         shadow = Shadow(
-                            color = Color.Black.copy(alpha = 0.85f),
+                            color = Color.Black,
                             offset = Offset(0f, 1f),
-                            blurRadius = 3f,
+                            blurRadius = 2f,
                         ),
                     ),
                     color = Color.White,
