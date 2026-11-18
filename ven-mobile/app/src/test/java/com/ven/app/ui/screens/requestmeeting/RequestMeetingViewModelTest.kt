@@ -5,14 +5,18 @@ import java.time.YearMonth
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RequestMeetingViewModelTest {
 
+    /** Tanggal tetap untuk pengujian deterministik (diinjeksikan ke ViewModel). */
+    private val fixedDate = LocalDate.of(2026, 9, 30)
+
     @Test
-    fun initialState_hasDefaultDynamicCalendarValues() {
-        val vm = RequestMeetingViewModel()
+    fun initialState_hasCalendarValuesDerivedFromToday() {
+        val vm = RequestMeetingViewModel(today = fixedDate)
         val state = vm.uiState.value
 
         assertEquals(YearMonth.of(2026, 9), state.visibleMonth)
@@ -29,7 +33,7 @@ class RequestMeetingViewModelTest {
 
     @Test
     fun onDaySelected_currentMonth_updatesSelectedDateAndText() {
-        val vm = RequestMeetingViewModel()
+        val vm = RequestMeetingViewModel(today = fixedDate)
         val targetDay = CalendarDay(
             date = LocalDate.of(2026, 9, 15),
             isCurrentMonth = true,
@@ -47,7 +51,7 @@ class RequestMeetingViewModelTest {
 
     @Test
     fun onDaySelected_outsideCurrentMonth_stateRemainsUnchanged() {
-        val vm = RequestMeetingViewModel()
+        val vm = RequestMeetingViewModel(today = fixedDate)
         val outsideDay = CalendarDay(
             date = LocalDate.of(2026, 8, 31),
             isCurrentMonth = false,
@@ -63,7 +67,7 @@ class RequestMeetingViewModelTest {
 
     @Test
     fun onNextMonth_incrementsVisibleMonthAndRecomputesGrid() {
-        val vm = RequestMeetingViewModel()
+        val vm = RequestMeetingViewModel(today = fixedDate)
 
         vm.onNextMonth()
 
@@ -76,7 +80,7 @@ class RequestMeetingViewModelTest {
 
     @Test
     fun onPrevMonth_decrementsVisibleMonthAndRecomputesGrid() {
-        val vm = RequestMeetingViewModel()
+        val vm = RequestMeetingViewModel(today = fixedDate)
 
         vm.onPrevMonth()
 
@@ -89,7 +93,7 @@ class RequestMeetingViewModelTest {
 
     @Test
     fun onNextMonth_multipleTimes_correctlyRollsOverYear() {
-        val vm = RequestMeetingViewModel()
+        val vm = RequestMeetingViewModel(today = fixedDate)
 
         // 2026-09 -> 2026-10 -> 2026-11 -> 2026-12 -> 2027-01
         repeat(4) {
@@ -103,7 +107,7 @@ class RequestMeetingViewModelTest {
 
     @Test
     fun onHourChange_sanitizesToMaxTwoDigits() {
-        val vm = RequestMeetingViewModel()
+        val vm = RequestMeetingViewModel(today = fixedDate)
 
         vm.onHourChange("123")
         assertEquals("12", vm.uiState.value.hourText)
@@ -117,7 +121,7 @@ class RequestMeetingViewModelTest {
 
     @Test
     fun onMinuteChange_sanitizesToMaxTwoDigits() {
-        val vm = RequestMeetingViewModel()
+        val vm = RequestMeetingViewModel(today = fixedDate)
 
         vm.onMinuteChange("450")
         assertEquals("45", vm.uiState.value.minuteText)
@@ -131,7 +135,7 @@ class RequestMeetingViewModelTest {
 
     @Test
     fun onPeriodChange_togglesBetweenAmAndPm() {
-        val vm = RequestMeetingViewModel()
+        val vm = RequestMeetingViewModel(today = fixedDate)
 
         vm.onPeriodChange(isAm = true)
         assertTrue(vm.uiState.value.isAm)
@@ -142,35 +146,35 @@ class RequestMeetingViewModelTest {
 
     @Test
     fun onMessageChange_updatesMessageInState() {
-        val vm = RequestMeetingViewModel()
+        val vm = RequestMeetingViewModel(today = fixedDate)
 
         vm.onMessageChange("Halo, ingin diskusi kolaborasi booth.")
         assertEquals("Halo, ingin diskusi kolaborasi booth.", vm.uiState.value.message)
     }
 
     @Test
-    fun sendRequest_withBlankHour_synchronouslySetsErrorMessageWithoutSending() {
-        val vm = RequestMeetingViewModel()
+    fun sendRequest_withBlankHour_synchronouslySetsValidationErrorWithoutSending() {
+        val vm = RequestMeetingViewModel(today = fixedDate)
         vm.onHourChange("")
 
         vm.sendRequest()
 
         val state = vm.uiState.value
-        assertEquals("Waktu pertemuan harus diisi", state.errorMessage)
+        assertEquals(RequestMeetingValidationError.TimeNotSet, state.validationError)
         assertFalse(state.isSending)
-        assertFalse(state.isSuccess)
+        assertNull(state.submitErrorText)
     }
 
     @Test
-    fun sendRequest_withBlankMinute_synchronouslySetsErrorMessageWithoutSending() {
-        val vm = RequestMeetingViewModel()
+    fun sendRequest_withBlankMinute_synchronouslySetsValidationErrorWithoutSending() {
+        val vm = RequestMeetingViewModel(today = fixedDate)
         vm.onMinuteChange("")
 
         vm.sendRequest()
 
         val state = vm.uiState.value
-        assertEquals("Waktu pertemuan harus diisi", state.errorMessage)
+        assertEquals(RequestMeetingValidationError.TimeNotSet, state.validationError)
         assertFalse(state.isSending)
-        assertFalse(state.isSuccess)
+        assertNull(state.submitErrorText)
     }
 }

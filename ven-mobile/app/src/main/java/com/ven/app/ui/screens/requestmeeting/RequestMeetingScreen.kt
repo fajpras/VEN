@@ -2,7 +2,6 @@ package com.ven.app.ui.screens.requestmeeting
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -17,11 +16,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,11 +50,13 @@ import com.ven.app.ui.components.layout.VexBottomActionBar
 import com.ven.app.ui.components.layout.VexTopBar
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonVariant
+import com.ven.app.ui.components.ui.VexTextArea
 import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
+import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 import com.ven.app.util.DateFormatter
@@ -90,7 +91,10 @@ fun RequestMeetingScreen(
         bottomBar = {
             VexBottomActionBar {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    state.errorMessage?.let { error ->
+                    val errorMessage = state.validationError?.messageRes
+                        ?.let { stringResource(it) }
+                        ?: state.submitErrorText
+                    errorMessage?.let { error ->
                         Text(
                             text = error,
                             color = colors.danger,
@@ -128,25 +132,22 @@ fun RequestMeetingScreen(
 
                     Text(
                         text = state.pameranTitle,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 20.sp,
-                        ),
+                        style = MaterialTheme.typography.titleLarge,
                         color = colors.text,
                         modifier = Modifier.padding(bottom = VexSpace.s4),
                     )
 
                     // Banner dinamis berdasarkan pameran yang terhubung
                     val bannerBitmap = rememberAsyncImageBitmap(state.bannerUrl)
-                    val baseColor = remember(state.bannerColor) {
+                    val baseColor = remember(state.bannerColor, colors.primary) {
                         try {
                             if (!state.bannerColor.isNullOrBlank()) {
                                 Color(android.graphics.Color.parseColor(state.bannerColor))
                             } else {
-                                Color(0xFF1E2A4A)
+                                colors.primary
                             }
                         } catch (_: Exception) {
-                            Color(0xFF1E2A4A)
+                            colors.primary
                         }
                     }
 
@@ -173,6 +174,11 @@ fun RequestMeetingScreen(
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop,
                             )
+                        } else if (state.isLoading) {
+                            CircularProgressIndicator(
+                                color = colors.onPrimary,
+                                modifier = Modifier.size(VexSize.iconLg),
+                            )
                         } else {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -192,7 +198,7 @@ fun RequestMeetingScreen(
                                 )
                                 Spacer(modifier = Modifier.height(VexSpace.s1))
                                 Text(
-                                    text = "VIRTUAL EXHIBITION ROOM",
+                                    text = stringResource(R.string.request_meeting_banner_subtitle),
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         fontWeight = FontWeight.Medium,
                                         letterSpacing = 1.sp,
@@ -224,7 +230,6 @@ fun RequestMeetingScreen(
                         text = stringResource(R.string.request_meeting_chose_date),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 18.sp,
                         ),
                         color = colors.text,
                     )
@@ -238,9 +243,8 @@ fun RequestMeetingScreen(
                     ) {
                         Text(
                             text = state.monthTitleText,
-                            style = MaterialTheme.typography.titleMedium.copy(
+                            style = MaterialTheme.typography.titleSmall.copy(
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 16.sp,
                             ),
                             color = colors.text,
                         )
@@ -383,7 +387,6 @@ fun RequestMeetingScreen(
                         text = stringResource(R.string.request_meeting_chose_time),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 18.sp,
                         ),
                         color = colors.text,
                     )
@@ -392,7 +395,7 @@ fun RequestMeetingScreen(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(VexSpace.s2),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         TimeDigitBox(
@@ -449,33 +452,11 @@ fun RequestMeetingScreen(
                 ) {
                     Spacer(modifier = Modifier.height(VexSpace.s5))
 
-                    val shape = RoundedCornerShape(VexRadius.md)
-                    BasicTextField(
+                    VexTextArea(
                         value = state.message,
                         onValueChange = onMessageChange,
-                        cursorBrush = SolidColor(colors.primary),
-                        textStyle = MaterialTheme.typography.bodyLarge.copy(
-                            color = colors.text,
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(130.dp)
-                            .border(1.dp, colors.borderInput, shape)
-                            .clip(shape)
-                            .background(colors.surfaceInput)
-                            .padding(VexSpace.s4),
-                        decorationBox = { innerTextField ->
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                if (state.message.isEmpty()) {
-                                    Text(
-                                        text = stringResource(R.string.request_meeting_message_hint),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = colors.textMuted,
-                                    )
-                                }
-                                innerTextField()
-                            }
-                        },
+                        placeholder = stringResource(R.string.request_meeting_message_hint),
+                        minHeight = 130.dp,
                     )
 
                     Spacer(modifier = Modifier.height(VexSpace.s5))
@@ -564,6 +545,7 @@ private fun RequestMeetingDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         RequestMeetingScreen(
             state = RequestMeetingUiState(
+                pameranTitle = "6th International Expo",
                 visibleMonth = month,
                 selectedDate = date,
                 selectedDateText = DateFormatter.formatRequestMeetingDate(date),
@@ -594,6 +576,7 @@ private fun RequestMeetingLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
         RequestMeetingScreen(
             state = RequestMeetingUiState(
+                pameranTitle = "6th International Expo",
                 visibleMonth = month,
                 selectedDate = date,
                 selectedDateText = DateFormatter.formatRequestMeetingDate(date),

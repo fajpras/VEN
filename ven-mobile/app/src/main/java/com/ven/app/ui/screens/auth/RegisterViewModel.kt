@@ -1,14 +1,8 @@
 package com.ven.app.ui.screens.auth
 
 import android.content.Context
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
 import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiLogin
@@ -16,7 +10,9 @@ import com.ven.app.data.api.ApiRegister
 import com.ven.app.data.api.SessionManager
 import com.ven.app.data.api.models.AuthData
 import com.ven.app.util.GoogleAuthHelper
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -52,6 +48,7 @@ data class RegisterUiState(
     val isOtpDialogOpen: Boolean = false,
     val isLoading: Boolean = false,
     val isSendingOtp: Boolean = false,
+    val resendCooldown: Int = 0,
     val errorMessage: String? = null,
     val infoMessage: String? = null,
 ) {
@@ -77,6 +74,13 @@ class RegisterViewModel : ViewModel() {
 
     private val _events = Channel<RegisterEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
+
+    private var cooldownJob: Job? = null
+
+    override fun onCleared() {
+        cooldownJob?.cancel()
+        super.onCleared()
+    }
 
     fun onEmailChange(value: String) =
         _uiState.update { it.copy(email = value, errorMessage = null) }
@@ -125,10 +129,10 @@ class RegisterViewModel : ViewModel() {
         }
     }
 
-    /** Kirim ulang OTP dari dalam dialog */
+    /** Kirim ulang OTP dari dalam dialog dengan cooldown 60 detik */
     fun resendOtp() {
         val email = _uiState.value.email
-        if (email.isBlank()) return
+        if (email.isBlank() || _uiState.value.resendCooldown > 0) return
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSendingOtp = true, errorMessage = null) }
@@ -137,6 +141,7 @@ class RegisterViewModel : ViewModel() {
 
             result.onSuccess { message ->
                 _uiState.update { it.copy(isSendingOtp = false, infoMessage = message) }
+                startCooldownTimer()
             }.onFailure { exception ->
                 _uiState.update {
                     it.copy(
@@ -144,6 +149,17 @@ class RegisterViewModel : ViewModel() {
                         errorMessage = exception.message ?: "Gagal mengirim ulang kode"
                     )
                 }
+            }
+        }
+    }
+
+    private fun startCooldownTimer() {
+        cooldownJob?.cancel()
+        cooldownJob = viewModelScope.launch {
+            _uiState.update { it.copy(resendCooldown = OTP_RESEND_COOLDOWN_SECONDS) }
+            while (_uiState.value.resendCooldown > 0) {
+                delay(1000)
+                _uiState.update { it.copy(resendCooldown = (it.resendCooldown - 1).coerceAtLeast(0)) }
             }
         }
     }
@@ -237,53 +253,8 @@ class RegisterViewModel : ViewModel() {
         sesi.saveToken(authData.token)
         sesi.saveUser(authData.pengguna)
     }
-}
 
-/** Penghubung antara RegisterViewModel dan RegisterScreen (stateless). */
-@Composable
-fun RegisterRoute(
-    onNavigateToOnboarding: () -> Unit,
-    onNavigateToHome: () -> Unit,
-    onNavigateToLogin: () -> Unit,
-    viewModel: RegisterViewModel = viewModel(),
-) {
-    val context = LocalContext.current
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                RegisterEvent.NavigateToOnboarding -> onNavigateToOnboarding()
-                RegisterEvent.NavigateToHome -> onNavigateToHome()
-            }
-        }
+    private companion object {
+        const val OTP_RESEND_COOLDOWN_SECONDS = 60
     }
-
-    /** Daftar menggunakan akun Google */
-     if (state.isOtpDialogOpen) {
-        VerifyOtpScreen(
-            state = ForgotPasswordUiState(
-                email = state.email,
-                otp = state.otp,
-                isLoading = state.isLoading,
-                errorMessage = state.errorMessage,
-            ),
-            onOtpChange = viewModel::onOtpChange,
-            onVerifyClick = { viewModel.submitRegisterWithOtp(context) },
-            onResendClick = viewModel::resendOtp,
-            onBackClick = viewModel::dismissOtpDialog,
-        )
-        return
-    }
-
-    RegisterScreen(
-        state = state,
-        onEmailChange = viewModel::onEmailChange,
-        onUsernameChange = viewModel::onUsernameChange,
-        onPasswordChange = viewModel::onPasswordChange,
-        onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
-        onRegisterClick = viewModel::requestOtpAndOpenDialog,
-        onGoogleClick = { viewModel.daftarDenganGoogle(context) },
-        onLoginClick = onNavigateToLogin,
-    )
 }

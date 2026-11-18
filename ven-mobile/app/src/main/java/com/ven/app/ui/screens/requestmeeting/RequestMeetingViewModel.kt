@@ -2,6 +2,8 @@ package com.ven.app.ui.screens.requestmeeting
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ven.app.R
+import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiPameran
 import com.ven.app.data.api.ApiUndangan
 import com.ven.app.data.api.models.CreateUndanganRequest
@@ -26,10 +28,11 @@ sealed interface RequestMeetingEvent {
 class RequestMeetingViewModel(
     private val apiUndangan: ApiUndangan = ApiUndangan,
     private val apiPameran: ApiPameran = ApiPameran,
+    today: LocalDate = LocalDate.now(),
 ) : ViewModel() {
 
-    private val initialMonth = YearMonth.of(2026, 9)
-    private val initialDate = LocalDate.of(2026, 9, 30)
+    private val initialMonth = YearMonth.from(today)
+    private val initialDate = today
     private var currentTargetId: String? = null
 
     private val _uiState = MutableStateFlow(
@@ -197,14 +200,14 @@ class RequestMeetingViewModel(
     fun sendRequest(overrideTargetId: String? = null) {
         val current = _uiState.value
         if (current.hourText.isBlank() || current.minuteText.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Waktu pertemuan harus diisi") }
+            _uiState.update { it.copy(validationError = RequestMeetingValidationError.TimeNotSet) }
             return
         }
 
         val hourVal = current.hourText.toIntOrNull() ?: 0
         val minuteVal = current.minuteText.toIntOrNull() ?: 0
         if (hourVal !in 1..12 || minuteVal !in 0..59) {
-            _uiState.update { it.copy(errorMessage = "Jadwal yang dipilih tidak valid") }
+            _uiState.update { it.copy(validationError = RequestMeetingValidationError.InvalidSchedule) }
             return
         }
 
@@ -215,7 +218,7 @@ class RequestMeetingViewModel(
         val scheduledDateTime = current.selectedDate.atTime(hour24, minuteVal)
 
         if (scheduledDateTime.isBefore(LocalDateTime.now())) {
-            _uiState.update { it.copy(errorMessage = "Jadwal yang dipilih tidak valid") }
+            _uiState.update { it.copy(validationError = RequestMeetingValidationError.InvalidSchedule) }
             return
         }
 
@@ -223,7 +226,7 @@ class RequestMeetingViewModel(
         val target = overrideTargetId ?: currentTargetId
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isSending = true, errorMessage = null) }
+            _uiState.update { it.copy(isSending = true, validationError = null, submitErrorText = null) }
 
             val request = if (target?.toIntOrNull() != null) {
                 CreateUndanganRequest(
@@ -241,11 +244,12 @@ class RequestMeetingViewModel(
 
             val result = apiUndangan.createUndangan(request)
             if (result.isSuccess) {
-                _uiState.update { it.copy(isSending = false, isSuccess = true) }
+                _uiState.update { it.copy(isSending = false) }
                 _events.emit(RequestMeetingEvent.RequestSuccess)
             } else {
-                val errorMsg = result.exceptionOrNull()?.message ?: "Gagal mengajukan diskusi"
-                _uiState.update { it.copy(isSending = false, errorMessage = errorMsg) }
+                val errorMsg = result.exceptionOrNull()?.message
+                    ?: AppStrings.get(R.string.request_meeting_error_send_failed)
+                _uiState.update { it.copy(isSending = false, submitErrorText = errorMsg) }
             }
         }
     }

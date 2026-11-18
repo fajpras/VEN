@@ -87,7 +87,6 @@ import com.ven.app.ui.screens.settings.SettingsPlaceholderScreen
 import com.ven.app.ui.screens.settings.SettingsScreen
 import com.ven.app.ui.screens.settings.ThemeScreen
 import com.ven.app.ui.screens.settings.VerifyEmailRoute
-import com.ven.app.ui.screens.settings.dummyHistoryEntries
 import com.ven.app.ui.screens.splash.SplashScreen
 import com.ven.app.ui.theme.VexTheme
 
@@ -710,21 +709,17 @@ fun AppNavHost(showExplore: Boolean = false) {
             val scheduleState by scheduleViewModel.uiState.collectAsStateWithLifecycle()
 
             val historyEntries = remember(scheduleState.historyItems) {
-                if (scheduleState.historyItems.isNotEmpty()) {
-                    scheduleState.historyItems.map { item ->
-                        com.ven.app.ui.components.feature.HistoryEntry(
-                            id = item.id,
-                            title = item.title,
-                            dateText = item.dateText,
-                            timeText = item.timeText,
-                            fullDateFormatted = item.fullDateFormatted,
-                            bannerRes = item.bannerRes,
-                            bannerUrl = item.bannerUrl,
-                            statusText = item.status,
-                        )
-                    }
-                } else {
-                    dummyHistoryEntries
+                scheduleState.historyItems.map { item ->
+                    com.ven.app.ui.components.feature.HistoryEntry(
+                        id = item.id,
+                        title = item.title,
+                        dateText = item.dateText,
+                        timeText = item.timeText,
+                        fullDateFormatted = item.fullDateFormatted,
+                        bannerRes = item.bannerRes,
+                        bannerUrl = item.bannerUrl,
+                        statusText = item.status,
+                    )
                 }
             }
 

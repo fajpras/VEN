@@ -1,7 +1,6 @@
 package com.ven.app.ui.screens.requestmeeting
 
 import java.time.LocalDate
-import java.time.YearMonth
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -11,17 +10,25 @@ import org.junit.Test
 class RequestMeetingUiStateTest {
 
     @Test
-    fun defaultState_hasExpectedDefaultValues() {
+    fun defaultState_hasNeutralValuesConsistentWithToday() {
         val state = RequestMeetingUiState()
 
-        assertEquals("1", state.pameranId)
-        assertEquals("6th International Expo", state.pameranTitle)
+        assertEquals("", state.pameranId)
+        assertEquals("", state.pameranTitle)
         assertNull(state.bannerUrl)
         assertNull(state.bannerColor)
-        assertEquals(YearMonth.of(2026, 9), state.visibleMonth)
-        assertEquals(LocalDate.of(2026, 9, 30), state.selectedDate)
-        assertEquals("Wed, 30 September 2026", state.selectedDateText)
-        assertEquals("September 2026", state.monthTitleText)
+
+        // Nilai kalender default mengikuti hari ini dan selalu konsisten.
+        assertEquals(java.time.YearMonth.from(LocalDate.now()), state.visibleMonth)
+        assertEquals(LocalDate.now(), state.selectedDate)
+        assertEquals(
+            com.ven.app.util.DateFormatter.formatRequestMeetingDate(state.selectedDate),
+            state.selectedDateText,
+        )
+        assertEquals(
+            com.ven.app.util.DateFormatter.formatMonthYear(state.visibleMonth),
+            state.monthTitleText,
+        )
         assertTrue(state.calendarDays.isEmpty())
 
         assertEquals("02", state.hourText)
@@ -31,8 +38,8 @@ class RequestMeetingUiStateTest {
 
         assertFalse(state.isLoading)
         assertFalse(state.isSending)
-        assertNull(state.errorMessage)
-        assertFalse(state.isSuccess)
+        assertNull(state.validationError)
+        assertNull(state.submitErrorText)
     }
 
     @Test

@@ -306,6 +306,9 @@
     <string name="forgot_password_error_email_format">Invalid email format</string>
     <string name="settings_error_upload_photo">Failed to upload photo</string>
     <string name="request_meeting_error_time_required">Meeting time is required</string>
+    <string name="request_meeting_error_invalid_schedule">The selected schedule is invalid</string>
+    <string name="request_meeting_error_send_failed">Failed to submit discussion request</string>
+    <string name="request_meeting_banner_subtitle">VIRTUAL EXHIBITION ROOM</string>
     <string name="profile_unknown_user">User Profile</string>
     <string name="time_year_ago">1 year ago</string>
     <string name="time_years_ago">%1$d years ago</string>

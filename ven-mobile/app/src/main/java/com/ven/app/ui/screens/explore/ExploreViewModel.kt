@@ -22,7 +22,7 @@ class ExploreViewModel(
     private val apiPencarian: ApiPencarian = ApiClient.createService(ApiPencarian::class.java),
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(dummyExploreUiState)
+    private val _uiState = MutableStateFlow(ExploreUiState())
     val uiState: StateFlow<ExploreUiState> = _uiState.asStateFlow()
 
     private var searchJob: Job? = null

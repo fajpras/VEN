@@ -20,13 +20,7 @@ class ScheduleViewModel(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
-        ScheduleUiState(
-            isLoading = autoLoad,
-            approvedItems = dummyApprovedSchedules,
-            waitingItems = dummyWaitingSchedules,
-            requestItems = dummyRequestSchedules,
-            historyItems = dummyApprovedSchedules.map { it.copy(isApproved = false, status = "selesai") },
-        )
+        ScheduleUiState(isLoading = autoLoad)
     )
     val uiState: StateFlow<ScheduleUiState> = _uiState.asStateFlow()
 
@@ -117,24 +111,16 @@ class ScheduleViewModel(
                 }
             }
 
-            // Fallback ke dummy jika API kosong pada environment mock
-            val finalApproved = if (approved.isEmpty() && pengundangResult.isFailure) dummyApprovedSchedules else approved
-            val finalWaiting = if (waiting.isEmpty() && pengundangResult.isFailure) dummyWaitingSchedules else waiting
-            val finalRequests = if (requests.isEmpty() && penyelenggaraResult.isFailure) dummyRequestSchedules else requests
-            val finalHistory = if (history.isEmpty() && pengundangResult.isFailure) {
-                dummyApprovedSchedules.map { it.copy(isApproved = false, status = "selesai") }
-            } else {
-                history
-            }
-
+            // Data dummy tidak lagi digunakan: API gagal/kosong tetap
+            // menampilkan empty state asli agar tidak menipu pengguna.
             _uiState.update {
                 it.copy(
                     isLoading = false,
                     isRefreshing = false,
-                    approvedItems = finalApproved,
-                    waitingItems = finalWaiting,
-                    requestItems = finalRequests,
-                    historyItems = finalHistory,
+                    approvedItems = approved,
+                    waitingItems = waiting,
+                    requestItems = requests,
+                    historyItems = history,
                 )
             }
         }

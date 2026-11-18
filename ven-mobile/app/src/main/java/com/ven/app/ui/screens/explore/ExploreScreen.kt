@@ -68,7 +68,7 @@ fun ExploreScreen(
     onRefresh: () -> Unit = {},
     onExhibitClick: (ExhibitItem) -> Unit = {},
     onAccountClick: (userId: String) -> Unit = {},
-    initialUiState: ExploreUiState = dummyExploreUiState,
+    initialUiState: ExploreUiState = ExploreUiState(),
     viewModel: ExploreViewModel? = null,
 ) {
     var localUiState by remember { mutableStateOf(initialUiState) }

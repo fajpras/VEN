@@ -271,6 +271,9 @@
     <string name="ai_chat_send_desc">Kirim pesan</string>
     <string name="settings_error_upload_photo">Gagal mengunggah foto</string>
     <string name="request_meeting_error_time_required">Waktu pertemuan harus diisi</string>
+    <string name="request_meeting_error_invalid_schedule">Jadwal yang dipilih tidak valid</string>
+    <string name="request_meeting_error_send_failed">Gagal mengajukan diskusi</string>
+    <string name="request_meeting_banner_subtitle">RUANG PAMERAN VIRTUAL</string>
     <string name="profile_unknown_user">Profil Pengguna</string>
     <string name="time_year_ago">1 tahun lalu</string>
     <string name="time_years_ago">%1$d tahun lalu</string>
