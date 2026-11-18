@@ -2,6 +2,7 @@ package com.ven.app.ui.screens.requestmeeting
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ven.app.data.api.ApiPameran
 import com.ven.app.data.api.ApiUndangan
 import com.ven.app.data.api.models.CreateUndanganRequest
 import com.ven.app.util.DateFormatter
@@ -24,6 +25,7 @@ sealed interface RequestMeetingEvent {
 
 class RequestMeetingViewModel(
     private val apiUndangan: ApiUndangan = ApiUndangan,
+    private val apiPameran: ApiPameran = ApiPameran,
 ) : ViewModel() {
 
     private val initialMonth = YearMonth.of(2026, 9)
@@ -45,7 +47,99 @@ class RequestMeetingViewModel(
     val events: SharedFlow<RequestMeetingEvent> = _events.asSharedFlow()
 
     fun setTargetId(targetId: String?) {
+        if (targetId == currentTargetId && !targetId.isNullOrBlank()) return
         currentTargetId = targetId
+        if (targetId.isNullOrBlank()) return
+
+        loadTargetDetails(targetId)
+    }
+
+    private fun loadTargetDetails(targetId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val pameranIdInt = targetId.toIntOrNull()
+            if (pameranIdInt != null) {
+                val res = apiPameran.getPameran(pameranIdInt)
+                if (res.isSuccess) {
+                    val pameran = res.getOrNull()
+                    if (pameran != null) {
+                        _uiState.update { current ->
+                            current.copy(
+                                isLoading = false,
+                                pameranId = pameran.idPameran.toString(),
+                                pameranTitle = pameran.judul,
+                                bannerUrl = pameran.banner,
+                                bannerColor = pameran.warna,
+                            )
+                        }
+                        return@launch
+                    }
+                }
+            } else {
+                // targetId adalah UUID karya
+                val karyaRes = apiPameran.getKarya(targetId)
+                if (karyaRes.isSuccess) {
+                    val karya = karyaRes.getOrNull()
+                    if (karya != null) {
+                        val pameran = karya.pameran
+                        if (pameran != null) {
+                            _uiState.update { current ->
+                                current.copy(
+                                    isLoading = false,
+                                    pameranId = pameran.idPameran.toString(),
+                                    pameranTitle = pameran.judul,
+                                    bannerUrl = pameran.banner,
+                                    bannerColor = pameran.warna,
+                                )
+                            }
+                            return@launch
+                        } else if (karya.idPameran != null) {
+                            val pamRes = apiPameran.getPameran(karya.idPameran)
+                            val p = pamRes.getOrNull()
+                            if (p != null) {
+                                _uiState.update { current ->
+                                    current.copy(
+                                        isLoading = false,
+                                        pameranId = p.idPameran.toString(),
+                                        pameranTitle = p.judul,
+                                        bannerUrl = p.banner,
+                                        bannerColor = p.warna,
+                                    )
+                                }
+                                return@launch
+                            }
+                        } else if (!karya.idPengguna.isNullOrBlank()) {
+                            // Fallback jika karya belum terhubung pameran: ambil pameran terbaru milik pembuat
+                            val userPamRes = apiPameran.getPameranByUser(karya.idPengguna)
+                            val latestPameran = userPamRes.getOrNull()?.firstOrNull()
+                            if (latestPameran != null) {
+                                _uiState.update { current ->
+                                    current.copy(
+                                        isLoading = false,
+                                        pameranId = latestPameran.idPameran.toString(),
+                                        pameranTitle = latestPameran.judul,
+                                        bannerUrl = latestPameran.banner,
+                                        bannerColor = latestPameran.warna,
+                                    )
+                                }
+                                return@launch
+                            }
+                        }
+
+                        // Jika tidak ada pameran sama sekali, gunakan judul dan file karya
+                        _uiState.update { current ->
+                            current.copy(
+                                isLoading = false,
+                                pameranTitle = karya.judul,
+                                bannerUrl = karya.fileUrl ?: karya.file,
+                            )
+                        }
+                        return@launch
+                    }
+                }
+            }
+            _uiState.update { it.copy(isLoading = false) }
+        }
     }
 
     fun onDaySelected(day: CalendarDay) {

@@ -58,6 +58,9 @@ data class KaryaItemModel(
 
     @SerializedName("pengguna")
     val pengguna: UserModel? = null,
+
+    @SerializedName("pameran")
+    val pameran: PameranItemModel? = null,
 )
 
 /**

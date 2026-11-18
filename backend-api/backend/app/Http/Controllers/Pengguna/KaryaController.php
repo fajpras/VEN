@@ -27,7 +27,7 @@ class KaryaController extends Controller
             'judul' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $karya = Karya::with(['kategori', self::PENGGUNA_PUBLIK])
+        $karya = Karya::with(['kategori', self::PENGGUNA_PUBLIK, 'pameran'])
             ->when($request->filled('id_kategori'), fn ($q) => $q->where('id_kategori', $request->integer('id_kategori')))
             ->when($request->filled('id_pameran'), fn ($q) => $q->where('id_pameran', $request->integer('id_pameran')))
             ->when($request->filled('jenis'), fn ($q) => $q->where('jenis', $request->query('jenis')))
@@ -55,7 +55,7 @@ class KaryaController extends Controller
         // KASUS 1: Pengguna memilih "Others" ATAU belum memiliki minat (guest/skip)
         // -> Tampilkan karya dari SELURUH kategori yang ada semuanya
         if ($hasOthers || empty($minatIds)) {
-            $query = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK]);
+            $query = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK, 'pameran']);
 
             if (!empty($excludeIds)) {
                 $query->whereNotIn('karya.id_karya', $excludeIds);
@@ -71,7 +71,7 @@ class KaryaController extends Controller
 
             // Fallback: Jika seluruh karya sudah pernah dilihat, acak ulang seluruh karya
             if ($karya->isEmpty() && !empty($excludeIds)) {
-                $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK])
+                $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK, 'pameran'])
                     ->inRandomOrder()
                     ->paginate($perPage);
             }
@@ -88,7 +88,7 @@ class KaryaController extends Controller
         if ($totalMinatTersedia > 0) {
             // Fase A: Tampilkan HANYA karya yang sesuai dengan kategori yang dipilih pengguna
             $minatQuery = Karya::query()->select('karya.*')
-                ->with(['kategori', self::PENGGUNA_PUBLIK])
+                ->with(['kategori', self::PENGGUNA_PUBLIK, 'pameran'])
                 ->whereIn('karya.id_kategori', $minatIds);
 
             if (!empty($excludeIds)) {
@@ -105,7 +105,7 @@ class KaryaController extends Controller
         } else {
             // Fase B: Karya dari kategori pilihan sudah habis -> Baru menampilkan karya dari kategori lain
             $lainQuery = Karya::query()->select('karya.*')
-                ->with(['kategori', self::PENGGUNA_PUBLIK])
+                ->with(['kategori', self::PENGGUNA_PUBLIK, 'pameran'])
                 ->whereNotIn('karya.id_kategori', $minatIds);
 
             if (!empty($excludeIds)) {
@@ -122,14 +122,14 @@ class KaryaController extends Controller
 
             // Fase C (Fallback): Jika seluruh karya kategori lain sudah pernah dilihat, acak ulang karya kategori lain agar konten tidak pernah habis
             if ($karya->isEmpty() && !empty($excludeIds)) {
-                $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK])
+                $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK, 'pameran'])
                     ->whereNotIn('karya.id_kategori', $minatIds)
                     ->inRandomOrder()
                     ->paginate($perPage);
 
                 // Jika di database tidak ada karya kategori lain, fallback acak seluruh karya
                 if ($karya->isEmpty()) {
-                    $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK])
+                    $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK, 'pameran'])
                         ->inRandomOrder()
                         ->paginate($perPage);
                 }

@@ -17,6 +17,7 @@ class RequestMeetingUiStateTest {
         assertEquals("1", state.pameranId)
         assertEquals("6th International Expo", state.pameranTitle)
         assertNull(state.bannerUrl)
+        assertNull(state.bannerColor)
         assertEquals(YearMonth.of(2026, 9), state.visibleMonth)
         assertEquals(LocalDate.of(2026, 9, 30), state.selectedDate)
         assertEquals("Wed, 30 September 2026", state.selectedDateText)

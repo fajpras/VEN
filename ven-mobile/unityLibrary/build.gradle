@@ -85,9 +85,14 @@ tasks.register('buildIl2Cpp') {
     doLast {
         def executableExtension = org.gradle.internal.os.OperatingSystem.current().isWindows() ? ".exe" : ""
         def il2cppExe = file("${workingDir}/src/main/Il2CppOutputProject/IL2CPP/build/deploy/il2cpp${executableExtension}")
+        def ndkPath = getUnityNdkPath()
+        def hasValidNdk = !ndkPath.isEmpty() && file("$ndkPath/source.properties").exists()
+
         // skipIl2CppBuild used for testing purposes
-        if (project.hasProperty("skipIl2CppBuild") || !il2cppExe.exists()) {
-            if (!il2cppExe.exists()) {
+        if (project.hasProperty("skipIl2CppBuild") || !il2cppExe.exists() || !hasValidNdk) {
+            if (!hasValidNdk) {
+                println("Android NDK with source.properties not found at '${ndkPath}', skipping il2cpp build and creating dummy files.")
+            } else if (!il2cppExe.exists()) {
                 println("il2cpp executable not found at ${il2cppExe}, creating dummy files.")
             } else {
                 println("Skipping il2cpp build, creating dummy files.")
@@ -96,14 +101,10 @@ tasks.register('buildIl2Cpp') {
                 {
                     def outPath = file(getIl2CppOutputPath(workingDir, abi))
                     def symPath = file(getIl2CppSymbolPath(workingDir, abi))
-                    if (!outPath.exists()) {
-                        outPath.parentFile.mkdirs()
-                        outPath.write("DummyBinary")
-                    }
-                    if (!symPath.exists()) {
-                        symPath.parentFile.mkdirs()
-                        symPath.write("DummySymbols")
-                    }
+                    outPath.parentFile.mkdirs()
+                    symPath.parentFile.mkdirs()
+                    outPath.write("DummyBinary")
+                    symPath.write("DummySymbols")
                 }
             }
         } else {

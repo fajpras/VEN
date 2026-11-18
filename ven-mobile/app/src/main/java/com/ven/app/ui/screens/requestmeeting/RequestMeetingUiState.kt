@@ -20,6 +20,7 @@ data class RequestMeetingUiState(
     val pameranId: String = "1",
     val pameranTitle: String = "6th International Expo",
     val bannerUrl: String? = null,
+    val bannerColor: String? = null,
     val visibleMonth: YearMonth = YearMonth.of(2026, 9),
     val selectedDate: LocalDate = LocalDate.of(2026, 9, 30),
     val selectedDateText: String = DateFormatter.formatRequestMeetingDate(LocalDate.of(2026, 9, 30)),
