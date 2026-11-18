@@ -164,20 +164,6 @@ object VexTopBar {
                     .fillMaxWidth()
                     .height(VexSize.topBar),
             ) {
-                IconButton(
-                    onClick = onCreateClick,
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .padding(start = VexSpace.s4),
-                ) {
-                    VexIcon(
-                        id = VexIcons.Add,
-                        contentDescription = stringResource(R.string.home_create_post),
-                        size = VexSize.icon,
-                        tint = colors.text,
-                    )
-                }
-
                 Text(
                     text = username,
                     style = MaterialTheme.typography.titleMedium.copy(
@@ -187,18 +173,28 @@ object VexTopBar {
                     modifier = Modifier.align(Alignment.Center),
                 )
 
-                IconButton(
-                    onClick = onMenuClick,
+                Row(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
-                        .padding(end = VexSpace.s4),
+                        .padding(end = VexSpace.s3),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    VexIcon(
-                        id = VexIcons.Menu,
-                        contentDescription = stringResource(R.string.profile_menu),
-                        size = VexSize.icon,
-                        tint = colors.text,
-                    )
+                    IconButton(onClick = onMenuClick) {
+                        VexIcon(
+                            id = VexIcons.SettingsProfile,
+                            contentDescription = stringResource(R.string.profile_menu),
+                            size = VexSize.icon,
+                            tint = colors.text,
+                        )
+                    }
+                    IconButton(onClick = onCreateClick) {
+                        VexIcon(
+                            id = VexIcons.Add,
+                            contentDescription = stringResource(R.string.home_create_post),
+                            size = VexSize.icon,
+                            tint = colors.text,
+                        )
+                    }
                 }
             }
 

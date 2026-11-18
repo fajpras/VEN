@@ -223,7 +223,7 @@ fun ProfileSettingsScreen(
                 errorMessage = stringResource(R.string.settings_username_error),
             )
 
-            Spacer(modifier = Modifier.height(VexSpace.s4))
+            Spacer(modifier = Modifier.height(VexSpace.s5))
 
             VexTextField(
                 value = name,
@@ -240,7 +240,7 @@ fun ProfileSettingsScreen(
                 errorMessage = stringResource(R.string.settings_name_error),
             )
 
-            Spacer(modifier = Modifier.height(VexSpace.s4))
+            Spacer(modifier = Modifier.height(VexSpace.s5))
 
             VexTextField(
                 value = phone,
@@ -259,7 +259,7 @@ fun ProfileSettingsScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             )
 
-            Spacer(modifier = Modifier.height(VexSpace.s4))
+            Spacer(modifier = Modifier.height(VexSpace.s5))
 
             VexTextField(
                 value = description,

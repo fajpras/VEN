@@ -5,7 +5,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,11 +18,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -53,11 +49,9 @@ import androidx.compose.ui.unit.sp
 import com.ven.app.R
 import com.ven.app.ui.components.ui.Avatar
 import com.ven.app.ui.components.ui.AvatarSize
-import com.ven.app.ui.components.ui.VexSkillChip
 import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
-import com.ven.app.ui.theme.CategoryColorMap
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
@@ -67,6 +61,16 @@ data class CaptionTextPart(
     val text: String,
     val url: String? = null,
 )
+
+private val CAPTION_MARKDOWN_QUOTE = Regex("^\\s*>\\s*")
+private val CAPTION_WHITESPACE = Regex("\\s+")
+
+private fun sanitizeCaptionTitle(title: String): String = title
+    .replace(CAPTION_MARKDOWN_QUOTE, "")
+    .replace('_', ' ')
+    .replace("**", "")
+    .replace(CAPTION_WHITESPACE, " ")
+    .trim()
 
 private val URL_REGEX = Regex(
     """(?i)\b(?:https?://|www\.)[^\s<>"'{}|\\^`]+"""
@@ -224,6 +228,7 @@ fun PostCaption(
 ) {
     val colors = VexTheme.colors
     val uriHandler = LocalUriHandler.current
+    val displayTitle = remember(title) { title?.let(::sanitizeCaptionTitle) }
 
     var isExpanded by remember { mutableStateOf(false) }
     val isLikelyLong = remember(title, description, collapsedMaxLines) {
@@ -233,7 +238,7 @@ fun PostCaption(
 
     val captionText = remember(
         username,
-        title,
+        displayTitle,
         description,
         colors.text,
         colors.primaryText,
@@ -243,7 +248,7 @@ fun PostCaption(
     ) {
         buildPostCaptionAnnotatedString(
             username = username,
-            title = title,
+            title = displayTitle,
             description = description,
             textColor = colors.text,
             linkColor = colors.primaryText,
@@ -263,7 +268,7 @@ fun PostCaption(
     ) {
         Text(
             text = captionText,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
             maxLines = if (isExpanded) Int.MAX_VALUE else collapsedMaxLines,
             overflow = TextOverflow.Ellipsis,
             onTextLayout = { textLayoutResult ->
@@ -277,14 +282,15 @@ fun PostCaption(
             Text(
                 text = if (isExpanded) seeLessText else seeMoreText,
                 style = MaterialTheme.typography.bodySmall.copy(
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Medium,
                 ),
-                color = colors.textSecondary,
+                color = colors.textMuted,
                 modifier = Modifier
-                    .padding(top = 4.dp)
+                    .padding(top = 2.dp)
                     .clickable(role = Role.Button) {
                         isExpanded = !isExpanded
-                    },
+                    }
+                    .padding(vertical = 2.dp),
             )
         }
     }
@@ -298,7 +304,6 @@ fun PostCard(
     modifier: Modifier = Modifier,
     userAvatarUrl: String? = null,
     title: String? = null,
-    category: String? = null,
     timestampText: String? = null,
     description: String = "",
     imageUrl: String? = null,
@@ -321,70 +326,42 @@ fun PostCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    start = VexSpace.s6,
-                    end = VexSpace.s6,
-                    top = VexSpace.s3,
-                    bottom = VexSpace.s3,
+                    horizontal = VexSpace.s4,
+                    vertical = VexSpace.s3,
                 ),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier
+                    .weight(1f)
                     .then(
                         if (onUsernameClick != null) Modifier.clickable(onClick = onUsernameClick) else Modifier
                     ),
             ) {
                 Avatar(
                     initials = username.removePrefix("@").take(2).uppercase(),
-                    size = AvatarSize.Sm,
+                    size = AvatarSize.Md,
                     imageUrl = userAvatarUrl,
                 )
-                Text(
-                    text = if (username.startsWith("@")) username else "@$username",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                    color = colors.text,
-                )
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(
-                    onClick = onRequestMeetingClick,
-                    shape = CircleShape,
-                    color = colors.surface.copy(alpha = 0.65f),
-                    border = BorderStroke(1.dp, colors.border.copy(alpha = 0.35f)),
-                    modifier = Modifier.size(34.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        VexIcon(
-                            id = VexIcons.ScheduleAction,
-                            contentDescription = stringResource(R.string.home_request_meeting),
-                            size = 17.dp,
-                            tint = colors.text,
-                        )
-                    }
-                }
-
-                Surface(
-                    onClick = onView3dClick,
-                    shape = CircleShape,
-                    color = colors.surface.copy(alpha = 0.65f),
-                    border = BorderStroke(1.dp, colors.border.copy(alpha = 0.35f)),
-                    modifier = Modifier.size(34.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        VexIcon(
-                            id = VexIcons.Play,
-                            contentDescription = stringResource(R.string.home_view_3d),
-                            size = 17.dp,
-                            tint = colors.text,
+                Column {
+                    Text(
+                        text = if (username.startsWith("@")) username else "@$username",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                        ),
+                        color = colors.text,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (!title.isNullOrBlank()) {
+                        Text(
+                            text = sanitizeCaptionTitle(title),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -443,33 +420,33 @@ fun PostCard(
             }
         }
 
-        if (!category.isNullOrBlank()) {
-            val catColor = CategoryColorMap[category]
-                ?: CategoryColorMap["Others"]
-                ?: colors.primary
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = VexSpace.s6,
-                        end = VexSpace.s6,
-                        top = VexSpace.s3,
-                        bottom = 2.dp,
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                VexSkillChip(
-                    text = category,
-                    categoryColor = catColor,
-                    onClick = {},
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = VexSpace.s2, vertical = VexSpace.s1),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onRequestMeetingClick) {
+                VexIcon(
+                    id = VexIcons.ScheduleAction,
+                    contentDescription = stringResource(R.string.home_request_meeting),
+                    size = 24.dp,
+                    tint = colors.text,
+                )
+            }
+            IconButton(onClick = onView3dClick) {
+                VexIcon(
+                    id = VexIcons.Play,
+                    contentDescription = stringResource(R.string.home_view_3d),
+                    size = 24.dp,
+                    tint = colors.text,
                 )
             }
         }
 
-        if (description.isNotBlank() || !title.isNullOrBlank()) {
+        if (description.isNotBlank()) {
             PostCaption(
                 username = username,
-                title = title,
                 description = description,
                 collapsedMaxLines = collapsedMaxLines,
                 seeMoreText = seeMoreText,
@@ -479,10 +456,9 @@ fun PostCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = VexSpace.s6,
-                        end = VexSpace.s6,
-                        top = 2.dp,
-                        bottom = if (timestampText.isNullOrBlank()) VexSpace.s4 else 2.dp,
+                        start = VexSpace.s4,
+                        end = VexSpace.s4,
+                        bottom = if (timestampText.isNullOrBlank()) VexSpace.s3 else 2.dp,
                     ),
             )
         }
@@ -492,16 +468,16 @@ fun PostCard(
                 text = timestampText.uppercase(),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Medium,
-                    letterSpacing = 0.5.sp,
+                    letterSpacing = 0.6.sp,
                 ),
-                color = colors.textMuted.copy(alpha = 0.7f),
+                color = colors.textMuted,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = VexSpace.s6,
-                        end = VexSpace.s6,
-                        top = 4.dp,
-                        bottom = VexSpace.s4,
+                        start = VexSpace.s4,
+                        end = VexSpace.s4,
+                        top = 2.dp,
+                        bottom = VexSpace.s3,
                     ),
             )
         }

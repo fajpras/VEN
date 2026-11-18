@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -40,7 +41,13 @@ import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
-import com.ven.app.ui.theme.onCategoryColor
+
+private fun mixWith(color: Color, target: Color, amount: Float): Color = Color(
+    red = color.red + (target.red - color.red) * amount,
+    green = color.green + (target.green - color.green) * amount,
+    blue = color.blue + (target.blue - color.blue) * amount,
+    alpha = color.alpha,
+)
 
 /**
  * Chip pilihan kategori interaktif untuk form atau filter pencarian.
@@ -148,11 +155,17 @@ fun VexSkillChip(
     @DrawableRes iconRes: Int? = R.drawable.ic_category_star,
     onClick: (() -> Unit)? = null,
 ) {
-    val textColor = onCategoryColor(categoryColor)
+    val isDark = VexTheme.colors.bg.luminance() < 0.5f
+    val categoryLuminance = categoryColor.luminance()
+    val accent = when {
+        isDark && categoryLuminance < 0.42f -> mixWith(categoryColor, Color.White, 0.45f)
+        !isDark && categoryLuminance > 0.45f -> mixWith(categoryColor, Color.Black, 0.38f)
+        else -> categoryColor
+    }
     val clickModifier = if (onClick != null) {
         Modifier.clickable(
             interactionSource = remember { MutableInteractionSource() },
-            indication = ripple(color = textColor.copy(alpha = 0.16f)),
+            indication = ripple(color = accent.copy(alpha = 0.16f)),
             role = Role.Button,
             onClick = onClick,
         )
@@ -161,43 +174,46 @@ fun VexSkillChip(
     }
 
     val shape = RoundedCornerShape(VexRadius.full)
-    val borderColor = if (textColor == Color.White) {
-        Color.White.copy(alpha = 0.24f)
-    } else {
-        Color.Black.copy(alpha = 0.16f)
-    }
 
     Row(
         modifier = modifier
-            .height(24.dp)
+            .height(26.dp)
             .clip(shape)
+            .background(accent.copy(alpha = if (isDark) 0.15f else 0.11f))
             .border(
                 width = 1.dp,
-                color = borderColor,
+                color = accent.copy(alpha = if (isDark) 0.34f else 0.30f),
                 shape = shape,
             )
-            .background(categoryColor)
             .then(clickModifier)
             .padding(horizontal = 10.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.5.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         if (iconRes != null && iconRes != 0) {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = null,
-                tint = textColor,
-                modifier = Modifier.size(10.5.dp),
-            )
+            Box(
+                modifier = Modifier
+                    .size(15.dp)
+                    .clip(RoundedCornerShape(VexRadius.full))
+                    .background(accent.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(9.dp),
+                )
+            }
         }
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall.copy(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 11.5.sp,
-                letterSpacing = 0.3.sp,
+                letterSpacing = 0.2.sp,
             ),
-            color = textColor,
+            color = accent,
             textAlign = TextAlign.Center,
             maxLines = 1,
         )
