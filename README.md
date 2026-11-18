@@ -1,17 +1,20 @@
 <div align="center">
 
 # 🏛️ VEN — Value Exhibition Network
+
 ### *The Next-Generation Digital Art & 3D Value Gallery Ecosystem*
 
 [![Android](https://img.shields.io/badge/Android-Kotlin%20%7C%20Jetpack%20Compose-3DDC84?style=for-the-badge&logo=android&logoColor=white)](ven-mobile/)
-[![Backend](https://img.shields.io/badge/Backend-Laravel%20%7C%20PHP%208.3-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](backend-api/backend/)
+[![Backend](https://img.shields.io/badge/Backend-Laravel%2013%20%7C%20PHP%208.3-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](backend-api/backend/)
 [![Database](https://img.shields.io/badge/Database-MySQL%208.4%20Multi--Role-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](backend-api/backend/)
 [![AI Integration](https://img.shields.io/badge/AI%20Assistant-Google%20Gemini-8E75C2?style=for-the-badge&logo=google&logoColor=white)](backend-api/backend/)
-[![UI Design](https://img.shields.io/badge/Design-Material%203%20%7C%20Tailwind%20v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](ven-mobile/docs/DESIGN.md)
-[![Security](https://img.shields.io/badge/Security-7%20Pillars%20Audited-green?style=for-the-badge&logo=shield&logoColor=white)](backend-api/backend/docs/)
+[![3D Viewer](https://img.shields.io/badge/3D%20Viewer-Unity%20%7C%20il2cpp-000000?style=for-the-badge&logo=unity&logoColor=white)](ven-mobile/unityLibrary/)
+[![UI Design](https://img.shields.io/badge/Design-Material%203%20%7C%20Tailwind%20v4-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)](ven-mobile/docs/DESIGN.md)
+[![Backend Tests](https://img.shields.io/badge/Tests%20Backend-87%20passing-brightgreen?style=for-the-badge&logo=checkmark&logoColor=white)](#-pengujian-otomatis-automated-testing)
+[![Android Tests](https://img.shields.io/badge/Tests%20Android-70%20passing-brightgreen?style=for-the-badge&logo=checkmark&logoColor=white)](#-pengujian-otomatis-automated-testing)
 
 <p align="center">
-  <b>VEN (Value Exhibition Network)</b> adalah ekosistem pameran seni dan galeri 3D digital interaktif yang menjembatani seniman, desainer, kurator, dan pengunjung dalam ruang pameran imersif. Memadukan aplikasi native <b>Android (Jetpack Compose)</b> dengan backend RESTful API berkinerja tinggi berbasis <b>Laravel 11/12</b>, arsitektur basis data <i>Least Privilege</i>, audit keamanan berlapis, serta integrasi kecerdasan buatan <b>Google Gemini</b>.
+  <b>VEN (Value Exhibition Network)</b> adalah ekosistem pameran seni dan galeri 3D digital interaktif yang menjembatani seniman, desainer, kurator, dan pengunjung dalam ruang pameran imersif. Memadukan aplikasi native <b>Android (Jetpack Compose)</b> dengan backend RESTful API berkinerja tinggi berbasis <b>Laravel 13</b>, arsitektur basis data <i>Least Privilege</i>, audit keamanan berlapis (backend & mobile), serta integrasi kecerdasan buatan <b>Google Gemini</b>.
 </p>
 
 ---
@@ -19,35 +22,31 @@
 </div>
 
 ## 📑 Daftar Isi
-- [🏛️ VEN — Value Exhibition Network](#️-ven--value-exhibition-network)
-    - [*The Next-Generation Digital Art \& 3D Value Gallery Ecosystem*](#the-next-generation-digital-art--3d-value-gallery-ecosystem)
-  - [📑 Daftar Isi](#-daftar-isi)
-  - [💡 Tentang VEN](#-tentang-ven)
-  - [🏛️ Arsitektur Sistem](#️-arsitektur-sistem)
-  - [✨ Fitur Utama](#-fitur-utama)
-    - [1. Mobile Client (Android Native)](#1-mobile-client-android-native)
-    - [2. Backend API \& Admin Web Panel](#2-backend-api--admin-web-panel)
-    - [3. 7 Pilar Kepatuhan Audit Keamanan Basis Data](#3-7-pilar-kepatuhan-audit-keamanan-basis-data)
-  - [📁 Struktur Repositori](#-struktur-repositori)
-  - [🚀 Panduan Memulai Cepat (Getting Started)](#-panduan-memulai-cepat-getting-started)
-    - [Prasyarat Sistem](#prasyarat-sistem)
-    - [Langkah Setup Backend \& Database](#langkah-setup-backend--database)
-    - [Langkah Menjalankan Mobile App](#langkah-menjalankan-mobile-app)
-  - [🧪 Pengujian Otomatis (Automated Testing)](#-pengujian-otomatis-automated-testing)
-    - [1. Backend API \& Keamanan Database (PHPUnit)](#1-backend-api--keamanan-database-phpunit)
-    - [2. Android Mobile Client (Gradle Unit Test)](#2-android-mobile-client-gradle-unit-test)
-    - [3. Postman API Suite](#3-postman-api-suite)
-  - [🛠️ Standar Pengembangan \& Git Workflow](#️-standar-pengembangan--git-workflow)
-  - [📄 Lisensi \& Hak Cipta](#-lisensi--hak-cipta)
+
+- [💡 Tentang VEN](#-tentang-ven)
+- [🏛️ Arsitektur Sistem](#️-arsitektur-sistem)
+- [✨ Fitur Utama](#-fitur-utama)
+  - [1. Mobile Client (Android Native)](#1-mobile-client-android-native)
+  - [2. Backend API & Admin Web Panel](#2-backend-api--admin-web-panel)
+  - [3. Keamanan Berlapis: 7 Pilar Audit DB & Hardening Mobile](#3-keamanan-berlapis-7-pilar-audit-db--hardening-mobile)
+- [📁 Struktur Repositori](#-struktur-repositori)
+- [🚀 Panduan Memulai Cepat (Getting Started)](#-panduan-memulai-cepat-getting-started)
+- [🧪 Pengujian Otomatis (Automated Testing)](#-pengujian-otomatis-automated-testing)
+- [📊 Status Proyek & Dokumentasi](#-status-proyek--dokumentasi)
+- [🛠️ Standar Pengembangan & Git Workflow](#️-standar-pengembangan--git-workflow)
+- [📄 Lisensi & Hak Cipta](#-lisensi--hak-cipta)
 
 ---
 
 ## 💡 Tentang VEN
 
-Platform **VEN** dirancang untuk mendemokratisasi akses karya seni, desain grafis, poster, dan model 3D melalui ruang Value digital. Melalui platform ini:
-1. **Kreator** dapat mempublikasikan karya poster 2D maupun merancang ruang pameran 3D (*Value Exhibit*) lengkap dengan penataan furnitur dan pencahayaan.
-2. **Pengunjung** dapat menjelajahi galeri pameran secara Value, melihat detail karya, mengajukan jadwal pertemuan (*Request Meeting*), dan berkonsultasi dengan asisten kurator AI cerdas.
-3. **Administrator & Kurator** memiliki dasbor terpusat untuk memoderasi karya, memverifikasi kepatuhan konten pameran, mengaudit log aktivitas sistem, dan mengelola sanksi akun secara *real-time*.
+Platform **VEN** dirancang untuk mendemokratisasi akses karya seni, desain grafis, poster, dan model 3D melalui ruang galeri digital. Melalui platform ini:
+
+| Peran | Kemampuan |
+|:---:|---|
+| 🎨 **Kreator** | Mempublikasikan karya poster 2D maupun merancang ruang pameran 3D (*Value Exhibit*) lengkap dengan penataan furnitur dan pencahayaan. |
+| 👥 **Pengunjung** | Menjelajahi galeri pameran secara virtual, melihat detail karya, mengajukan jadwal pertemuan (*Request Meeting*), dan berkonsultasi dengan asisten kurator AI cerdas. |
+| 🛡️ **Administrator & Kurator** | Mengelola dasbor terpusat untuk memoderasi karya, memverifikasi kepatuhan konten pameran, mengaudit log aktivitas sistem, dan menjatuhkan sanksi akun secara *real-time*. |
 
 ---
 
@@ -59,11 +58,12 @@ Ekosistem VEN dibangun dengan memisahkan domain aplikasi secara bersih:
 graph TD
     subgraph "Client Layer"
         MA["📱 Android Mobile App<br/>(Kotlin + Jetpack Compose)"]
+        UA["🎮 Unity 3D Viewer<br/>(proses :unity ter-embed)"]
         WA["💻 Web Admin Panel<br/>(Blade + Vite + Tailwind v4)"]
     end
 
     subgraph "API Gateway & Application Layer"
-        LB["🌐 RESTful API Server<br/>(Laravel 11/12, PHP 8.3)"]
+        LB["🌐 RESTful API Server<br/>(Laravel 13, PHP 8.3)"]
         Sanctum["🔐 Sanctum Token & Session Auth"]
         Scheduler["⏱️ Artisan Scheduler & Daemon Workers"]
     end
@@ -79,15 +79,17 @@ graph TD
         DB_DBA[("⚙️ mysql_dba<br/>(DDL, Migrasi, Backup & Recovery)")]
     end
 
-    MA -->|JSON HTTP / Auth Bearer| LB
-    WA -->|Session HTTP / CSRF| LB
+    MA -->|"JSON HTTP / Bearer Token<br/>(HTTPS-only pada release)"| LB
+    MA -->|"RoomDto via UnityBridge"| UA
+    UA -->|"room-dto API"| LB
+    WA -->|"Session HTTP / CSRF"| LB
     LB --> Sanctum
     LB --> Scheduler
-    LB -->|Chat Curate & Recs| Gemini
-    LB -->|Asset Management| Storage
-    LB -->|Query Pengguna| DB_User
-    LB -->|Moderasi & Log Sistem| DB_Admin
-    Scheduler -->|Midnight Backup & Verifikasi| DB_DBA
+    LB -->|"Chat Curate & Recs"| Gemini
+    LB -->|"Asset Management"| Storage
+    LB -->|"Query Pengguna"| DB_User
+    LB -->|"Moderasi & Log Sistem"| DB_Admin
+    Scheduler -->|"Midnight Backup & Verifikasi"| DB_DBA
 ```
 
 ---
@@ -95,7 +97,7 @@ graph TD
 ## ✨ Fitur Utama
 
 ### 1. Mobile Client (Android Native)
-Dibangun menggunakan **Kotlin** dan **Jetpack Compose** dengan pendekatan *Unidirectional Data Flow (UDF)* dan desain berbasis *Material 3*:
+Dibangun menggunakan **Kotlin** dan **Jetpack Compose** dengan pendekatan *Unidirectional Data Flow (UDF)* — setiap fitur terpisah rapi menjadi `Screen.kt` (stateless), `Route.kt` (stateful), `ViewModel.kt`, dan `UiState.kt`:
 
 * 🚀 **Smart Feed & Refresh System (Instagram Style)**:
   * **Pull-to-Refresh**: Usap layar ke bawah dari bagian atas untuk memicu pembaruan data secara dinamis dengan animasi spinner Material 3.
@@ -108,28 +110,34 @@ Dibangun menggunakan **Kotlin** dan **Jetpack Compose** dengan pendekatan *Unidi
   * Grid eksplorasi 3 kolom dengan *Memory LRU Cache* (0ms) dan *Disk Cache* ter-downsample (360x480).
   * Pencarian terpadu dengan *debounce* instan: tab *For You, Accounts, Posts,* dan *Exhibits*.
   * Filter modal kategori dinamis berbasis *Bottom Sheet*.
-* 🏛️ **3D Exhibition Editor**:
-  * Pembuatan ruang pameran Value interaktif: checklist persiapan, penamaan, pemilihan template ruang, penempatan objek/furnitur, dan kontrol palet warna.
-* 📅 **Jadwal Pertemuan (Schedule & Meeting Requests)**:
-  * Pengajuan, peninjauan, dan konfirmasi jadwal temu kurator/seniman (*Approved, Waiting, Requests*).
+* 🏛️ **3D Exhibition Editor & Viewer**:
+  * Pembuatan ruang pameran virtual interaktif: checklist persiapan, penamaan, pemilihan template ruang, penempatan objek/furnitur, dan kontrol palet warna.
+  * Viewer pameran 3D berbasis **Unity** (proses `:unity` ter-embed) dengan penyambutan data ruangan *real-time* dari API (`room-dto`).
+* 📅 **Jadwal Pertemuan (Schedule & Request Meeting — UC-17)**:
+  * Pengajuan, peninjauan, dan konfirmasi jadwal temu kurator/seniman dalam 4 tab: *Approved, Waiting, Requests,* dan *History*.
+  * Kalender pemilih tanggal dinamis + input jam/menit AM-PM, validasi jadwal lampau, dan catatan pertemuan.
 * 🤖 **Asisten Cerdas AI (Gemini Assistant)**:
-  * Panel drawer interaktif untuk tanya jawab seputar karya seni dan kurasi pameran.
-* 🌗 **Theme Engine (Dark & Light Mode)**:
-  * Dioptimalkan khusus untuk **Dark Mode** elegan yang menonjolkan estetika warna karya seni pengguna.
+  * Panel drawer interaktif untuk tanya jawab seputar karya seni dan kurasi pameran, dengan riwayat chat persisten.
+* 🌗 **Theme Engine (Dark & Light Mode) & Multi-Bahasa (EN/ID)**:
+  * Palet desain kustom (`VexColors`) dengan design token lengkap — warna, spacing, radius, tipografi, dan motion — dioptimalkan untuk **Dark Mode** elegan yang menonjolkan estetika karya seni.
+  * Seluruh antarmuka tersedia dalam dua bahasa (*English* & *Bahasa Indonesia*) dengan pemilihan bahasa di pengaturan.
 
 ---
 
 ### 2. Backend API & Admin Web Panel
-Dibangun di atas fondasi **Laravel 11/12** dengan performa tinggi dan struktur modular:
+Dibangun di atas fondasi **Laravel 13** dengan performa tinggi dan struktur modular:
 
-* **High-Performance RESTful API**: Endpoint JSON terstruktur rapi untuk seluruh alur bisnis aplikasi mobile.
+* **High-Performance RESTful API**: Endpoint JSON terstruktur rapi (`{data, message}`) untuk seluruh alur bisnis aplikasi mobile — autentikasi & OTP, profil, pameran, karya, undangan, pencarian, dan AI.
 * **Web Admin Panel Terintegrasi**: Dasbor moderasi karya, verifikasi pameran, manajemen pengguna, inspeksi riwayat aktivitas (*LogAudit*), dan penjatuhan sanksi akun berbasis **Blade Views** dan **Tailwind CSS v4**.
 * **Proteksi Mutasi Data**: Validasi ketat Form Request, *Policy-based authorization*, dan pencegahan injeksi payload.
-* **Integrasi AI Gemini**: Endpoint analitik kurasi dan rekomendasi konten otomatis.
+* **Penanganan Galat Terpusat**: Semua endpoint `/api/*` selalu merespons JSON tanpa membocorkan detail internal; akses langsung dari browser dialihkan ke halaman 404 kustom.
+* **Integrasi AI Gemini**: Endpoint analitik kurasi dan rekomendasi konten otomatis dengan grounding konteks pameran & karya.
 
 ---
 
-### 3. 7 Pilar Kepatuhan Audit Keamanan Basis Data
+### 3. Keamanan Berlapis: 7 Pilar Audit DB & Hardening Mobile
+
+#### 🗄️ Backend — 7 Pilar Kepatuhan Audit Keamanan Basis Data
 
 Backend VEN telah diaudit secara formal dan memenuhi 7 standar ketat arsitektur basis data:
 
@@ -144,6 +152,16 @@ Backend VEN telah diaudit secara formal dan memenuhi 7 standar ketat arsitektur 
 | **7** | **Disaster Recovery Sandbox Verification** | Otomasi verifikasi pemulihan cadangan database ke sandbox terisolasi via perintah `ven:restore-db`. |
 
 > 📖 *Dokumentasi teknis lengkap masing-masing kepatuhan dapat ditinjau di direktori [`backend-api/backend/docs/`](backend-api/backend/docs/).*
+
+#### 📱 Mobile Client — Hardening Keamanan Aplikasi
+
+| Lapisan | Implementasi pada `ven-mobile` |
+|---|---|
+| **Penyimpanan Sesi** | Token & data pengguna terenkripsi **AES-256-GCM** via **AndroidKeyStore** (`util/SecurePrefs`) dengan migrasi transparan dari data lama — kecil kemungkinan dibaca dari root/backup. |
+| **Transport** | Build release **HTTPS-only** (`networkSecurityConfig`); cleartext hanya diizinkan untuk emulator/localhost pada build debug. |
+| **Backup** | Preferensi sesi sensitif dikecualikan dari *cloud backup* & *device transfer* (`backup_rules` / `data_extraction_rules`). |
+| **Logging** | Interceptor HTTP level `BODY` hanya aktif pada build debug — kata sandi, OTP, dan JWT tidak pernah tercetak di logcat release. |
+| **Komponen** | Activity Unity tidak `exported` (tidak dapat dipanggil aplikasi lain); `proguard-rules.pro` disiapkan untuk obfuskasi release. |
 
 ---
 
@@ -169,15 +187,18 @@ ven/
 ├── ven-mobile/                # Aplikasi Klien Android Native
 │   ├── app/src/main/
 │   │   ├── java/com/ven/app/
-│   │   │   ├── data/             # API Service, Retrofit Client, & Data Models
+│   │   │   ├── core/             # Konfigurasi global (AppConfig) & lokalisasi (AppStrings)
+│   │   │   ├── data/             # API Service, SessionManager terenkripsi, & Data Models
 │   │   │   ├── ui/
-│   │   │   │   ├── components/   # Komponen UI bersama (VexChip, PostCard, MediaGrid)
+│   │   │   │   ├── components/   # Komponen UI bersama (VexButton, VexTextArea, PostCard, ...)
 │   │   │   │   ├── navigation/   # Routing AppNavigation & BottomNav Bar
-│   │   │   │   ├── screens/      # Feature Screens (Home, Explore, Schedule, AI, Create)
-│   │   │   │   └── theme/        # Token desain resmi VEN (Color, Space, Typography)
-│   │   │   └── util/             # Utility format tanggal, cache, & helper
+│   │   │   │   ├── screens/      # Feature Screens (Home, Explore, Schedule, AI, Create, ...)
+│   │   │   │   └── theme/        # Token desain resmi VEN (Color, Space, Radius, Typography)
+│   │   │   └── util/             # Utility (SecurePrefs, DateFormatter, GoogleAuth, ...)
 │   │   └── res/                  # Vector drawables, strings lokalisasi, & resource visual
+│   ├── unityLibrary/             # Modul Unity 3D Viewer (il2cpp)
 │   └── docs/DESIGN.md            # Spesifikasi desain visual & alur interaksi Figma
+├── docs/                      # STATUS-PROYEK-VEN.md — status modul, verifikasi, & kendala
 └── postman/                   # Koleksi pengujian endpoint API & suite verifikasi audit
 ```
 
@@ -186,8 +207,11 @@ ven/
 ## 🚀 Panduan Memulai Cepat (Getting Started)
 
 ### Prasyarat Sistem
-* **Backend**: PHP >= 8.3, Composer >= 2.6, MySQL >= 8.0/8.4 (Laragon sangat disarankan di Windows).
-* **Mobile**: Android Studio (Ladybug / Meerkat / terbaru), JDK 17, Android SDK Platform 34/35.
+
+| Komponen | Kebutuhan |
+|---|---|
+| 🖥️ **Backend** | PHP >= 8.3, Composer >= 2.6, MySQL >= 8.0/8.4 (Laragon sangat disarankan di Windows), Node.js >= 18 |
+| 📱 **Mobile** | Android Studio (Ladybug / Meerkat / terbaru), JDK 17, Android SDK Platform 34/35 |
 
 ---
 
@@ -235,11 +259,19 @@ ven/
 
 ### Langkah Menjalankan Mobile App
 
-1. Buka folder [`ven-mobile/`](ven-mobile/) di **Android Studio**.
-2. Biarkan Gradle melakukan sinkronisasi dependensi proyek (*Gradle Sync*).
-3. Pastikan backend API berjalan. Jika menggunakan Emulator Android standar, backend dapat diakses melalui host bawaan `10.0.2.2:8000`.
-4. Pilih target perangkat (Emulator atau Perangkat Fisik via USB Debugging).
-5. Klik **Run 'app'** (`Shift + F10`) atau jalankan perintah kompilasi:
+1. **Konfigurasi endpoint API**: salin/atur file `ven-mobile/.env`:
+   ```env
+   # Emulator Android memakai host loopback bawaan
+   BASE_URL=http://10.0.2.2:8000/api/
+   # Google Web Client ID untuk Sign-In
+   GOOGLE_SERVER_CLIENT_ID=<client-id-anda>
+   ```
+   > 💡 *Untuk perangkat fisik, ganti `10.0.2.2` dengan IP LAN komputer Anda. Build release wajib memakai `https://` — aplikasi menolak base URL non-HTTPS pada mode release.*
+2. Buka folder [`ven-mobile/`](ven-mobile/) di **Android Studio**.
+3. Biarkan Gradle melakukan sinkronisasi dependensi proyek (*Gradle Sync*).
+4. Pastikan backend API berjalan.
+5. Pilih target perangkat (Emulator atau Perangkat Fisik via USB Debugging).
+6. Klik **Run 'app'** (`Shift + F10`) atau jalankan perintah kompilasi:
    ```powershell
    cd ven-mobile
    .\gradlew.bat installDebug
@@ -249,31 +281,52 @@ ven/
 
 ## 🧪 Pengujian Otomatis (Automated Testing)
 
-Integritas sistem VEN diuji secara berkala untuk memastikan reliabilitas tinggi:
+Integritas sistem VEN diuji secara berkala untuk memastikan reliabilitas tinggi — hasil verifikasi terakhir: **19 November 2026**.
 
 ### 1. Backend API & Keamanan Database (PHPUnit)
 ```powershell
 cd backend-api/backend
 php artisan test
 ```
-> ✅ **Status: 37 tests passed, 176 assertions (100% Lulus, 0 Error).**
+> ✅ **Status: 87 test — 87 lulus, 406 assertion (100% lulus, 0 galat).**
+
+> ⚠️ Pengujian wajib menggunakan database `ven_testing`; dilarang mengarahkan test ke database aplikasi `ven`.
 
 ### 2. Android Mobile Client (Gradle Unit Test)
 ```powershell
 cd ven-mobile
 .\gradlew.bat testDebugUnitTest
 ```
-> ✅ **Status: Seluruh unit test Jetpack Compose & ViewModel sukses.**
+> ✅ **Status: 70 test — 70 lulus (100% lulus, 0 galat)** — mencakup ViewModel, UiState, navigasi, & logika utilitas.
 
-### 3. Postman API Suite
+### 3. Build & Smoke Test
+```powershell
+cd ven-mobile
+.\gradlew.bat assembleDebug
+```
+> ✅ **Status: BUILD SUCCESSFUL** — APK debug (~124,9 MB) tersedia di `app/build/outputs/apk/debug/`.
+
+### 4. Postman API Suite
 Koleksi lengkap pengujian endpoint API dan verifikasi 7 pilar kepatuhan database tersedia di folder [`postman/`](postman/) siap diimpor ke Postman.
+
+---
+
+## 📊 Status Proyek & Dokumentasi
+
+| Dokumen | Isi |
+|---|---|
+| 📋 [`docs/STATUS-PROYEK-VEN.md`](docs/STATUS-PROYEK-VEN.md) | Status modul per fitur (✅/⚠️/❌), hasil verifikasi terkini (test, build, tanggal, commit), daftar bagian mock, dan kendala aktif beserta rekomendasinya. |
+| 🎨 [`ven-mobile/docs/DESIGN.md`](ven-mobile/docs/DESIGN.md) | Spesifikasi design system Vex: palet warna, tipografi, spacing, komponen, dan pola interaksi. |
+| 🗄️ [`backend-api/backend/docs/`](backend-api/backend/docs/) | Dokumentasi formal 7 pilar audit keamanan basis data. |
+| 🧪 [`postman/`](postman/) | Koleksi Postman pengujian API & audit keamanan. |
 
 ---
 
 ## 🛠️ Standar Pengembangan & Git Workflow
 
-1. **Clean Code & Architecture**: Seluruh kontribusi wajib mengikuti kaidah *Skinny Controller, Business Logic in Services, Unidirectional Data Flow (Compose)*, dan dokumentasi fungsi yang rapi.
-2. **Kebijakan Git Push**:
+1. **Clean Code & Architecture**: Seluruh kontribusi wajib mengikuti kaidah *Skinny Controller, Business Logic in Services, Unidirectional Data Flow (Compose)*, dan dokumentasi fungsi yang rapi — lihat [`.agents/rules/`](.agents/rules/).
+2. **Status Proyek Selalu Sinkron**: Setiap penambahan/perubahan/penghapusan fitur **wajib** memperbarui [`docs/STATUS-PROYEK-VEN.md`](docs/STATUS-PROYEK-VEN.md) pada commit yang sama.
+3. **Kebijakan Git Push**:
    * **AI Agent dilarang menjalankan `git push` otomatis**.
    * Seluruh eksekusi `git push` ke remote repository adalah **hak prerogatif eksklusif dari Developer (Pengguna)** secara manual.
 
@@ -283,3 +336,7 @@ Koleksi lengkap pengujian endpoint API dan verifikasi 7 pilar kepatuhan database
 
 Hak Cipta © 2026 Tim Pengembang **VEN (Value Exhibition Network)**.  
 Seluruh hak cipta dilindungi undang-undang.
+
+<div align="center">
+  <sub>Dibangun dengan 💜 oleh Tim VEN</sub>
+</div>

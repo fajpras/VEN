@@ -1,6 +1,6 @@
 # 🏛️ VEN Backend REST API
 
-Backend API untuk **VEN (Virtual Exhibition Network)** — platform galeri dan pameran seni virtual 3D interaktif. Dibangun di atas **Laravel 11** dan **PHP 8.3**, dirancang dengan arsitektur keamanan berlapis, pemisahan hak akses basis data (*least privilege*), integrasi AI multimodal (Google AI Studio Gemini), serta dukungan WebRTC real-time.
+Backend API untuk **VEN (Virtual Exhibition Network)** — platform galeri dan pameran seni virtual 3D interaktif. Dibangun di atas **Laravel 13** dan **PHP 8.3**, dirancang dengan arsitektur keamanan berlapis, pemisahan hak akses basis data (*least privilege*), integrasi AI multimodal (Google AI Studio Gemini), serta dukungan WebRTC real-time.
 
 ---
 
@@ -115,7 +115,7 @@ php artisan schedule:work
 Seluruh modul telah dilengkapi pengujian otomatis dengan **PHPUnit**:
 
 ```powershell
-# Jalankan seluruh test suite (37 tests, 176 assertions)
+# Jalankan seluruh test suite (87 tests, 406 assertions)
 php artisan test
 
 # Menggunakan path PHP Laragon langsung:
