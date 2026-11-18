@@ -19,132 +19,64 @@
         </div>
     </form>
 
-    @php
-        $query = request()->query();
-        unset($query['page']);
-
-        $buildUrl = function (array $merge) use ($query) {
-            return request()->url() . '?' . http_build_query(array_merge($query, $merge));
-        };
-    @endphp
+    @include('admin.layouts.list-controls')
 
     @if ($viewMode === 'list')
-        {{-- Account List View with Headers Aligned to the Right of Card/List Toggle --}}
-        <div class="overflow-x-auto">
-            <div class="min-w-[850px] space-y-3">
-                {{-- Header Row: Toggle [ Card | List ] on left, column headers to the right, Show per page on right end --}}
-                <div class="grid grid-cols-12 items-center gap-4 px-2 py-1 text-xs text-[#94A3B8] dark:text-[#71717A] font-medium select-none">
-                    {{-- Toggle Card / List --}}
-                    <div class="col-span-2">
-                        <div class="inline-flex items-center gap-1 p-1 rounded-full bg-[#EBEBEB] dark:bg-[#27272A] w-fit" role="group" aria-label="Mode tampilan">
-                            <a href="{{ $buildUrl(['view' => 'card']) }}"
-                               class="h-8 px-3.5 rounded-full flex items-center gap-1.5 text-xs font-medium text-[#64748B] dark:text-[#A1A1AA] hover:text-[#0F172A] dark:hover:text-white transition-colors"
-                               aria-pressed="false">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm9 0a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1h-5a1 1 0 01-1-1V5zM4 14a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5zm9 0a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1h-5a1 1 0 01-1-1v-5z" />
-                                </svg>
-                                Card
-                            </a>
-                            <a href="{{ $buildUrl(['view' => 'list']) }}"
-                               class="h-8 px-3.5 rounded-full flex items-center gap-1.5 text-xs font-medium bg-white dark:bg-zinc-700 text-[#BA18F5] shadow-xs transition-colors"
-                               aria-pressed="true">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
-                                List
-                            </a>
+        {{-- Account List --}}
+        <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
+            @forelse ($pengguna as $user)
+                <div class="py-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
+                    {{-- Avatar & Username --}}
+                    <div class="flex items-center gap-4 min-w-[260px]">
+                        <img src="{{ $user->foto_profil ? asset('storage/' . $user->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode($user->nama) . '&background=BA18F5&color=fff' }}"
+                             alt="{{ $user->nama }}"
+                             class="w-11 h-11 rounded-full object-cover border border-gray-100 dark:border-zinc-800 shadow-xs flex-shrink-0">
+                        <div>
+                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">username</span>
+                            <span class="text-sm font-semibold text-[#0F172A] dark:text-white">{{ $user->nama_panggilan }}</span>
                         </div>
                     </div>
 
-                    {{-- Headers to the right of Card/List toggle --}}
-                    <div class="col-span-2">
-                        <span>username</span>
+                    {{-- Name --}}
+                    <div class="min-w-[180px]">
+                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">name</span>
+                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->nama }}</span>
                     </div>
-                    <div class="col-span-3">
-                        <span>name</span>
+
+                    {{-- Post --}}
+                    <div class="min-w-[50px]">
+                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">post</span>
+                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->karya_count ?? $user->karya()->count() }}</span>
                     </div>
-                    <div class="col-span-1">
-                        <span>post</span>
+
+                    {{-- Exhibition --}}
+                    <div class="min-w-[60px]">
+                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">exhibition</span>
+                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->pameran_count ?? $user->pameran()->count() }}</span>
                     </div>
-                    <div class="col-span-1">
-                        <span>exhibition</span>
+
+                    {{-- Join Date --}}
+                    <div class="min-w-[80px]">
+                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">join date</span>
+                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->created_at ? $user->created_at->format('d/m/y') : '—' }}</span>
                     </div>
-                    <div class="col-span-1">
-                        <span>join date</span>
-                    </div>
-                    <div class="col-span-2 flex items-center justify-end">
-                        <div class="flex items-center gap-1.5 text-xs text-[#64748B] dark:text-[#A1A1AA]">
-                            <label for="perPageSelectList" class="font-medium">Show</label>
-                            <select id="perPageSelectList"
-                                    onchange="window.location.href = this.value"
-                                    class="h-7 px-2 rounded-full bg-[#EBEBEB] dark:bg-[#27272A] text-[#0F172A] dark:text-white text-xs font-semibold outline-none focus:ring-2 focus:ring-[#BA18F5] cursor-pointer border border-transparent">
-                                @foreach ($perPageOptions as $option)
-                                    <option value="{{ $buildUrl(['per_page' => $option]) }}" {{ (int) $perPage === (int) $option ? 'selected' : '' }}>
-                                        {{ $option }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <span class="font-medium">per page</span>
-                        </div>
+
+                    {{-- Action Button: Suspend (Red Pill) --}}
+                    <div class="flex items-center">
+                        <button type="button"
+                                onclick="openSuspendModal('{{ $user->id_pengguna }}', '{{ addslashes($user->nama) }}', '{{ addslashes($user->nama_panggilan) }}')"
+                                class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
+                            Suspend
+                        </button>
                     </div>
                 </div>
-
-                {{-- Account Data Rows --}}
-                <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
-                    @forelse ($pengguna as $user)
-                        <div class="py-3 grid grid-cols-12 items-center gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
-                            {{-- Avatar (under Card/List toggle) --}}
-                            <div class="col-span-2 flex items-center pl-1">
-                                <img src="{{ $user->foto_profil ? asset('storage/' . $user->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode($user->nama) . '&background=BA18F5&color=fff' }}"
-                                     alt="{{ $user->nama }}"
-                                     class="w-10 h-10 rounded-full object-cover border border-gray-100 dark:border-zinc-800 shadow-xs flex-shrink-0">
-                            </div>
-
-                            {{-- Username --}}
-                            <div class="col-span-2 min-w-0">
-                                <span class="text-sm font-semibold text-[#0F172A] dark:text-white truncate block">{{ $user->nama_panggilan }}</span>
-                            </div>
-
-                            {{-- Name --}}
-                            <div class="col-span-3 min-w-0">
-                                <span class="text-sm font-medium text-[#0F172A] dark:text-white truncate block">{{ $user->nama }}</span>
-                            </div>
-
-                            {{-- Post --}}
-                            <div class="col-span-1 min-w-0">
-                                <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->karya_count ?? $user->karya()->count() }}</span>
-                            </div>
-
-                            {{-- Exhibition --}}
-                            <div class="col-span-1 min-w-0">
-                                <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->pameran_count ?? $user->pameran()->count() }}</span>
-                            </div>
-
-                            {{-- Join Date --}}
-                            <div class="col-span-1 min-w-0">
-                                <span class="text-sm font-medium text-[#0F172A] dark:text-white whitespace-nowrap">{{ $user->created_at ? $user->created_at->format('d/m/y') : '—' }}</span>
-                            </div>
-
-                            {{-- Action Button: Suspend (Red Pill) --}}
-                            <div class="col-span-2 flex items-center justify-end">
-                                <button type="button"
-                                        onclick="openSuspendModal('{{ $user->id_pengguna }}', '{{ addslashes($user->nama) }}', '{{ addslashes($user->nama_panggilan) }}')"
-                                        class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
-                                    Suspend
-                                </button>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
-                            No user accounts found.
-                        </div>
-                    @endforelse
+            @empty
+                <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
+                    No user accounts found.
                 </div>
-            </div>
+            @endforelse
         </div>
     @else
-        @include('admin.layouts.list-controls')
-
         {{-- Account Card Grid --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
             @forelse ($pengguna as $user)
