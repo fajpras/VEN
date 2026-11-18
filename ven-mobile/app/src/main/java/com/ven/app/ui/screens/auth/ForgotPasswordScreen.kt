@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.ven.app.R
 import com.ven.app.ui.components.layout.VexTopBar
 import com.ven.app.ui.components.ui.VexButton
+import com.ven.app.ui.components.ui.VexButtonShape
 import com.ven.app.ui.components.ui.VexButtonVariant
 import com.ven.app.ui.components.ui.VexTextField
 import com.ven.app.ui.components.ui.VexTextFieldVariant
@@ -100,6 +101,7 @@ fun ForgotPasswordScreen(
                     variant = VexButtonVariant.Primary,
                     loading = state.isLoading,
                     enabled = state.email.isNotBlank(),
+                    shape = VexButtonShape.Boxed,
                 )
             }
         }

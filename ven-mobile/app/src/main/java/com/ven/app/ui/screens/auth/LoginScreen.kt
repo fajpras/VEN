@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
 import com.ven.app.ui.components.layout.AuthLayout
 import com.ven.app.ui.components.ui.VexButton
+import com.ven.app.ui.components.ui.VexButtonShape
 import com.ven.app.ui.components.ui.VexButtonVariant
 import com.ven.app.ui.components.ui.VexPasswordField
 import com.ven.app.ui.components.ui.VexTextField
@@ -58,8 +59,8 @@ fun LoginScreen(
             VexTextField(
                 value = state.identifier,
                 onValueChange = onIdentifierChange,
-                placeholder = stringResource(R.string.auth_placeholder_email_username),
-                variant = VexTextFieldVariant.Pill,
+                label = stringResource(R.string.auth_placeholder_email_username),
+                variant = VexTextFieldVariant.Boxed,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Next,
@@ -71,8 +72,9 @@ fun LoginScreen(
             VexPasswordField(
                 value = state.password,
                 onValueChange = onPasswordChange,
-                placeholder = stringResource(R.string.auth_placeholder_password),
-                variant = VexTextFieldVariant.Pill,
+                label = stringResource(R.string.auth_placeholder_password),
+                placeholder = "",
+                variant = VexTextFieldVariant.Boxed,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done,
@@ -110,6 +112,7 @@ fun LoginScreen(
                 onClick = onLoginClick,
                 variant = VexButtonVariant.Primary,
                 loading = state.isLoading,
+                shape = VexButtonShape.Boxed,
             )
 
             Spacer(Modifier.height(VexSpace.s6))
@@ -126,6 +129,7 @@ fun LoginScreen(
                 onClick = onGoogleClick,
                 variant = VexButtonVariant.Outline,
                 icon = R.drawable.ic_google,
+                shape = VexButtonShape.Boxed,
             )
         },
         footerContent = {
@@ -145,6 +149,7 @@ fun LoginScreen(
                     text = stringResource(R.string.register_button),
                     onClick = onRegisterClick,
                     variant = VexButtonVariant.Inverse,
+                    shape = VexButtonShape.Boxed,
                 )
             }
         },
