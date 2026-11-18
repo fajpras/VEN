@@ -66,7 +66,7 @@
     "Outputpath": "C:/laragon/www/VEN/ven/ven-mobile/unityLibrary/src/main/jniLibs/arm64-v8a/libil2cpp.so",
     "DontDeployBaselib": false,
     "Verbose": false,
-    "ToolChainPath": "C:/Program Files/Unity/Hub/Editor/6000.3.25f1/Editor/Data/PlaybackEngines/AndroidPlayer/NDK",
+    "ToolChainPath": "C:\\Users\\Fajri\\AppData\\Local\\Android\\Sdk\\ndk\\27.2.12479018",
     "Forcerebuild": false,
     "DisableBeeBuilder": false,
     "Libil2cppStatic": false,
