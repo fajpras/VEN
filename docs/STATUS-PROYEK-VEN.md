@@ -1,12 +1,12 @@
 # Status Proyek VEN — Daftar Modul, Verifikasi, dan Kendala
 
-> **Tanggal verifikasi:** 18 November 2026
+> **Tanggal verifikasi:** 19 November 2026
 >
 > **Branch aktif:** `main`
 >
-> **Commit terakhir:** `cabe7eb` — `Update: projek logs` (working tree memuat restore AI/Bahasa + fitur Jadwal Undangan & Request Meeting UC-17 + fix backend)
+> **Commit terakhir:** `6772ce3` — `fix(build): update NDK toolchain path and add error logging for compilation failures` (commit berikutnya memuat penguatan keamanan & polish UI mobile)
 >
-> **Perubahan terbaru:** Implementasi penuh modul Jadwal Undangan & Request Meeting (UC-17) terhubung API (`POST/GET/PATCH /api/undangan`); backend diperluas mendukung parameter `id_pameran` & `id_karya` dengan pembuatan otomatis ruangan privat; Schedule 4 tab (Approved, Waiting, Request, History) + aksi Terima/Tolak & Join 3D Viewer; 87 test backend lulus (100%); 70 dari 71 unit test Android lulus.
+> **Perubahan terbaru:** Penguatan keamanan aplikasi Android: token & data sesi kini terenkripsi AES-256-GCM via AndroidKeyStore (`SecurePrefs` + migrasi transparan `SessionManager`), logging HTTP level BODY hanya pada build debug, cleartext dimatikan untuk release (`network_security_config.xml` HTTPS-only; emulator tetap diizinkan pada src/debug), token dikecualikan dari cloud backup, kedua activity Unity tidak lagi `exported`, URL cleartext hardcode `10.0.2.2` dihapus dari kode, `proguard-rules.pro` disiapkan (minify masih nonaktif), cooldown 60 detik untuk kirim ulang OTP registrasi. Koreksi: fallback dummy data dihapus total dari jalur production (Schedule, History, Explore), `ScreenRouteTest` diperbaiki, tanggal awal Request Meeting kini dinamis (tidak lagi Sept 2026), pesan galat Request Meeting dilokalisasi, dead code dibersihkan (`com/ven/app/unity/UnityLauncher`, test template `com.example.venmobile`, warna template), `RegisterRoute` & `ProfileViewModel` dipindah ke file sendiri. Polish UI: tombol Outline adaptif tema, window background terang/gelap sesuai mode (tidak ada kilatan gelap di mode terang), Request Meeting memakai `VexTextArea` + indikator loading banner, warna hardcode dipindah ke token tema (`accentWarning`). **70 dari 70 unit test Android lulus.**
 >
 > **Lingkungan:** Windows + Laragon, PHP 8.3.30, Laravel 13.34.0, MySQL, Android Gradle 9.6
 
@@ -30,8 +30,8 @@ Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang s
 | Smoke test API live | `artisan serve` + login `fajri@ven.test` | ✅ Login, `/api/pameran`, `/api/karya/rekomendasi`, `/api/profil`, `/api/pencarian`, `/api/ai/tanya`, `/api/undangan` merespons normal |
 | Admin Web Panel | `GET /admin/login` | ✅ HTTP 200 |
 | Build Android | `.\gradlew.bat assembleDebug` | ✅ **BUILD SUCCESSFUL** |
-| Artefak APK | `app/build/outputs/apk/debug/app-debug.apk` | ✅ Ada, 124.904.951 byte (~124,9 MB) |
-| Test Android | `.\gradlew.bat testDebugUnitTest` | ⚠️ **71 test — 70 lulus, 1 gagal** (`ScreenRouteTest`) |
+| Artefak APK | `app/build/outputs/apk/debug/app-debug.apk` | ✅ Ada, 124.936.295 byte (~124,9 MB) |
+| Test Android | `.\gradlew.bat testDebugUnitTest` | ✅ **70 test — 70 lulus** (2 test template `com.example.venmobile` dihapus; `ScreenRouteTest` diperbaiki) |
 
 **Catatan lingkungan:** perintah `php` tidak tersedia di PATH. Gunakan path Laragon:
 
@@ -82,6 +82,8 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 | 12 | Schedule (Jadwal Undangan) | `ScheduleViewModel` → `ApiUndangan` (4 tab: Approved, Waiting, Request, History; aksi Terima/Tolak & Join Room 3D Viewer) | ✅ |
 | 13 | Request Meeting (UC-17) | `RequestMeetingViewModel` → `ApiUndangan.createUndangan`, validasi tanggal/jam lampau, input jam/menit/AM-PM, catatan | ✅ |
 | 14 | Riwayat Undangan di Settings | `HistoryScreen` tersambung ke `ScheduleViewModel` (menampilkan riwayat undangan riil dari API) | ✅ |
+| 15 | Penguatan keamanan mobile | `util/SecurePrefs` (AES-256-GCM AndroidKeyStore) + `SessionManager` terenkripsi; `ApiClient` logging BODY hanya debug & `setBaseUrl` menolak non-HTTPS di release; `network_security_config.xml` (release HTTPS-only), `backup_rules`/`data_extraction_rules` mengecualikan `ven_auth_pref` & `ven_ai_chat_pref`, activity Unity `exported=false`, `proguard-rules.pro` siap (minify off), cooldown OTP registrasi | ✅ |
+| 16 | Polish UI & konsistensi design token | Tombol `VexButton.Outline` adaptif tema (perbaikan mode terang), `themes.xml` light/night (window background sesuai mode), `RequestMeetingScreen` memakai `VexTextArea` + loading state banner + spacing/typography token, token `accentWarning` baru, warna hardcode dihapus dari `CarouselExhibitions`/`CreateOptionsBottomSheet` | ✅ |
 
 ### 2.3 Artefak Pendukung
 
@@ -109,30 +111,34 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 | No | Kendala | Bukti | Dampak | Rekomendasi |
 |:--:|---|---|---|---|
 | 1 | Database `ven` belum memuat kolom `objek.id_pameran` | Uji live Unity membuka `GET /api/pameran/4/room-dto` menghasilkan **HTTP 500** (`Unknown column 'objek.id_pameran'`). Migrasi `2026_11_11_000001_add_id_pameran_to_objek_table.php` sudah jalan di `ven_testing` tetapi belum di `ven` | Endpoint `room-dto` gagal; Unity beralih ke fallback RoomDto lokal | Jalankan migrasi kolom `id_pameran` pada database aplikasi `ven` setelah persetujuan pengguna |
-| 2 | Unit test Android usang | `app/src/test/.../ui/navigation/ScreenRouteTest.kt:20` masih mengharapkan `create_exhibit_editor/tpl_small`, sedangkan `Screen.kt:42-55` kini menambahkan query `title/description/bannerUrl/tipe` | 1 test Android gagal (build tetap sukses) | Perbarui ekspektasi test sesuai format route terbaru |
 
 ### Prioritas Sedang
 
 | No | Kendala | Dampak | Rekomendasi |
 |:--:|---|---|---|
-| 3 | Modul Create Post dan Publish editor masih simulasi | Fitur terlihat jalan tetapi data belum tersimpan ke server | Buat `ApiKarya` di mobile, lalu hubungkan ViewModel ke endpoint yang sudah ada |
-| 4 | Source Unity (`.cs`) tidak ada di repo, hanya binary `il2cpp` | Integrasi Unity tidak dapat diaudit dari source; verifikasi butuh perangkat/emulator | Simpan proyek Unity sebagai submodule/folder terpisah atau dokumentasikan prosedur build |
-| 5 | Perubahan binary Unity belum di-commit | `libil2cpp.so` (arm64) termodifikasi dan `compile-data.json` masih untracked | Tinjau ulang lalu commit secara terkontrol (hindari commit binary besar tanpa kebutuhan) |
+| 2 | Modul Create Post dan Publish editor masih simulasi | Fitur terlihat jalan tetapi data belum tersimpan ke server | Buat `ApiKarya` di mobile, lalu hubungkan ViewModel ke endpoint yang sudah ada |
+| 3 | Source Unity (`.cs`) tidak ada di repo, hanya binary `il2cpp` | Integrasi Unity tidak dapat diaudit dari source; verifikasi butuh perangkat/emulator. Token Bearer masih dikirim via intent extra ke proses `:unity` (`UnityLauncher` → `UnityBridge`) — risiko eksternal sudah ditekan (activity Unity kini `exported="false"`), tetapi token tetap tampil di intent dump | Simpan proyek Unity sebagai submodule/folder terpisah atau dokumentasikan prosedur build; jangka panjang: sampaikan token lewat mekanisme IPC terbatas |
+| 4 | Perubahan binary Unity belum di-commit | `libil2cpp.so` (arm64) termodifikasi dan `compile-data.json` masih untracked | Tinjau ulang lalu commit secara terkontrol (hindari commit binary besar tanpa kebutuhan) |
+| 5 | R8/obfuskasi (`isMinifyEnabled`) masih nonaktif | APK release mudah dibedah; `proguard-rules.pro` sudah disiapkan (keep rules Gson/Retrofit/UnityBridge) | Aktifkan `isMinifyEnabled = true` lalu smoke test build release di perangkat fisik (Unity + Gson) sebelum rilis |
 
 ### Prioritas Rendah / Lingkungan
 
 | No | Kendala | Rekomendasi |
 |:--:|---|---|
-| 6 | `BASE_URL` mobile default `http://10.0.2.2:8000/api/` | Hanya untuk emulator; ubah `ven-mobile/.env` untuk perangkat fisik |
-| 7 | `android:usesCleartextTraffic="true"` aktif | Wajar untuk development; matikan dan gunakan HTTPS untuk rilis |
-| 8 | README menyebut "37 tests passed" | Perbarui angka menjadi 87 test backend / 71 test Android |
-| 9 | APK berukuran ~124,9 MB karena Unity binary | Pertimbangkan Android App Bundle atau ABI split |
-| 10 | `php` tidak ada di PATH | Gunakan path Laragon (`C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe`) atau tambahkan ke environment variable |
+| 6 | `BASE_URL` mobile default `http://10.0.2.2:8000/api/` | Hanya untuk emulator; ubah `ven-mobile/.env` untuk perangkat fisik. Pastikan URL HTTPS dipakai saat rilis (release build menolak base URL non-HTTPS) |
+| 7 | README menyebut "37 tests passed" | Perbarui angka menjadi 87 test backend / 70 test Android |
+| 8 | APK berukuran ~124,9 MB karena Unity binary | Pertimbangkan Android App Bundle atau ABI split |
+| 9 | `php` tidak ada di PATH | Gunakan path Laragon (`C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe`) atau tambahkan ke environment variable |
+| 10 | `GOOGLE_SERVER_CLIENT_ID` di `.env` berformat non-standar (`glowing-icon-510605-m1.apps.googleusercontent.com`) | Client ID Google OAuth umumnya berawalan angka; verifikasi nilai Web Client ID di Google Cloud Console agar login Google tidak gagal di produksi |
 
 ### Kendala yang Sudah Diperbaiki
 
 | Tanggal | Kendala | Perbaikan | Bukti |
 |---|---|---|---|
+| 19 Nov 2026 | Token otentikasi & data pengguna tersimpan plaintext di SharedPreferences dan ikut cloud backup; logging HTTP level BODY menyala di build release (password/OTP/JWT tercetak di logcat); cleartext HTTP aktif di semua build type; activity Unity `exported=true`; URL `http://10.0.2.2:8000` hardcode di kode | `SessionManager` kini mengenkripsi token & JSON pengguna via `util/SecurePrefs` (AES-256-GCM AndroidKeyStore, migrasi transparan dari plaintext); interceptor logging hanya ditambahkan saat `BuildConfig.DEBUG`; `setBaseUrl` menolak non-HTTPS di release; manifest memakai `network_security_config.xml` HTTPS-only (debug src-set tetap mengizinkan emulator/LAN) + `backup_rules`/`data_extraction_rules` mengecualikan prefs sensitif; activity Unity ditimpa `exported="false"`; fallback URL kini dari `BuildConfig.BASE_URL`/`AppConfig.baseUrl` | `gradlew :app:testDebugUnitTest` 70/70 lulus; `assembleDebug` BUILD SUCCESSFUL; grep tidak menemukan lagi URL cleartext hardcode di `app/src/main` |
+| 19 Nov 2026 | Fallback dummy data tampil di jalur production (Schedule/History/Explore menampilkan data palsu saat API gagal/kosong); `RequestMeetingViewModel` memakai tanggal awal hardcode Sept 2026; pesan galat Request Meeting hardcode Indonesia; dead code (`com/ven/app/unity/UnityLauncher`, test template `com.example.venmobile`, warna template, import tak terpakai); `RegisterRoute` & `ProfileViewModel` menempel di file lain | Fallback dummy dihapus total (empty state asli); `RequestMeetingViewModel` menerima `today: LocalDate = LocalDate.now()` (injeksikan tanggal tetap di test); galat validasi jadi enum `RequestMeetingValidationError` dipetakan ke `stringResource`; dead code dihapus; `RegisterRoute.kt` & `ProfileViewModel.kt` dipisah | `gradlew :app:testDebugUnitTest` 70/70 lulus (termasuk `ScreenRouteTest` yang diperbaiki); `assembleDebug` BUILD SUCCESSFUL |
+| 19 Nov 2026 | Tombol `VexButton.Outline` memakai warna hardcode putih/hitam (rusak di mode terang); window background tema selalu gelap (kilatan gelap bagi pengguna mode terang); `RequestMeetingScreen` menulis ulang text field, mengabaikan `isLoading`, dan memakai warna/spacing hardcode; warna hardcode di `CarouselExhibitions` & `CreateOptionsBottomSheet` | `Outline` kini transparan dengan token tema (`colors.text`/`colors.border`); `themes.xml` dipecah light (`values/`) & night (`values-night/`); `RequestMeetingScreen` memakai `VexTextArea`, indikator loading banner, fallback warna `colors.primary`, token `VexSpace`/typography; token baru `accentWarning` ditambahkan ke kedua palet | `assembleDebug` BUILD SUCCESSFUL; preview Dark/Light tersedia pada semua komponen yang diubah |
+| 18 Nov 2026 | Unit test Android usang | `app/src/test/.../ui/navigation/ScreenRouteTest.kt:20` diperbarui sesuai format route `create_exhibit_editor` terbaru (query `title/description/bannerUrl/tipe`) | `gradlew :app:testDebugUnitTest` — `ScreenRouteTest` lulus; 70/70 test lulus |
 | 18 Nov 2026 | Modul Schedule & Request Meeting (UC-17) sebelumnya masih mock/simulasi | Dibuat `ApiUndangan`, `ScheduleViewModel` (4 tab: Approved, Waiting, Request, History; aksi Terima/Tolak & Join Room 3D Viewer), `RequestMeetingViewModel` terhubung ke `POST /api/undangan` dengan validasi jadwal lampau; endpoint `POST /api/undangan` diperluas menerima `id_pameran`/`id_karya` dan otomatis membuat ruangan privat | `tests/Feature/DiskusiUndanganTest.php` 8 test lulus; `ScheduleViewModelTest.kt` 5 test lulus; live smoke test emulator sukses mengajukan undangan ke pameran Alex Pratama dan muncul di tab Waiting |
 | 18 Nov 2026 | Fitur AI Chat dan Multi-bahasa hilang pasca-merge branch Unity | Merestorasi source dari commit `6f338e9` & `234c250`: `AiChatHistoryPreferences`, `AiChatViewModel`, `AiChatScreen`, `ChatHistoryDrawer`, `AppLanguage`, `VenApplication`, `locales_config.xml`, `DateFormatter`, dan sinkronisasi 321 resource string. Mempertahankan konfigurasi `unityLibrary/build.gradle` (NDK 27.2, CMake 3.22.1) | APK build sukses (`assembleDebug`), Android unit test 70/71 lulus; smoke test emulator membuktikan switch English/Indonesian persisten dan AI Chat live Gemini terhubung |
 | 18 Nov 2026 | Endpoint `/api/ai/tanya` menghasilkan **HTTP 500** `Unknown column 'nama' in 'field list'` saat memuat konteks pameran & karya | `AIChatController::buildKonteks`: relasi `kategori` pada tabel `karya` menggunakan nama kolom `kategori`, bukan `nama`. Diperbaiki menjadi `kategori:id_kategori,kategori` dan `$k->kategori->kategori` | Ditambahkan regression test `test_ai_chat_memuat_konteks_karya_dengan_relasi_kategori` di `AIChatGeminiTest.php`; backend suite 79/79 test lulus (381 assertion); uji live emulator menjawab pertanyaan pameran dan menolak pertanyaan out-of-scope |
@@ -146,9 +152,11 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 - **Backend:** 100% test lulus (**87 test, 406 assertion**). Seluruh modul inti (auth, profil, pameran, karya, undangan, pencarian, admin, audit keamanan, backup/restore, AI live Gemini) merespons normal pada smoke test live.
 - **Android:** alur utama selesai dan berhasil di-build (APK debug ~124,9 MB tersedia). Autentikasi, home, explore, profil, settings, create exhibit, Schedule (Approved, Waiting, Request, History), Request Meeting (UC-17), AI Chat live, Multi-bahasa (EN/ID), dan viewer Unity sudah aktif tersambung API.
+- **Keamanan mobile:** token & data sesi terenkripsi AES-256-GCM (AndroidKeyStore), logging HTTP hanya di debug, release HTTPS-only dengan pengecualian emulator pada debug, prefs sensitif dikecualikan dari backup, activity Unity non-exported, `proguard-rules.pro` siap (minify menunggu smoke test perangkat).
+- **Dummy data dihapus total** dari jalur production — Schedule/History/Explore menampilkan empty state asli saat API kosong atau gagal; tersisa hanya sebagai bahan `@Preview`.
 - **Belum selesai:** Create Post (unggah karya dari mobile) dan publish pameran dari editor Compose.
 - **Catatan integrasi Unity:** UnityPlayerGameActivity terbuka normal (room 3D berjalan dengan fallback RoomDto), namun migrasi `id_pameran` pada tabel `objek` belum diterapkan di database aplikasi `ven` (baru di `ven_testing`).
-- **Kegagalan test Android (1 dari 71):** `ScreenRouteTest.kt:20` disebabkan ekspektasi query parameter rute lama pada test case, bukan galat build maupun runtime aplikasi.
+- **Test Android:** **70/70 lulus** — `ScreenRouteTest` diperbaiki; 2 test template bawaan dihapus sehingga total berubah dari 71 menjadi 70.
 
 ---
 

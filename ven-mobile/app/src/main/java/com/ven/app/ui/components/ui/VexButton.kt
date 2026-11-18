@@ -68,7 +68,7 @@ fun VexButton(
         }
         VexButtonVariant.Outline -> {
             if (!enabled) colors.surfaceInput to colors.textDisabled
-            else Color.White to Color.Black
+            else Color.Transparent to colors.text
         }
         VexButtonVariant.Danger -> {
             if (!enabled) colors.danger.copy(alpha = 0.3f) to colors.textDisabled
@@ -108,7 +108,7 @@ fun VexButton(
             .background(bgColor)
             .then(
                 if (variant == VexButtonVariant.Outline) {
-                    Modifier.border(1.dp, Color.Black, RoundedCornerShape(VexRadius.full))
+                    Modifier.border(1.dp, colors.border, RoundedCornerShape(VexRadius.full))
                 } else {
                     Modifier
                 }
