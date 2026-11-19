@@ -32,7 +32,7 @@
 
                 {{-- Date --}}
                 <div class="text-xs font-medium text-[#94A3B8] dark:text-[#71717A] min-w-[70px] text-right">
-                    {{ $log->waktu ? $log->waktu->format('d/m/y') : ($log->created_at ? $log->created_at->format('d/m/y') : '29/09/26') }}
+                    {{ $log->waktu ? $log->waktu->format('d/m/y') : ($log->created_at ? $log->created_at->format('d/m/y') : '—') }}
                 </div>
 
                 {{-- Detail Link (Purple) --}}
@@ -59,9 +59,9 @@
 {{-- Detail Audit Trail Modal --}}
 <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
     <div class="fixed inset-0 bg-black/60 backdrop-blur-xs" onclick="closeDetailModal()"></div>
-    <div class="relative w-full max-w-lg bg-white dark:bg-[#1E1E20] rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#E5E7EB] dark:border-[#2D2D30] z-10">
+    <div class="relative w-full max-w-lg bg-white dark:bg-[#1E1E20] rounded-2xl p-6 sm:p-8 shadow-xl border border-[#E5E7EB] dark:border-[#2D2D30] z-10">
         <div class="flex items-center justify-between pb-4 border-b border-[#E5E7EB] dark:border-[#2D2D30] mb-6">
-            <h2 class="text-xl font-bold text-[#0F172A] dark:text-white">Activity Log Details</h2>
+            <h2 class="text-lg font-semibold text-[#0F172A] dark:text-white">Activity Log Details</h2>
             <button type="button" onclick="closeDetailModal()" class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 hover:text-black dark:text-zinc-400 dark:hover:text-white transition-colors cursor-pointer">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -78,7 +78,7 @@
             <div class="grid grid-cols-2 gap-4 text-sm">
                 <div class="p-3 bg-gray-50 dark:bg-zinc-800/40 rounded-xl">
                     <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium">Administrator</span>
-                    <span id="modalAdmin" class="font-medium text-[#0F172A] dark:text-white">Admin 1</span>
+                    <span id="modalAdmin" class="font-medium text-[#0F172A] dark:text-white">—</span>
                 </div>
 
                 <div class="p-3 bg-gray-50 dark:bg-zinc-800/40 rounded-xl">
@@ -116,11 +116,11 @@
     function openDetailModal(log) {
         const modal = document.getElementById('detailModal');
         document.getElementById('modalDesc').textContent = log.pesan || log.deskripsi || 'Administrative action';
-        document.getElementById('modalAdmin').textContent = log.pengguna ? log.pengguna.nama : 'Admin 1';
-        document.getElementById('modalTime').textContent = log.waktu ? new Date(log.waktu).toLocaleString() : (log.created_at ? new Date(log.created_at).toLocaleString() : '29/09/26');
-        document.getElementById('modalIp').textContent = log.ip_address || '127.0.0.1';
+        document.getElementById('modalAdmin').textContent = log.pengguna ? log.pengguna.nama : '—';
+        document.getElementById('modalTime').textContent = log.waktu ? new Date(log.waktu).toLocaleString() : (log.created_at ? new Date(log.created_at).toLocaleString() : '—');
+        document.getElementById('modalIp').textContent = log.ip_address || '—';
         document.getElementById('modalEntity').textContent = (log.entitas || log.tipe_entitas || 'General') + (log.id_entitas ? ' #' + log.id_entitas : (log.aksi ? ' (' + log.aksi + ')' : ''));
-        document.getElementById('modalAgent').textContent = log.user_agent || navigator.userAgent;
+        document.getElementById('modalAgent').textContent = log.user_agent || '—';
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }

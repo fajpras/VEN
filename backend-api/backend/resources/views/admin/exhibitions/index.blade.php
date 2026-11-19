@@ -24,8 +24,8 @@
         @forelse ($pameran as $exhibit)
             <div class="py-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
                 {{-- Landscape Banner Thumbnail --}}
-                <div class="w-full md:w-[150px] h-[75px] flex-shrink-0 rounded-xl overflow-hidden shadow-xs bg-gray-100 dark:bg-zinc-800">
-                    <img src="{{ $exhibit->banner ? asset('storage/' . $exhibit->banner) : ($exhibit->banner_url ?? 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80') }}"
+                <div class="w-full md:w-[150px] h-[75px] flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800">
+                    <img src="{{ $exhibit->banner ? asset('storage/' . $exhibit->banner) : ($exhibit->banner_url ?? 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%202%201%22%3E%3Crect%20width=%222%22%20height=%221%22%20fill=%22%23E5E7EB%22/%3E%3C/svg%3E') }}"
                          alt="{{ $exhibit->judul }}"
                          class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
                 </div>
@@ -33,13 +33,13 @@
                 {{-- Title --}}
                 <div class="min-w-[160px]">
                     <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">title</span>
-                    <span class="text-base font-bold text-[#0F172A] dark:text-white">{{ $exhibit->judul }}</span>
+                    <span class="text-base font-semibold text-[#0F172A] dark:text-white">{{ $exhibit->judul }}</span>
                 </div>
 
                 {{-- Owner --}}
                 <div class="min-w-[130px]">
                     <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">owner</span>
-                    <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $exhibit->pengguna->nama_panggilan ?? 'user' }}</span>
+                    <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $exhibit->pengguna->nama_panggilan ?? '—' }}</span>
                 </div>
 
                 {{-- Post --}}
@@ -51,14 +51,14 @@
                 {{-- Created At --}}
                 <div class="min-w-[80px]">
                     <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">created at</span>
-                    <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $exhibit->created_at ? $exhibit->created_at->format('d/m/y') : '29/09/26' }}</span>
+                    <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $exhibit->created_at ? $exhibit->created_at->format('d/m/y') : '—' }}</span>
                 </div>
 
                 {{-- Action: Delete Button --}}
                 <div class="flex items-center">
                     <button type="button"
                             onclick="openDeleteExhibitionModal('{{ $exhibit->id_pameran }}', '{{ addslashes($exhibit->judul) }}')"
-                            class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide shadow-sm hover:bg-red-600 active:scale-95 transition-all cursor-pointer">
+                            class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
                         Delete
                     </button>
                 </div>
@@ -78,9 +78,9 @@
 {{-- Delete Confirmation Modal --}}
 <div id="deleteExhibitionModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
     <div class="fixed inset-0 bg-black/60 backdrop-blur-xs" onclick="closeDeleteExhibitionModal()"></div>
-    <div class="relative w-full max-w-md bg-white dark:bg-[#1E1E20] rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#E5E7EB] dark:border-[#2D2D30] z-10">
+    <div class="relative w-full max-w-md bg-white dark:bg-[#1E1E20] rounded-2xl p-6 sm:p-8 shadow-xl border border-[#E5E7EB] dark:border-[#2D2D30] z-10">
         <div class="flex items-center justify-between pb-4 border-b border-[#E5E7EB] dark:border-[#2D2D30] mb-6">
-            <h2 class="text-xl font-bold text-[#0F172A] dark:text-white">Delete Exhibition</h2>
+            <h2 class="text-lg font-semibold text-[#0F172A] dark:text-white">Delete Exhibition</h2>
             <button type="button" onclick="closeDeleteExhibitionModal()" class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 hover:text-black dark:text-zinc-400 dark:hover:text-white transition-colors cursor-pointer">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -99,7 +99,7 @@
                 <button type="button" onclick="closeDeleteExhibitionModal()" class="h-10 px-5 rounded-full text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 font-medium text-sm transition-colors cursor-pointer">
                     Cancel
                 </button>
-                <button type="submit" class="h-10 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-sm shadow-md hover:bg-red-600 transition-colors cursor-pointer">
+                <button type="submit" class="h-10 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-sm hover:bg-red-600 transition-colors cursor-pointer">
                     Delete Exhibition
                 </button>
             </div>

@@ -55,14 +55,14 @@
                 {{-- Join Date --}}
                 <div class="min-w-[80px]">
                     <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">join date</span>
-                    <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->created_at ? $user->created_at->format('d/m/y') : '29/09/26' }}</span>
+                    <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $user->created_at ? $user->created_at->format('d/m/y') : '—' }}</span>
                 </div>
 
                 {{-- Action Button: Suspend (Red Pill) --}}
                 <div class="flex items-center">
                     <button type="button"
                             onclick="openSuspendModal('{{ $user->id_pengguna }}', '{{ addslashes($user->nama) }}', '{{ addslashes($user->nama_panggilan) }}')"
-                            class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide shadow-sm hover:bg-red-600 active:scale-95 transition-all cursor-pointer">
+                            class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
                         Suspend
                     </button>
                 </div>
@@ -82,9 +82,9 @@
 {{-- Suspend Modal Dialog --}}
 <div id="suspendModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
     <div class="fixed inset-0 bg-black/60 backdrop-blur-xs" onclick="closeSuspendModal()"></div>
-    <div class="relative w-full max-w-lg bg-white dark:bg-[#1E1E20] rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#E5E7EB] dark:border-[#2D2D30] z-10">
+    <div class="relative w-full max-w-lg bg-white dark:bg-[#1E1E20] rounded-2xl p-6 sm:p-8 shadow-xl border border-[#E5E7EB] dark:border-[#2D2D30] z-10">
         <div class="flex items-center justify-between pb-4 border-b border-[#E5E7EB] dark:border-[#2D2D30] mb-6">
-            <h2 class="text-xl font-bold text-[#0F172A] dark:text-white">Suspend User Account</h2>
+            <h2 class="text-lg font-semibold text-[#0F172A] dark:text-white">Suspend User Account</h2>
             <button type="button" onclick="closeSuspendModal()" class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 hover:text-black dark:text-zinc-400 dark:hover:text-white transition-colors cursor-pointer">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -126,7 +126,7 @@
                 <button type="button" onclick="closeSuspendModal()" class="h-10 px-5 rounded-full text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 font-medium text-sm transition-colors cursor-pointer">
                     Cancel
                 </button>
-                <button type="submit" class="h-10 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-sm shadow-md hover:bg-red-600 transition-colors cursor-pointer">
+                <button type="submit" class="h-10 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-sm hover:bg-red-600 transition-colors cursor-pointer">
                     Confirm Suspend
                 </button>
             </div>

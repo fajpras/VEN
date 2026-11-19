@@ -1,5 +1,5 @@
 <header class="h-20 w-full flex items-center justify-between px-10 bg-white/70 dark:bg-[#121212]/70 backdrop-blur-md sticky top-0 z-20 transition-colors">
-    <h1 class="text-2xl font-bold text-[#0F172A] dark:text-white tracking-tight">
+    <h1 class="text-xl font-semibold text-[#0F172A] dark:text-white tracking-tight">
         @yield('page_title', 'Dashboard')
     </h1>
 

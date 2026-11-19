@@ -74,10 +74,10 @@
     {{-- 2-Column Responsive Card Grid --}}
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
         @forelse ($karya as $post)
-            <div class="flex flex-col sm:flex-row gap-6 p-4 rounded-3xl bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-900/40 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-zinc-800">
+            <div class="flex flex-col sm:flex-row gap-6 p-4 rounded-2xl bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-900/40 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-zinc-800">
                 {{-- Portrait Poster Thumbnail --}}
-                <div class="w-full sm:w-[170px] h-[230px] flex-shrink-0 rounded-2xl overflow-hidden shadow-sm bg-gray-100 dark:bg-zinc-800">
-                    <img src="{{ $post->file_url ?? $post->thumbnail_url ?? 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=80' }}"
+                <div class="w-full sm:w-[170px] h-[230px] flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800">
+                    <img src="{{ $post->file_url ?? $post->thumbnail_url ?? 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%203%204%22%3E%3Crect%20width=%223%22%20height=%224%22%20fill=%22%23E5E7EB%22/%3E%3C/svg%3E' }}"
                          alt="{{ $post->judul }}"
                          class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
                 </div>
@@ -85,8 +85,8 @@
                 {{-- Post Content & Actions --}}
                 <div class="flex flex-col justify-between flex-1 py-1">
                     <div>
-                        <h3 class="text-xl font-bold text-[#0F172A] dark:text-white leading-snug">{{ $post->judul }}</h3>
-                        <p class="text-sm font-medium text-[#94A3B8] dark:text-[#71717A] mt-1">{{ $post->pengguna->nama_panggilan ?? 'user' }}</p>
+                        <h3 class="text-lg font-semibold text-[#0F172A] dark:text-white leading-snug">{{ $post->judul }}</h3>
+                        <p class="text-sm font-medium text-[#94A3B8] dark:text-[#71717A] mt-1">{{ $post->pengguna->nama_panggilan ?? '—' }}</p>
                         <p class="text-sm text-[#0F172A] dark:text-[#D4D4D8] mt-4 line-clamp-3 leading-relaxed">
                             {{ $post->deskripsi }}
                         </p>
@@ -95,7 +95,7 @@
                     <div class="pt-4">
                         <button type="button"
                                 onclick="openDeleteModal('{{ $post->id_karya }}', '{{ addslashes($post->judul) }}')"
-                                class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide shadow-sm hover:bg-red-600 active:scale-95 transition-all cursor-pointer">
+                                class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
                             Delete
                         </button>
                     </div>
@@ -116,9 +116,9 @@
 {{-- Delete Confirmation Modal --}}
 <div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
     <div class="fixed inset-0 bg-black/60 backdrop-blur-xs" onclick="closeDeleteModal()"></div>
-    <div class="relative w-full max-w-md bg-white dark:bg-[#1E1E20] rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#E5E7EB] dark:border-[#2D2D30] z-10">
+    <div class="relative w-full max-w-md bg-white dark:bg-[#1E1E20] rounded-2xl p-6 sm:p-8 shadow-xl border border-[#E5E7EB] dark:border-[#2D2D30] z-10">
         <div class="flex items-center justify-between pb-4 border-b border-[#E5E7EB] dark:border-[#2D2D30] mb-6">
-            <h2 class="text-xl font-bold text-[#0F172A] dark:text-white">Delete Artwork</h2>
+            <h2 class="text-lg font-semibold text-[#0F172A] dark:text-white">Delete Artwork</h2>
             <button type="button" onclick="closeDeleteModal()" class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 hover:text-black dark:text-zinc-400 dark:hover:text-white transition-colors cursor-pointer">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -137,7 +137,7 @@
                 <button type="button" onclick="closeDeleteModal()" class="h-10 px-5 rounded-full text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 font-medium text-sm transition-colors cursor-pointer">
                     Cancel
                 </button>
-                <button type="submit" class="h-10 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-sm shadow-md hover:bg-red-600 transition-colors cursor-pointer">
+                <button type="submit" class="h-10 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-sm hover:bg-red-600 transition-colors cursor-pointer">
                     Delete Post
                 </button>
             </div>
