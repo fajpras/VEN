@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ven.app.R
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.components.ui.VexBottomSheet
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonVariant
@@ -74,12 +75,22 @@ fun EventDetailSheet(
                     .aspectRatio(16f / 9f)
                     .clip(RoundedCornerShape(VexRadius.md)),
             ) {
-                Image(
-                    painter = painterResource(id = event.bannerRes),
-                    contentDescription = event.title,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                )
+                val bitmap = rememberAsyncImageBitmap(event.bannerUrl)
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = event.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = event.bannerRes),
+                        contentDescription = event.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(VexSpace.s5))

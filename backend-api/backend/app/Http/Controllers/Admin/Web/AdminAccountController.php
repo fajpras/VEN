@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
+use App\Support\AdminListOptions;
 use App\Models\SanksiAkun;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,8 @@ class AdminAccountController extends Controller
     public function index(Request $request): View
     {
         $cari = $request->query('cari');
-        $perPage = (int) $request->query('per_page', 4);
+        $perPage = AdminListOptions::perPage($request);
+        $viewMode = AdminListOptions::viewMode($request);
 
         try {
             $pengguna = Pengguna::query()
@@ -105,7 +107,9 @@ class AdminAccountController extends Controller
             );
         }
 
-        return view('admin.accounts.index', compact('pengguna'));
+        $perPageOptions = AdminListOptions::PER_PAGE_OPTIONS;
+
+        return view('admin.accounts.index', compact('pengguna', 'viewMode', 'perPage', 'perPageOptions'));
     }
 
     public function suspend(Request $request, string $id): RedirectResponse

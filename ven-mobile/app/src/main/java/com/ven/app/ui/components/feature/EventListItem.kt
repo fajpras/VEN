@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.screens.schedule.ScheduleEventItem
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
@@ -72,12 +74,22 @@ fun EventListItem(
                 .aspectRatio(16f / 9f)
                 .clip(RoundedCornerShape(VexRadius.md)),
         ) {
-            Image(
-                painter = painterResource(id = entry.bannerRes),
-                contentDescription = entry.title,
-                modifier = Modifier.fillMaxWidth(),
-                contentScale = ContentScale.Crop,
-            )
+            val bitmap = rememberAsyncImageBitmap(entry.bannerUrl)
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = entry.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = entry.bannerRes),
+                    contentDescription = entry.title,
+                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.Crop,
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(VexSpace.s4))

@@ -17,8 +17,14 @@ class ScreenRouteTest {
 
     @Test
     fun screenRoutes_createExhibitEditor_withTemplateId_isCorrect() {
-        assertEquals("create_exhibit_editor/tpl_small", Screen.CreateExhibitEditor.createRoute("tpl_small"))
-        assertEquals("create_exhibit_editor/ex1", Screen.CreateExhibitEditor.createRoute("ex1"))
+        assertEquals(
+            "create_exhibit_editor/tpl_small?title=&description=&bannerUrl=&tipe=kecil",
+            Screen.CreateExhibitEditor.createRoute("tpl_small"),
+        )
+        assertEquals(
+            "create_exhibit_editor/ex1?title=&description=&bannerUrl=&tipe=kecil",
+            Screen.CreateExhibitEditor.createRoute("ex1"),
+        )
     }
 
     @Test

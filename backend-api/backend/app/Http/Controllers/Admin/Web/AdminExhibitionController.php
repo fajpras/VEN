@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pameran;
+use App\Support\AdminListOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -15,7 +16,8 @@ class AdminExhibitionController extends Controller
     public function index(Request $request): View
     {
         $cari = $request->query('cari');
-        $perPage = (int) $request->query('per_page', 4);
+        $perPage = AdminListOptions::perPage($request);
+        $viewMode = AdminListOptions::viewMode($request);
 
         try {
             $pameran = Pameran::query()
@@ -79,7 +81,9 @@ class AdminExhibitionController extends Controller
             );
         }
 
-        return view('admin.exhibitions.index', compact('pameran'));
+        $perPageOptions = AdminListOptions::PER_PAGE_OPTIONS;
+
+        return view('admin.exhibitions.index', compact('pameran', 'viewMode', 'perPage', 'perPageOptions'));
     }
 
     public function destroy(string $id): RedirectResponse

@@ -28,16 +28,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
 import com.ven.app.ui.components.feature.HistoryEntry
 import com.ven.app.ui.components.feature.HistoryListItem
 import com.ven.app.ui.components.layout.VexTopBar
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.components.ui.VexBottomSheet
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
@@ -107,31 +104,32 @@ fun HistoryScreen(
                             .clip(RoundedCornerShape(VexRadius.md))
                             .background(colors.surfaceInput),
                     ) {
-                        Image(
-                            painter = painterResource(id = entry.bannerRes),
-                            contentDescription = entry.title,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop,
-                        )
+                        val bitmap = rememberAsyncImageBitmap(entry.bannerUrl)
+                        if (bitmap != null) {
+                            Image(
+                                bitmap = bitmap,
+                                contentDescription = entry.title,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(id = entry.bannerRes),
+                                contentDescription = entry.title,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(VexSpace.s5))
 
-                    // Deskripsi Status Request Terjadwal
-                    val annotatedText = buildAnnotatedString {
-                        append("Your request which is scheduled in ")
-                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = colors.text)) {
-                            append(entry.fullDateFormatted)
-                        }
-                        append(" at ")
-                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = colors.text)) {
-                            append(entry.timeText)
-                        }
-                        append(" has been finished.")
-                    }
-
                     Text(
-                        text = annotatedText,
+                        text = stringResource(
+                            R.string.settings_history_detail_msg,
+                            entry.fullDateFormatted,
+                            entry.timeText,
+                        ),
                         style = MaterialTheme.typography.bodyLarge,
                         color = colors.text,
                     )

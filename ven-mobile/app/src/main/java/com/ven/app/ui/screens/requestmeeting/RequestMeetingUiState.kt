@@ -1,10 +1,18 @@
 package com.ven.app.ui.screens.requestmeeting
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
+import com.ven.app.R
 import com.ven.app.util.DateFormatter
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
+
+/** Jenis kesalahan validasi pada form pengajuan pertemuan. */
+enum class RequestMeetingValidationError(@param:StringRes val messageRes: Int) {
+    TimeNotSet(R.string.request_meeting_error_time_required),
+    InvalidSchedule(R.string.request_meeting_error_invalid_schedule),
+}
 
 @Immutable
 data class CalendarDay(
@@ -17,13 +25,14 @@ data class CalendarDay(
 
 @Immutable
 data class RequestMeetingUiState(
-    val pameranId: String = "1",
-    val pameranTitle: String = "6th International Expo",
+    val pameranId: String = "",
+    val pameranTitle: String = "",
     val bannerUrl: String? = null,
-    val visibleMonth: YearMonth = YearMonth.of(2026, 9),
-    val selectedDate: LocalDate = LocalDate.of(2026, 9, 30),
-    val selectedDateText: String = DateFormatter.formatRequestMeetingDate(LocalDate.of(2026, 9, 30)),
-    val monthTitleText: String = DateFormatter.formatMonthYear(YearMonth.of(2026, 9)),
+    val bannerColor: String? = null,
+    val visibleMonth: YearMonth = YearMonth.from(LocalDate.now()),
+    val selectedDate: LocalDate = LocalDate.now(),
+    val selectedDateText: String = DateFormatter.formatRequestMeetingDate(selectedDate),
+    val monthTitleText: String = DateFormatter.formatMonthYear(visibleMonth),
     val calendarDays: List<CalendarDay> = emptyList(),
     val hourText: String = "02",
     val minuteText: String = "30",
@@ -31,8 +40,8 @@ data class RequestMeetingUiState(
     val message: String = "",
     val isLoading: Boolean = false,
     val isSending: Boolean = false,
-    val errorMessage: String? = null,
-    val isSuccess: Boolean = false,
+    val validationError: RequestMeetingValidationError? = null,
+    val submitErrorText: String? = null,
 )
 
 fun buildMonthGrid(

@@ -25,11 +25,14 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.ven.app.R
+import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiClient
 import com.ven.app.data.api.ApiLogin
 import com.ven.app.data.api.ApiPencarian
@@ -39,6 +42,7 @@ import com.ven.app.util.UnityLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.ven.app.data.preference.AppLanguage
 import com.ven.app.data.preference.ThemePreferences
 import com.ven.app.ui.components.feature.CreateOptionsBottomSheet
 import com.ven.app.ui.components.layout.AppScaffold
@@ -71,6 +75,7 @@ import com.ven.app.ui.screens.requestmeeting.RequestMeetingEvent
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingScreen
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingViewModel
 import com.ven.app.ui.screens.schedule.ScheduleScreen
+import com.ven.app.ui.screens.schedule.ScheduleViewModel
 import com.ven.app.ui.screens.settings.AccountStatusRoute
 import com.ven.app.ui.screens.settings.ChangeEmailRoute
 import com.ven.app.ui.screens.settings.ChangeEmailViewModel
@@ -82,7 +87,6 @@ import com.ven.app.ui.screens.settings.SettingsPlaceholderScreen
 import com.ven.app.ui.screens.settings.SettingsScreen
 import com.ven.app.ui.screens.settings.ThemeScreen
 import com.ven.app.ui.screens.settings.VerifyEmailRoute
-import com.ven.app.ui.screens.settings.dummyHistoryEntries
 import com.ven.app.ui.screens.splash.SplashScreen
 import com.ven.app.ui.theme.VexTheme
 
@@ -93,7 +97,7 @@ fun AppNavHost(showExplore: Boolean = false) {
     val sessionManager = remember { SessionManager.getInstance(context) }
     val coroutineScope = rememberCoroutineScope()
     val currentTheme by themePreferences.themeMode.collectAsStateWithLifecycle()
-    var selectedLanguage by remember { mutableStateOf("English") }
+    var currentLanguage by remember { mutableStateOf(AppLanguage.current()) }
     var isAccountDisabled by remember { mutableStateOf(false) }
 
     val isLoggedIn = remember { !sessionManager.getToken().isNullOrBlank() }
@@ -458,12 +462,14 @@ fun AppNavHost(showExplore: Boolean = false) {
                             if (res.isSuccessful) {
                                 val detail = res.body()?.data
                                 val mapped = detail?.karya?.map { k ->
-                                    val author = detail.pengguna?.namaPanggilan ?: detail.pengguna?.nama ?: "Kreator"
+                                    val author = detail.pengguna?.namaPanggilan ?: detail.pengguna?.nama
+                                        ?: AppStrings.get(R.string.common_creator)
                                     PostsFeedItem(
                                         id = k.idKarya,
                                         username = "@$author",
                                         title = k.judul,
-                                        category = k.kategori?.nama ?: "Karya",
+                                        category = k.kategori?.nama
+                                            ?: AppStrings.get(R.string.common_artwork),
                                         timestampText = DateFormatter.formatRelativeTime(k.createdAt),
                                         description = k.deskripsi.orEmpty(),
                                         imageUrl = k.fileUrl ?: k.file,
@@ -561,9 +567,14 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        composable(Screen.RequestMeeting.route) {
+        composable(Screen.RequestMeeting.route) { backStackEntry ->
+            val postId = backStackEntry.arguments?.getString("postId").orEmpty()
             val requestViewModel: RequestMeetingViewModel = viewModel()
             val requestState by requestViewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(postId) {
+                requestViewModel.setTargetId(postId)
+            }
 
             LaunchedEffect(Unit) {
                 requestViewModel.events.collect { event ->
@@ -672,8 +683,11 @@ fun AppNavHost(showExplore: Boolean = false) {
 
         composable(Screen.SettingsLanguage.route) {
             LanguageScreen(
-                currentLanguage = selectedLanguage,
-                onLanguageSelected = { selectedLanguage = it },
+                currentLanguage = currentLanguage,
+                onLanguageSelected = { language ->
+                    currentLanguage = language
+                    AppLanguage.select(language)
+                },
                 onBackClick = { navController.popBackStack() },
             )
         }
@@ -691,22 +705,40 @@ fun AppNavHost(showExplore: Boolean = false) {
         }
 
         composable(Screen.SettingsHistory.route) {
+            val scheduleViewModel: ScheduleViewModel = viewModel()
+            val scheduleState by scheduleViewModel.uiState.collectAsStateWithLifecycle()
+
+            val historyEntries = remember(scheduleState.historyItems) {
+                scheduleState.historyItems.map { item ->
+                    com.ven.app.ui.components.feature.HistoryEntry(
+                        id = item.id,
+                        title = item.title,
+                        dateText = item.dateText,
+                        timeText = item.timeText,
+                        fullDateFormatted = item.fullDateFormatted,
+                        bannerRes = item.bannerRes,
+                        bannerUrl = item.bannerUrl,
+                        statusText = item.status,
+                    )
+                }
+            }
+
             HistoryScreen(
-                entries = dummyHistoryEntries,
+                entries = historyEntries,
                 onBackClick = { navController.popBackStack() },
             )
         }
 
         composable(Screen.SettingsPrivacy.route) {
             SettingsPlaceholderScreen(
-                title = "Privacy Policy",
+                title = stringResource(R.string.settings_item_privacy_policy),
                 onBackClick = { navController.popBackStack() },
             )
         }
 
         composable(Screen.SettingsHelp.route) {
             SettingsPlaceholderScreen(
-                title = "Help",
+                title = stringResource(R.string.settings_item_help),
                 onBackClick = { navController.popBackStack() },
             )
         }
@@ -816,6 +848,9 @@ fun MainHomeScreen(
             BottomNavTab.Schedule -> {
                 ScheduleScreen(
                     onTabSelected = { currentTab = it },
+                    onJoinRoom = { exhibitId ->
+                        onNavigateToExhibitViewer(exhibitId?.ifBlank { "4" } ?: "4")
+                    },
                 )
             }
             BottomNavTab.Ai -> {

@@ -31,12 +31,12 @@
     {{-- Floating 3D Cubes (balok-1 and balok-2) --}}
     {{-- 1. Large Isometric Block (Bottom-Left) --}}
     <div class="absolute -bottom-8 -left-12 w-[340px] sm:w-[460px] md:w-[540px] pointer-events-none z-10 animate-float-slow">
-        <img src="{{ asset('assets/admin/balok-1.svg') }}" alt="Decorative Cube Large Left" class="w-full h-auto drop-shadow-2xl opacity-95">
+        <img src="{{ asset('assets/admin/balok-1.svg') }}" alt="Decorative Cube Large Left" class="w-full h-auto drop-shadow-xl opacity-95">
     </div>
 
     {{-- 2. Large Isometric Block (Bottom-Right, Mirrored) --}}
     <div class="absolute -bottom-8 -right-12 w-[340px] sm:w-[460px] md:w-[540px] pointer-events-none z-10 scale-x-[-1] animate-float-slow">
-        <img src="{{ asset('assets/admin/balok-1.svg') }}" alt="Decorative Cube Large Right" class="w-full h-auto drop-shadow-2xl opacity-95">
+        <img src="{{ asset('assets/admin/balok-1.svg') }}" alt="Decorative Cube Large Right" class="w-full h-auto drop-shadow-xl opacity-95">
     </div>
 
     {{-- 3. Small Isometric Block (Mid-Left Floating) --}}
@@ -50,7 +50,7 @@
     </div>
 
     {{-- Center Login Card --}}
-    <div class="relative z-20 w-full max-w-[420px] mx-4 bg-white rounded-3xl p-8 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100">
+    <div class="relative z-20 w-full max-w-[420px] mx-4 bg-white rounded-2xl p-8 sm:p-10 shadow-[0_12px_40px_rgba(0,0,0,0.12)] border border-gray-100">
         <form method="POST" action="{{ route('admin.login.submit') }}" class="space-y-5">
             @csrf
 
@@ -67,7 +67,7 @@
                        value="{{ old('email', 'admin@ven.test') }}"
                        placeholder="Email"
                        required
-                       class="w-full h-12 px-4 rounded-lg bg-[#EAEAEA] text-[#0F172A] placeholder-[#8E8E93] text-sm font-medium border border-transparent focus:border-[#BA18F5] focus:bg-white outline-none transition-all">
+                       class="w-full h-12 px-4 rounded-xl bg-[#EAEAEA] text-[#0F172A] placeholder-[#8E8E93] text-sm font-medium border border-transparent focus:border-[#BA18F5] focus:bg-white outline-none transition-all">
             </div>
 
             {{-- Password Input with Visibility Toggle --}}
@@ -77,7 +77,7 @@
                        name="password"
                        placeholder="Password"
                        required
-                       class="w-full h-12 pl-4 pr-12 rounded-lg bg-[#EAEAEA] text-[#0F172A] placeholder-[#8E8E93] text-sm font-medium border border-transparent focus:border-[#BA18F5] focus:bg-white outline-none transition-all">
+                       class="w-full h-12 pl-4 pr-12 rounded-xl bg-[#EAEAEA] text-[#0F172A] placeholder-[#8E8E93] text-sm font-medium border border-transparent focus:border-[#BA18F5] focus:bg-white outline-none transition-all">
                 <button type="button"
                         onclick="togglePasswordVisibility()"
                         class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black transition-colors cursor-pointer">
@@ -99,7 +99,7 @@
 
             {{-- Submit Button --}}
             <button type="submit"
-                    class="w-full h-12 rounded-lg bg-gradient-to-r from-[#BA18F5] to-[#D257FF] text-white font-semibold text-base shadow-lg shadow-purple-500/30 hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center cursor-pointer">
+                    class="w-full h-12 rounded-xl bg-gradient-to-r from-[#BA18F5] to-[#D257FF] text-white font-semibold text-base hover:opacity-95 transition-opacity flex items-center justify-center cursor-pointer">
                 Sign In
             </button>
         </form>

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Pengguna;
 
 use App\Http\Controllers\Controller;
+use App\Models\Karya;
+use App\Models\Pameran;
 use App\Models\Pengguna;
 use App\Models\Ruangan;
 use App\Models\Undangan;
@@ -21,7 +23,10 @@ class DiskusiController extends Controller
 
         $id = $request->user()->id_pengguna;
 
-        $undangan = Undangan::with(['ruangan.pameran:id_pameran,judul,id_pengguna'])
+        $undangan = Undangan::with([
+            'ruangan.pameran:id_pameran,judul,id_pengguna,banner',
+            'pengguna:id_pengguna,nama,nama_panggilan,foto_profil',
+        ])
             ->when(
                 $request->query('sebagai') === 'penyelenggara',
                 fn ($q) => $q->whereHas('ruangan.pameran', fn ($p) => $p->where('id_pengguna', $id)),
@@ -37,12 +42,37 @@ class DiskusiController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_ruangan' => ['required', 'integer', Rule::exists('ruangan', 'id_ruangan')->where('jenis', 'privat')],
-            'waktu' => ['required', 'date', 'after:now'],
-            'catatan' => ['nullable', 'string', 'max:255'],
+            'id_ruangan' => ['nullable', 'integer', Rule::exists('ruangan', 'id_ruangan')->where('jenis', 'privat')],
+            'id_pameran' => ['nullable', 'integer', 'exists:pameran,id_pameran'],
+            'id_karya'   => ['nullable', 'string', 'exists:karya,id_karya'],
+            'waktu'      => ['required', 'date', 'after:now'],
+            'catatan'    => ['nullable', 'string', 'max:255'],
         ]);
 
-        $ruangan = Ruangan::with('pameran')->findOrFail($validated['id_ruangan']);
+        if (empty($validated['id_ruangan']) && empty($validated['id_pameran']) && empty($validated['id_karya'])) {
+            return $this->error('Target pameran atau ruangan harus disertakan.', 422);
+        }
+
+        if (!empty($validated['id_ruangan'])) {
+            $ruangan = Ruangan::with('pameran')->findOrFail($validated['id_ruangan']);
+        } elseif (!empty($validated['id_pameran'])) {
+            $pameran = Pameran::findOrFail($validated['id_pameran']);
+            $ruangan = Ruangan::firstOrCreate(
+                ['id_pameran' => $pameran->id_pameran, 'jenis' => 'privat']
+            );
+            $ruangan->setRelation('pameran', $pameran);
+        } else {
+            $karya = Karya::with('pameran')->findOrFail($validated['id_karya']);
+            $pameran = $karya->pameran ?: Pameran::where('id_pengguna', $karya->id_pengguna)->latest('id_pameran')->first();
+            if (! $pameran) {
+                return $this->notFound('Pameran terkait karya tidak tersedia.');
+            }
+            $ruangan = Ruangan::firstOrCreate(
+                ['id_pameran' => $pameran->id_pameran, 'jenis' => 'privat']
+            );
+            $ruangan->setRelation('pameran', $pameran);
+        }
+
         $user = $request->user();
 
         if (! $ruangan->pameran) {
@@ -70,7 +100,10 @@ class DiskusiController extends Controller
             'status' => 'diproses',
         ]);
 
-        return $this->created($undangan, 'Undangan diskusi diajukan.');
+        return $this->created(
+            $undangan->load(['ruangan.pameran:id_pameran,judul,id_pengguna,banner', 'pengguna:id_pengguna,nama,nama_panggilan,foto_profil']),
+            'Undangan diskusi diajukan.'
+        );
     }
 
     public function show(Request $request, Undangan $undangan)

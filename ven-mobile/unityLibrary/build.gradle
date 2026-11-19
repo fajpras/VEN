@@ -12,7 +12,6 @@ dependencies {
 
 android {
     namespace "com.unity3d.player"
-    ndkPath "C:/Program Files/Unity/Hub/Editor/6000.3.25f1/Editor/Data/PlaybackEngines/AndroidPlayer/NDK"
     ndkVersion "27.2.12479018"
     compileSdk 36
     buildToolsVersion "36.0.0"
@@ -86,22 +85,27 @@ tasks.register('buildIl2Cpp') {
     doLast {
         def executableExtension = org.gradle.internal.os.OperatingSystem.current().isWindows() ? ".exe" : ""
         def il2cppExe = file("${workingDir}/src/main/Il2CppOutputProject/IL2CPP/build/deploy/il2cpp${executableExtension}")
+        def ndkPath = getUnityNdkPath()
+        def hasValidNdk = !ndkPath.isEmpty() && file("$ndkPath/source.properties").exists()
+
         // skipIl2CppBuild used for testing purposes
-        if (project.hasProperty("skipIl2CppBuild") || !il2cppExe.exists()) {
-            if (!il2cppExe.exists()) {
-                println("il2cpp executable not found at ${il2cppExe}, creating dummy files.")
+        if (project.hasProperty("skipIl2CppBuild") || !il2cppExe.exists() || !hasValidNdk) {
+            if (!hasValidNdk) {
+                println("Android NDK with source.properties not found at '${ndkPath}', skipping il2cpp build.")
+            } else if (!il2cppExe.exists()) {
+                println("il2cpp executable not found at ${il2cppExe}, skipping il2cpp build.")
             } else {
-                println("Skipping il2cpp build, creating dummy files.")
+                println("Skipping il2cpp build.")
             }
             archs.each { arch, abi ->
                 {
                     def outPath = file(getIl2CppOutputPath(workingDir, abi))
                     def symPath = file(getIl2CppSymbolPath(workingDir, abi))
-                    if (!outPath.exists()) {
+                    if (!outPath.exists() || outPath.length() < 1000) {
                         outPath.parentFile.mkdirs()
                         outPath.write("DummyBinary")
                     }
-                    if (!symPath.exists()) {
+                    if (!symPath.exists() || symPath.length() < 1000) {
                         symPath.parentFile.mkdirs()
                         symPath.write("DummySymbols")
                     }
@@ -151,7 +155,34 @@ def getUnityNdkPath() {
     if (android.hasProperty("ndkPath") && android.ndkPath != null) {
         return android.ndkPath
     }
-    return System.getenv("ANDROID_NDK_ROOT") ?: System.getenv("ANDROID_NDK_HOME") ?: "C:/Program Files/Unity/Hub/Editor/6000.3.25f1/Editor/Data/PlaybackEngines/AndroidPlayer/NDK"
+    if (android.hasProperty("ndkDirectory") && android.ndkDirectory != null) {
+        return android.ndkDirectory.absolutePath
+    }
+    def envNdk = System.getenv("ANDROID_NDK_ROOT") ?: System.getenv("ANDROID_NDK_HOME") ?: ""
+    if (!envNdk.isEmpty() && file("$envNdk/source.properties").exists()) {
+        return envNdk
+    }
+    def sdkDir = getUnitySdkPath()
+    if (!sdkDir.isEmpty()) {
+        if (android.hasProperty("ndkVersion") && android.ndkVersion != null) {
+            def verNdk = file("${sdkDir}/ndk/${android.ndkVersion}")
+            if (verNdk.exists() && file("${verNdk}/source.properties").exists()) {
+                return verNdk.absolutePath
+            }
+        }
+        def ndkParent = file("${sdkDir}/ndk")
+        if (ndkParent.exists()) {
+            def ndkDirs = ndkParent.listFiles()
+            if (ndkDirs != null) {
+                for (File d : ndkDirs) {
+                    if (d.isDirectory() && file("${d}/source.properties").exists()) {
+                        return d.absolutePath
+                    }
+                }
+            }
+        }
+    }
+    return envNdk
 }
 
 def getUnitySdkPath() {

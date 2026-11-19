@@ -61,6 +61,7 @@ fun RequestListItem(
         Avatar(
             initials = entry.requesterName.take(2).uppercase(),
             imageRes = entry.requesterAvatarRes,
+            imageUrl = entry.requesterAvatarUrl,
             size = AvatarSize.Md,
             contentDescription = entry.requesterName,
         )

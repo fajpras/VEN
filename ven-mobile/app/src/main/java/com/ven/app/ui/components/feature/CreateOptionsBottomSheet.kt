@@ -121,8 +121,8 @@ fun CreateOptionsBottomSheet(
             // Pilihan 2: New Exhibit (3D)
             CreateOptionRow(
                 iconRes = VexIcons.Tab.Exhibits.filled,
-                iconTint = Color(0xFFFF9A00),
-                iconBgColor = Color(0xFFFF9A00).copy(alpha = 0.12f),
+                iconTint = colors.accentWarning,
+                iconBgColor = colors.accentWarning.copy(alpha = 0.12f),
                 title = stringResource(R.string.create_sheet_exhibit_title),
                 description = stringResource(R.string.create_sheet_exhibit_desc),
                 onClick = onCreateExhibitClick,

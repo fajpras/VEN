@@ -1,36 +1,39 @@
-package com.ven.app.ui.navigation
+﻿package com.ven.app.ui.navigation
 
+import androidx.annotation.StringRes
+import com.ven.app.R
 import com.ven.app.ui.icons.VexIconPair
 import com.ven.app.ui.icons.VexIcons
 
+
 enum class BottomNavTab(
     val route: String,
-    val title: String,
+    @param:StringRes val titleRes: Int,
     val iconPair: VexIconPair? = null,
 ) {
     Home(
         route = "home",
-        title = "Home",
+        titleRes = R.string.bottom_nav_home,
         iconPair = VexIcons.Nav.Home,
     ),
     Schedule(
         route = "schedule",
-        title = "Schedule",
+        titleRes = R.string.bottom_nav_schedule,
         iconPair = VexIcons.Nav.Schedule,
     ),
     Ai(
         route = "ai",
-        title = "AI Assistant",
+        titleRes = R.string.bottom_nav_ai,
         iconPair = VexIcons.Nav.Ai,
     ),
     Explore(
         route = "explore",
-        title = "Explore",
+        titleRes = R.string.bottom_nav_explore,
         iconPair = VexIcons.Nav.Explore,
     ),
     Profile(
         route = "profile",
-        title = "Profile",
+        titleRes = R.string.bottom_nav_profile,
         iconPair = null,
     );
 

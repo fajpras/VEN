@@ -21,7 +21,7 @@
                     </svg>
                 </span>
             @else
-                <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="w-9 h-9 rounded-full flex items-center justify-center text-[#0F172A] dark:text-white bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors shadow-xs" aria-label="Previous page">
+                <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="w-9 h-9 rounded-full flex items-center justify-center text-[#0F172A] dark:text-white bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors" aria-label="Previous page">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -34,7 +34,7 @@
                 @if (is_array($element))
                     @foreach ($element as $page => $url)
                         @if ($page == $paginator->currentPage())
-                            <span aria-current="page" class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold text-white bg-[#BA18F5] shadow-md shadow-purple-500/25 select-none">
+                            <span aria-current="page" class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold text-white bg-[#BA18F5] select-none">
                                 {{ $page }}
                             </span>
                         @else
@@ -55,7 +55,7 @@
 
             {{-- Next Page Button --}}
             @if ($paginator->hasMorePages())
-                <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="w-9 h-9 rounded-full flex items-center justify-center text-[#0F172A] dark:text-white bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors shadow-xs" aria-label="Next page">
+                <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="w-9 h-9 rounded-full flex items-center justify-center text-[#0F172A] dark:text-white bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors" aria-label="Next page">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>

@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\PilihKoneksi;
+use App\Models\Karya;
+use App\Models\Kategori;
 use App\Models\Pengguna;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Config;
@@ -53,9 +56,15 @@ class AIChatGeminiTest extends TestCase
             ->assertJsonPath('data.jawaban', 'Halo! Ini adalah jawaban dari Google Gemini AI Studio tentang pameran virtual VEN.');
 
         Http::assertSent(function ($request) {
+            $systemInstruction = $request['system_instruction']['parts'][0]['text'] ?? '';
+
             return str_contains($request->url(), 'generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent')
                 && $request->hasHeader('x-goog-api-key', 'fake-gemini-api-key')
-                && isset($request['contents'][0]['parts'][0]['text']);
+                && isset($request['contents'][0]['parts'][0]['text'])
+                && str_contains($systemInstruction, 'ATURAN WAJIB (UC-18)')
+                && str_contains($systemInstruction, 'SKENARIO ALTERNATIF')
+                && str_contains($systemInstruction, 'Daftar Karya yang ada di VEN')
+                && str_contains($systemInstruction, 'Daftar Pameran yang ada di VEN');
         });
     }
 
@@ -87,6 +96,54 @@ class AIChatGeminiTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('data.jawaban', 'Maaf, layanan AI sedang tidak tersedia. Coba lagi nanti.');
+    }
+
+    public function test_ai_chat_memuat_konteks_karya_dengan_relasi_kategori(): void
+    {
+        $this->withoutMiddleware(PilihKoneksi::class);
+
+        Config::set('services.ai.key', 'fake-gemini-api-key');
+        Config::set('services.ai.model', 'gemini-1.5-flash');
+        Config::set('services.ai.url', null);
+
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                ['text' => 'Jawaban konteks.'],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $kategori = Kategori::create(['kategori' => 'Lukisan']);
+        Karya::create([
+            'id_kategori' => $kategori->id_kategori,
+            'id_pengguna' => $this->user->id_pengguna,
+            'judul' => 'Karya Konteks Kategori',
+            'jenis' => 'poster',
+            'deskripsi' => 'Deskripsi karya konteks.',
+            'file' => 'karya/konteks.jpg',
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson('/api/ai/tanya', [
+                'pertanyaan' => 'Karya apa yang ada?',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.jawaban', 'Jawaban konteks.');
+
+        Http::assertSent(function ($request) {
+            $systemInstruction = $request['system_instruction']['parts'][0]['text'] ?? '';
+
+            return str_contains($systemInstruction, 'Karya Konteks Kategori')
+                && str_contains($systemInstruction, '[Kategori: Lukisan]');
+        });
     }
 }
 
