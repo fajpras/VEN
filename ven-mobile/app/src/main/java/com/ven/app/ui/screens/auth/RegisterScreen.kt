@@ -29,6 +29,7 @@ import com.ven.app.R
 import com.ven.app.ui.components.layout.AuthLayout
 import com.ven.app.ui.components.ui.OtpInput
 import com.ven.app.ui.components.ui.VexButton
+import com.ven.app.ui.components.ui.VexButtonShape
 import com.ven.app.ui.components.ui.VexButtonVariant
 import com.ven.app.ui.components.ui.VexPasswordField
 import com.ven.app.ui.components.ui.VexTextField
@@ -166,8 +167,8 @@ fun RegisterScreen(
             VexTextField(
                 value = state.email,
                 onValueChange = onEmailChange,
-                placeholder = stringResource(R.string.auth_placeholder_email),
-                variant = VexTextFieldVariant.Pill,
+                label = stringResource(R.string.auth_placeholder_email),
+                variant = VexTextFieldVariant.Boxed,
                 isError = state.email.isNotEmpty() && !state.isEmailValid,
                 errorMessage = stringResource(R.string.register_error_email),
                 keyboardOptions = KeyboardOptions(
@@ -181,8 +182,8 @@ fun RegisterScreen(
             VexTextField(
                 value = state.username,
                 onValueChange = onUsernameChange,
-                placeholder = stringResource(R.string.auth_placeholder_username),
-                variant = VexTextFieldVariant.Pill,
+                label = stringResource(R.string.auth_placeholder_username),
+                variant = VexTextFieldVariant.Boxed,
                 isError = state.username.isNotEmpty() && !state.isUsernameValid,
                 errorMessage = stringResource(R.string.register_error_username),
                 keyboardOptions = KeyboardOptions(
@@ -196,8 +197,9 @@ fun RegisterScreen(
             VexPasswordField(
                 value = state.password,
                 onValueChange = onPasswordChange,
-                placeholder = stringResource(R.string.auth_placeholder_password),
-                variant = VexTextFieldVariant.Pill,
+                label = stringResource(R.string.auth_placeholder_password),
+                placeholder = "",
+                variant = VexTextFieldVariant.Boxed,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Next,
@@ -219,8 +221,9 @@ fun RegisterScreen(
             VexPasswordField(
                 value = state.confirmPassword,
                 onValueChange = onConfirmPasswordChange,
-                placeholder = stringResource(R.string.auth_placeholder_confirm_password),
-                variant = VexTextFieldVariant.Pill,
+                label = stringResource(R.string.auth_placeholder_confirm_password),
+                placeholder = "",
+                variant = VexTextFieldVariant.Boxed,
                 isError = state.confirmPassword.isNotEmpty() && !state.isPasswordMatch,
                 errorMessage = stringResource(R.string.register_error_confirm),
                 keyboardOptions = KeyboardOptions(
@@ -247,6 +250,7 @@ fun RegisterScreen(
                 variant = VexButtonVariant.Primary,
                 enabled = state.canSubmit,
                 loading = state.isLoading,
+                shape = VexButtonShape.Boxed,
             )
 
             Spacer(Modifier.height(VexSpace.s6))
@@ -263,6 +267,7 @@ fun RegisterScreen(
                 onClick = onGoogleClick,
                 variant = VexButtonVariant.Outline,
                 icon = R.drawable.ic_google,
+                shape = VexButtonShape.Boxed,
             )
         },
         footerContent = {
@@ -282,6 +287,7 @@ fun RegisterScreen(
                     text = stringResource(R.string.login_button),
                     onClick = onLoginClick,
                     variant = VexButtonVariant.Inverse,
+                    shape = VexButtonShape.Boxed,
                 )
             }
         },

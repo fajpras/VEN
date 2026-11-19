@@ -44,6 +44,11 @@ enum class VexButtonVariant {
     TextLink,
 }
 
+enum class VexButtonShape {
+    Pill,
+    Boxed,
+}
+
 @Composable
 fun VexButton(
     text: String,
@@ -53,9 +58,13 @@ fun VexButton(
     enabled: Boolean = true,
     loading: Boolean = false,
     @DrawableRes icon: Int? = null,
+    shape: VexButtonShape = VexButtonShape.Pill,
 ) {
     val colors = VexTheme.colors
     val isInteractive = enabled && !loading
+    val buttonShape = RoundedCornerShape(
+        if (shape == VexButtonShape.Boxed) VexRadius.md else VexRadius.full,
+    )
 
     val (bgColor: Color, textColor: Color) = when (variant) {
         VexButtonVariant.Primary -> {
@@ -104,11 +113,11 @@ fun VexButton(
         modifier = modifier
             .fillMaxWidth()
             .height(VexSize.control)
-            .clip(RoundedCornerShape(VexRadius.full))
+            .clip(buttonShape)
             .background(bgColor)
             .then(
                 if (variant == VexButtonVariant.Outline) {
-                    Modifier.border(1.dp, Color.Black, RoundedCornerShape(VexRadius.full))
+                    Modifier.border(1.dp, Color.Black, buttonShape)
                 } else {
                     Modifier
                 }

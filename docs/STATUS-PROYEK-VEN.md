@@ -1,12 +1,12 @@
 # Status Proyek VEN — Daftar Modul, Verifikasi, dan Kendala
 
-> **Tanggal verifikasi:** 13 November 2026
+> **Tanggal verifikasi:** 19 November 2026 (perubahan Auth; verifikasi Android terblokir NDK Unity)
 >
-> **Branch aktif:** `integration-test`
+> **Branch aktif:** `main`
 >
-> **Commit terakhir:** `41a0503` — `feat(web): halaman 404 Blade kustom bertema VEN`
+> **Commit terakhir:** `ec8980d` (HEAD saat perubahan UI Auth belum di-commit)
 >
-> **Perubahan terbaru:** akar situs `GET /` kini menjawab **404** (tidak lagi mengarah ke login admin/beranda) dan halaman 404 tidak lagi memuat tautan "Kembali ke Beranda" — 13 November 2026 (commit lokal setelah `41a0503`)
+> **Perubahan terbaru:** enam field Login/Register menggunakan varian Boxed berlabel; tombol Login, Register, Google, dan Send OTP pada alur Auth memakai radius Boxed yang sama. Perubahan tampilan belum terverifikasi melalui build karena NDK Unity tidak valid — 19 November 2026.
 >
 > **Lingkungan:** Windows + Laragon, PHP 8.3.33, Laravel 13.34.0, MySQL, Android Gradle 9.6
 
@@ -29,9 +29,9 @@ Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang s
 | API dibuka dari browser | `GET /api/pameran/25` + `Accept: text/html` | ✅ `302` → `/404`, halaman 404 kustom ditampilkan; klien API (`application/json`, wildcard, tanpa Accept) tetap menerima JSON |
 | Smoke test API live | `artisan serve` + login `fajri@ven.test` | ✅ Login, `/api/pameran`, `/api/karya/rekomendasi`, `/api/profil`, `/api/pencarian`, `/api/pameran/23/room-dto` merespons normal |
 | Admin Web Panel | `GET /admin/login` | ✅ HTTP 200 |
-| Build Android | `.\gradlew.bat assembleDebug` | ✅ **BUILD SUCCESSFUL** |
-| Artefak APK | `app/build/outputs/apk/debug/app-debug.apk` | ✅ Ada, 113.634.995 byte (~113,6 MB) |
-| Test Android | `.\gradlew.bat testDebugUnitTest` | ⚠️ **66 test — 65 lulus, 1 gagal** |
+| Build Android | `.\gradlew.bat :app:testDebugUnitTest :app:assembleDebug --console=plain` | ⚠️ **Terblokir sebelum kompilasi**: `unityLibrary` menunjuk NDK Unity 6000.3.25f1 yang tidak valid di mesin ini; hasil build sukses sebelumnya berasal dari verifikasi 13 November 2026 |
+| Artefak APK | `app/build/outputs/apk/debug/app-debug.apk` | ⚠️ Hasil verifikasi sebelumnya: 113.634.995 byte (~113,6 MB); belum dibangun ulang pada 19 November 2026 |
+| Test Android | `.\gradlew.bat :app:testDebugUnitTest :app:assembleDebug --console=plain` | ⚠️ Terblokir konfigurasi NDK sebelum test berjalan; hasil sebelumnya: **66 test — 65 lulus, 1 gagal** (13 November 2026) |
 
 **Catatan lingkungan:** perintah `php` tidak tersedia di PATH. Gunakan path Laragon:
 
@@ -68,7 +68,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 | No | Modul | Bukti Implementasi | Status |
 |:--:|---|---|:--:|
-| 1 | Splash, Login, Register, OTP, Forgot/Reset Password | `ui/screens/auth/*`, `ApiLogin`, `ApiRegister` | ✅ |
+| 1 | Splash, Login, Register, OTP, Forgot/Reset Password | `ui/screens/auth/*`, `ApiLogin`, `ApiRegister`; Login/Register memakai input Boxed berlabel dan tombol utama Auth memakai radius Boxed (perubahan UI belum terverifikasi build) | ⚠️ |
 | 2 | Onboarding minat | `InterestViewModel` → `ApiProfil.kategori()` / `minat()` | ✅ |
 | 3 | Home feed & rekomendasi | `HomeViewModel` → `ApiHome` (`karya/rekomendasi`, `pameran/rekomendasi`), pull-to-refresh, double-tap tab | ✅ |
 | 4 | Explore & pencarian | `ExploreViewModel` → `ApiPencarian`, filter kategori, grid 3 kolom | ✅ |
@@ -112,6 +112,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 | 1 | Tabel `ven_testing.reset_kata_sandi` hilang | Migrasi tercatat di tabel `migrations`, tetapi tabel tidak ada. Test gagal: `tests/Feature/ProfilMinatTest.php:291` | 1 test backend gagal | Jalankan `php artisan migrate:fresh --database=mysql` pada database **ven_testing** (jangan `ven`) |
 | 2 | `GEMINI_API_KEY` kosong | Uji live `POST /api/ai/tanya` → `"Layanan AI belum dikonfigurasi. Hubungi administrator."` | Fitur AI Assistant tidak berfungsi nyata; mobile menampilkan jawaban dummy | Isi `GEMINI_API_KEY` di `.env`, lalu `php artisan config:clear` |
 | 3 | Unit test Android usang | `app/src/test/.../ui/navigation/ScreenRouteTest.kt:20` masih mengharapkan `create_exhibit_editor/tpl_small`, sedangkan `Screen.kt:42-55` kini menambahkan query `title/description/bannerUrl/tipe` | 1 test Android gagal (build tetap sukses) | Perbarui ekspektasi test sesuai format route terbaru |
+| 4 | NDK Unity tidak valid pada lingkungan verifikasi saat ini | `ven-mobile/unityLibrary/build.gradle:15` menunjuk ke `C:/Program Files/Unity/Hub/Editor/6000.3.25f1/Editor/Data/PlaybackEngines/AndroidPlayer/NDK`; Gradle gagal pada konfigurasi `:unityLibrary` (`CXX1101`) | Build dan test Android untuk perubahan Auth 19 November 2026 tidak dapat dijalankan | Pasang Unity Android Build Support/NDK yang sesuai, lalu jalankan ulang Gradle tanpa mengubah sumber proyek |
 
 ### Prioritas Sedang
 
