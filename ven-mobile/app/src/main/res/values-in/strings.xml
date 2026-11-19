@@ -363,4 +363,10 @@
     <string name="ai_chat_menu_desc">Buka riwayat obrolan</string>
     <string name="auth_error_reset_password">Gagal mengubah kata sandi</string>
     <string name="settings_deactivate_confirm_title">Konfirmasi Nonaktifkan Akun</string>
+    <string name="ai_chat_item_menu_desc">Opsi obrolan</string>
+    <string name="ai_chat_delete_action">Hapus obrolan</string>
+    <string name="ai_chat_delete_dialog_title">Hapus obrolan?</string>
+    <string name="ai_chat_delete_dialog_msg">Percakapan ini akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.</string>
+    <string name="ai_chat_delete_confirm">Hapus</string>
+    <string name="ai_chat_delete_cancel">Batal</string>
 </resources>

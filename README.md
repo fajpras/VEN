@@ -117,7 +117,7 @@ Dibangun menggunakan **Kotlin** dan **Jetpack Compose** dengan pendekatan *Unidi
   * Pengajuan, peninjauan, dan konfirmasi jadwal temu kurator/seniman dalam 4 tab: *Approved, Waiting, Requests,* dan *History*.
   * Kalender pemilih tanggal dinamis + input jam/menit AM-PM, validasi jadwal lampau, dan catatan pertemuan.
 * 🤖 **Asisten Cerdas AI (Gemini Assistant)**:
-  * Panel drawer interaktif untuk tanya jawab seputar karya seni dan kurasi pameran, dengan riwayat chat persisten.
+  * Panel drawer interaktif untuk tanya jawab seputar karya seni dan kurasi pameran, dengan riwayat chat persisten dan hapus percakapan per item.
 * 🌗 **Theme Engine (Dark & Light Mode) & Multi-Bahasa (EN/ID)**:
   * Palet desain kustom (`VexColors`) dengan design token lengkap — warna, spacing, radius, tipografi, dan motion — dioptimalkan untuk **Dark Mode** elegan yang menonjolkan estetika karya seni.
   * Seluruh antarmuka tersedia dalam dua bahasa (*English* & *Bahasa Indonesia*) dengan pemilihan bahasa di pengaturan.
@@ -297,14 +297,14 @@ php artisan test
 cd ven-mobile
 .\gradlew.bat testDebugUnitTest
 ```
-> ✅ **Status: 70 test — 70 lulus (100% lulus, 0 galat)** — mencakup ViewModel, UiState, navigasi, & logika utilitas.
+> ✅ **Status: 73 test — 73 lulus (100% lulus, 0 galat)** — mencakup ViewModel, UiState, navigasi, & logika utilitas.
 
 ### 3. Build & Smoke Test
 ```powershell
 cd ven-mobile
 .\gradlew.bat assembleDebug
 ```
-> ✅ **Status: BUILD SUCCESSFUL** — APK debug (~124,9 MB) tersedia di `app/build/outputs/apk/debug/`.
+> ✅ **Status: BUILD SUCCESSFUL** — APK debug (~126 MB) tersedia di `app/build/outputs/apk/debug/`.
 
 ### 4. Postman API Suite
 Koleksi lengkap pengujian endpoint API dan verifikasi 7 pilar kepatuhan database tersedia di folder [`postman/`](postman/) siap diimpor ke Postman.
