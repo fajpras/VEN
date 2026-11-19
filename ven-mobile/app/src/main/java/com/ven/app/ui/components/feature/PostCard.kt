@@ -66,6 +66,16 @@ data class CaptionTextPart(
     val url: String? = null,
 )
 
+private val CAPTION_MARKDOWN_QUOTE = Regex("^\\s*>\\s*")
+private val CAPTION_WHITESPACE = Regex("\\s+")
+
+private fun sanitizeCaptionTitle(title: String): String = title
+    .replace(CAPTION_MARKDOWN_QUOTE, "")
+    .replace('_', ' ')
+    .replace("**", "")
+    .replace(CAPTION_WHITESPACE, " ")
+    .trim()
+
 private val URL_REGEX = Regex(
     """(?i)\b(?:https?://|www\.)[^\s<>"'{}|\\^`]+"""
 )
@@ -222,6 +232,7 @@ fun PostCaption(
 ) {
     val colors = VexTheme.colors
     val uriHandler = LocalUriHandler.current
+    val displayTitle = remember(title) { title?.let(::sanitizeCaptionTitle) }
 
     var isExpanded by remember { mutableStateOf(false) }
     val isLikelyLong = remember(title, description, collapsedMaxLines) {
@@ -231,7 +242,7 @@ fun PostCaption(
 
     val captionText = remember(
         username,
-        title,
+        displayTitle,
         description,
         colors.text,
         colors.primaryText,
@@ -241,7 +252,7 @@ fun PostCaption(
     ) {
         buildPostCaptionAnnotatedString(
             username = username,
-            title = title,
+            title = displayTitle,
             description = description,
             textColor = colors.text,
             linkColor = colors.primaryText,
@@ -261,7 +272,7 @@ fun PostCaption(
     ) {
         Text(
             text = captionText,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
             maxLines = if (isExpanded) Int.MAX_VALUE else collapsedMaxLines,
             overflow = TextOverflow.Ellipsis,
             onTextLayout = { textLayoutResult ->
@@ -274,15 +285,16 @@ fun PostCaption(
         if (hasVisualOverflow || isExpanded) {
             Text(
                 text = if (isExpanded) seeLessText else seeMoreText,
-                style = MaterialTheme.typography.bodySmall.copy(
+                style = MaterialTheme.typography.labelLarge.copy(
                     fontWeight = FontWeight.SemiBold,
                 ),
-                color = colors.textSecondary,
+                color = colors.primaryText,
                 modifier = Modifier
-                    .padding(top = 4.dp)
+                    .padding(top = 2.dp)
                     .clickable(role = Role.Button) {
                         isExpanded = !isExpanded
-                    },
+                    }
+                    .padding(vertical = 2.dp),
             )
         }
     }
@@ -463,12 +475,12 @@ fun PostCard(
 
         if (!timestampText.isNullOrBlank()) {
             Text(
-                text = timestampText.uppercase(),
+                text = "•  ${timestampText.uppercase()}",
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Medium,
-                    letterSpacing = 0.5.sp,
+                    letterSpacing = 0.6.sp,
                 ),
-                color = colors.textMuted.copy(alpha = 0.7f),
+                color = colors.textMuted.copy(alpha = 0.85f),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
