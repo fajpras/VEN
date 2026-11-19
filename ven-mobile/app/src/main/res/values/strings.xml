@@ -373,4 +373,10 @@
     <string name="interest_error_load">Failed to load interest categories</string>
     <string name="auth_google_generic_error">An error occurred during Google Sign-In</string>
     <string name="auth_error_reset_password">Failed to reset password</string>
+    <string name="ai_chat_item_menu_desc">Chat options</string>
+    <string name="ai_chat_delete_action">Delete chat</string>
+    <string name="ai_chat_delete_dialog_title">Delete chat?</string>
+    <string name="ai_chat_delete_dialog_msg">This conversation will be permanently deleted. This action cannot be undone.</string>
+    <string name="ai_chat_delete_confirm">Delete</string>
+    <string name="ai_chat_delete_cancel">Cancel</string>
 </resources>

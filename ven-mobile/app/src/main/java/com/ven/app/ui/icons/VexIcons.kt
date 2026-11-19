@@ -51,6 +51,7 @@ object VexIcons {
     @DrawableRes val ContactPhone = R.drawable.ic_contact_phone
     @DrawableRes val NewChat = R.drawable.ic_action_new_chat
     @DrawableRes val Send = R.drawable.ic_action_send
+    @DrawableRes val MoreVert = R.drawable.ic_action_more_vert
     @DrawableRes val Visibility = R.drawable.eyes_on
     @DrawableRes val VisibilityOff = R.drawable.eyes_off
     @DrawableRes val EyesOn = R.drawable.eyes_on

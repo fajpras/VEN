@@ -62,6 +62,7 @@ fun AiChatScreen(
         onSendMessage = viewModel::onSendMessage,
         onNewChat = viewModel::onNewChat,
         onSelectConversation = viewModel::onSelectConversation,
+        onDeleteConversation = viewModel::onDeleteConversation,
         modifier = modifier,
     )
 }
@@ -74,6 +75,7 @@ fun AiChatScreenContent(
     onSendMessage: () -> Unit,
     onNewChat: () -> Unit,
     onSelectConversation: (ChatConversation) -> Unit,
+    onDeleteConversation: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = VexTheme.colors
@@ -109,6 +111,9 @@ fun AiChatScreenContent(
                     onSelectChat = { conversation ->
                         onSelectConversation(conversation)
                         coroutineScope.launch { drawerState.close() }
+                    },
+                    onDeleteChat = { conversation ->
+                        onDeleteConversation(conversation.id)
                     },
                 )
             }
@@ -209,6 +214,7 @@ private fun AiChatScreenEmptyDarkPreview() {
             onSendMessage = {},
             onNewChat = {},
             onSelectConversation = {},
+            onDeleteConversation = {},
         )
     }
 }
@@ -230,6 +236,7 @@ private fun AiChatScreenConversationDarkPreview() {
             onSendMessage = {},
             onNewChat = {},
             onSelectConversation = {},
+            onDeleteConversation = {},
         )
     }
 }
@@ -251,6 +258,7 @@ private fun AiChatScreenConversationLightPreview() {
             onSendMessage = {},
             onNewChat = {},
             onSelectConversation = {},
+            onDeleteConversation = {},
         )
     }
 }

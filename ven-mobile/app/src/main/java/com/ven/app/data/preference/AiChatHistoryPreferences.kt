@@ -6,14 +6,20 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.ven.app.ui.screens.ai.ChatConversation
 
-class AiChatHistoryPreferences private constructor(context: Context) {
+interface AiChatHistoryStore {
+    fun loadHistory(userId: String = "guest"): List<ChatConversation>
+    fun saveHistory(userId: String = "guest", history: List<ChatConversation>)
+    fun deleteConversation(userId: String = "guest", chatId: String)
+}
+
+class AiChatHistoryPreferences private constructor(context: Context) : AiChatHistoryStore {
 
     private val preferences: SharedPreferences =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     private val gson = Gson()
     private val listType = object : TypeToken<List<ChatConversation>>() {}.type
 
-    fun loadHistory(userId: String = "guest"): List<ChatConversation> {
+    override fun loadHistory(userId: String): List<ChatConversation> {
         val key = "${KEY_CHAT_HISTORY}_$userId"
         val json = preferences.getString(key, null) ?: return emptyList()
         return try {
@@ -23,11 +29,26 @@ class AiChatHistoryPreferences private constructor(context: Context) {
         }
     }
 
-    fun saveHistory(userId: String = "guest", history: List<ChatConversation>) {
+    override fun saveHistory(userId: String, history: List<ChatConversation>) {
         try {
             val key = "${KEY_CHAT_HISTORY}_$userId"
             val json = gson.toJson(history, listType)
             preferences.edit().putString(key, json).apply()
+        } catch (_: Exception) {
+        }
+    }
+
+    override fun deleteConversation(userId: String, chatId: String) {
+        val key = "${KEY_CHAT_HISTORY}_$userId"
+        val remaining = loadHistory(userId).filterNot { it.id == chatId }
+        try {
+            preferences.edit().apply {
+                if (remaining.isEmpty()) {
+                    remove(key)
+                } else {
+                    putString(key, gson.toJson(remaining, listType))
+                }
+            }.commit()
         } catch (_: Exception) {
         }
     }

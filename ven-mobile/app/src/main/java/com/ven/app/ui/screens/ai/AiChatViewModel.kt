@@ -8,7 +8,9 @@ import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiAiChat
 import com.ven.app.data.api.SessionManager
 import com.ven.app.data.preference.AiChatHistoryPreferences
+import com.ven.app.data.preference.AiChatHistoryStore
 import java.util.UUID
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,12 +18,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AiChatViewModel(
-    private val historyPrefs: AiChatHistoryPreferences? = try {
+    private val historyPrefs: AiChatHistoryStore? = try {
         AiChatHistoryPreferences.getInstance(VenApplication.instance)
     } catch (_: Exception) {
         null
     },
 ) : ViewModel() {
+
+    private var chatJob: Job? = null
 
     private val currentUserId: String
         get() = try {
@@ -72,9 +76,11 @@ class AiChatViewModel(
             )
         }
 
-        viewModelScope.launch {
+        chatJob = viewModelScope.launch {
             val result = ApiAiChat.tanya(currentInput)
             val rawResponse = result.getOrNull()
+
+            if (_uiState.value.currentChatId != activeChatId) return@launch
 
             val aiResponseText = if (rawResponse != null && !rawResponse.contains("belum dikonfigurasi")) {
                 rawResponse
@@ -126,6 +132,28 @@ class AiChatViewModel(
                     chatHistory = existingHistory,
                 )
             }
+        }
+    }
+
+    fun onDeleteConversation(chatId: String) {
+        val wasActive = _uiState.value.currentChatId == chatId
+        if (wasActive) chatJob?.cancel()
+
+        val remainingHistory = _uiState.value.chatHistory.filterNot { it.id == chatId }
+        try {
+            historyPrefs?.deleteConversation(currentUserId, chatId)
+        } catch (_: Exception) {
+        }
+
+        _uiState.update { current ->
+            current.copy(
+                chatHistory = remainingHistory,
+                currentChatId = if (wasActive) null else current.currentChatId,
+                messages = if (wasActive) emptyList() else current.messages,
+                inputText = if (wasActive) "" else current.inputText,
+                isAiTyping = if (wasActive) false else current.isAiTyping,
+                errorMessage = if (wasActive) null else current.errorMessage,
+            )
         }
     }
 
