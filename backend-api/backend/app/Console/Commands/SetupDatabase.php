@@ -20,7 +20,7 @@ class SetupDatabase extends Command
         $clientHost = env('VEN_DB_CLIENT_HOST', env('DB_CLIENT_HOST', 'localhost'));
 
         $rootUser = env('MYSQL_ROOT_USER', 'root');
-        $rootPass = (string) $this->secret("Password MySQL untuk ROOT '{$rootUser}' (kosongkan bila tidak ada)");
+        $rootPass = (string) (env('MYSQL_ROOT_PASSWORD') ?? $this->secret("Password MySQL untuk ROOT '{$rootUser}' (kosongkan bila tidak ada)"));
 
         if (! $db || ! preg_match('/^[A-Za-z0-9_]+$/', $db)) {
             $this->error('DB_DATABASE kosong atau berisi karakter tidak valid.');

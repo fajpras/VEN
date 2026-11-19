@@ -10,6 +10,7 @@ unity-export/
 # Backend API (Laravel)
 backend-api/backend/vendor/
 backend-api/backend/.env
+backend-api/backend/.env.docker
 backend-api/backend/node_modules/
 backend-api/backend/public/build/
 backend-api/backend/public/hot

@@ -87,6 +87,14 @@ php artisan storage:link
 ```powershell
 php artisan serve
 ```
+
+### Menjalankan dengan Docker dan mengukur kebutuhan VPS
+
+Docker Compose untuk Laravel + PHP-FPM + Nginx + MySQL tersedia di
+[`docker/README.md`](docker/README.md). Konfigurasi awal dituning untuk
+membandingkan VPS 2 vCPU/2 GB RAM, lengkap dengan `docker stats` dan load test
+k6 bertahap. Jangan memakai `.env` Laragon langsung; buat `.env.docker` dari
+`.env.docker.example` dan isi secret khusus Docker.
 Aplikasi berjalan secara lokal di: `http://127.0.0.1:8000`
 
 ### Menjalankan Task Scheduler (Cron Job Otomatis)
