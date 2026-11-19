@@ -42,7 +42,6 @@ class KaryaController extends Controller
     public function rekomendasi(Request $request)
     {
         $user = $request->user();
-        $page = $request->integer('page', 1);
         $perPage = min($request->integer('per_page', 12), 24);
         $excludeIds = array_filter(array_map('trim', explode(',', (string) $request->query('exclude', ''))));
         $refresh = $request->boolean('refresh', false);

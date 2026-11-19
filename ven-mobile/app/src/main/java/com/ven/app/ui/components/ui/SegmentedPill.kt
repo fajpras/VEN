@@ -1,4 +1,4 @@
-package com.ven.app.ui.components.ui
+﻿package com.ven.app.ui.components.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,7 +28,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
-import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
 enum class CreateContentType {
@@ -38,8 +37,8 @@ enum class CreateContentType {
 
 /**
  * SegmentedPill melayang untuk beralih antara alur Post dan Exhibit.
- * Sesuai spesifikasi DESIGN.md §6.1 & §8.13:
- * - Lebar ≈ 240-250dp, tinggi ≈ 50-54dp.
+ * Sesuai spesifikasi DESIGN.md Â§6.1 & Â§8.13:
+ * - Lebar â‰ˆ 240-250dp, tinggi â‰ˆ 50-54dp.
  * - Pill melayang, fill surface/bg + border subtle.
  * - Terpilih: teks tebal warna text, Tidak terpilih: textMuted.
  */

@@ -1,4 +1,4 @@
-package com.ven.app.ui.screens.create.exhibit
+﻿package com.ven.app.ui.screens.create.exhibit
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +24,6 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,7 +48,7 @@ import com.ven.app.ui.theme.VexTheme
 
 /**
  * Layar Pemilihan Template Ruang Pameran Virtual (New Exhibit - Langkah 1).
- * Sesuai spesifikasi DESIGN.md §8.14 & Wireframe Figma (node 4256-704):
+ * Sesuai spesifikasi DESIGN.md Â§8.14 & Wireframe Figma (node 4256-704):
  * - TopBar: X + "New Exhibit" (kiri)
  * - Daftar vertikal template: Small (9 Post), Medium (14 Post), Big (21 Post), Event (60 Post)
  * - Kartu pratinjau isometrik 3D ruang pameran berlatar grid gelap

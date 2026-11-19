@@ -1,4 +1,4 @@
-package com.ven.app.ui.screens.create.exhibit.editor.components
+﻿package com.ven.app.ui.screens.create.exhibit.editor.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,7 +36,6 @@ import com.ven.app.R
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
-import com.ven.app.ui.theme.BrandPurple
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
@@ -47,8 +46,8 @@ import com.ven.app.ui.theme.VexTheme
  *
  * Menampilkan:
  * 1. Checklist Syarat Penerbitan:
- *    - "title & description" (merah ✕ jika belum, hijau ✓ jika lengkap)
- *    - "a panel" (merah ✕ jika 0 panel, hijau ✓ jika minimal 1 panel terisi)
+ *    - "title & description" (merah âœ• jika belum, hijau âœ“ jika lengkap)
+ *    - "a panel" (merah âœ• jika 0 panel, hijau âœ“ jika minimal 1 panel terisi)
  * 2. Tombol CTA "Publish":
  *    - Disabled / pudar jika syarat belum terpenuhi
  *    - Ungu solid aktif jika kedua syarat terpenuhi
@@ -117,7 +116,7 @@ fun ExhibitMainBottomPanel(
 
 /**
  * Item checklist sesuai wireframe (Image 2):
- * Menampilkan ikon status lingkaran kecil (merah ✕ atau hijau ✓) dan teks berwarna sesuai status.
+ * Menampilkan ikon status lingkaran kecil (merah âœ• atau hijau âœ“) dan teks berwarna sesuai status.
  */
 @Composable
 private fun WireframeChecklistItem(
@@ -144,7 +143,7 @@ private fun WireframeChecklistItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        // Lingkaran Ikon Status (Merah ✕ atau Hijau ✓)
+        // Lingkaran Ikon Status (Merah âœ• atau Hijau âœ“)
         Box(
             modifier = Modifier
                 .size(18.dp)
@@ -161,7 +160,7 @@ private fun WireframeChecklistItem(
                 )
             } else {
                 Text(
-                    text = "✕",
+                    text = "âœ•",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 10.sp,

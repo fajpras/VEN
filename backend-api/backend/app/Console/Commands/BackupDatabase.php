@@ -3,8 +3,6 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use PDO;
-use Throwable;
 
 class BackupDatabase extends Command
 {
@@ -61,4 +59,3 @@ class BackupDatabase extends Command
         return self::SUCCESS;
     }
 }
-?>

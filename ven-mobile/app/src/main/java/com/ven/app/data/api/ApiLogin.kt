@@ -68,8 +68,9 @@ object ApiLogin {
                 kataSandi = kataSandi
             )
             val response = service.login(request)
-            if (response.isSuccessful && response.body()?.data != null) {
-                Result.success(response.body()!!.data!!)
+            val data = response.body()?.data
+            if (response.isSuccessful && data != null) {
+                Result.success(data)
             } else {
                 val errorMsg = ApiClient.parseError(response.errorBody()?.string())
                 Result.failure(Exception(errorMsg))
@@ -86,8 +87,9 @@ object ApiLogin {
                 accessToken = accessToken
             )
             val response = service.loginGoogle(request)
-            if (response.isSuccessful && response.body()?.data != null) {
-                Result.success(response.body()!!.data!!)
+            val data = response.body()?.data
+            if (response.isSuccessful && data != null) {
+                Result.success(data)
             } else {
                 val errorMsg = ApiClient.parseError(response.errorBody()?.string())
                 Result.failure(Exception(errorMsg))

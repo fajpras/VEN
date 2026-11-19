@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Throwable;
 
 class InitializeDatabase extends Command
 {
@@ -57,4 +56,3 @@ class InitializeDatabase extends Command
         return self::SUCCESS;
     }
 }
-?>

@@ -1,4 +1,4 @@
-package com.ven.app.ui.components.ui
+﻿package com.ven.app.ui.components.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,14 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
 /**
  * Label seksi/kategori grup menu Settings.
- * Sesuai DESIGN.md §6.1:
+ * Sesuai DESIGN.md Â§6.1:
  * - Teks [bodyMedium] dengan warna [VexTheme.colors.textMuted].
  */
 @Composable

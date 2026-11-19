@@ -1,4 +1,4 @@
-package com.ven.app.ui.components.ui
+﻿package com.ven.app.ui.components.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -21,9 +20,9 @@ import com.ven.app.ui.theme.VexTheme
 
 /**
  * Bottom Sheet modal untuk VEN (Virtual Exhibition).
- * Sesuai DESIGN.md §6.1:
+ * Sesuai DESIGN.md Â§6.1:
  * - Radius atas 28dp ([VexRadius.xl]).
- * - Handle bar abu-abu 40×4dp bentuk pill.
+ * - Handle bar abu-abu 40Ã—4dp bentuk pill.
  * - Warna kontainer [VexTheme.colors.surface].
  * - Warna scrim [VexTheme.colors.scrim].
  */

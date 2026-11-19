@@ -4,13 +4,8 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,8 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,20 +25,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.ven.app.R
-import com.ven.app.core.localization.AppStrings
-import com.ven.app.data.api.ApiClient
 import com.ven.app.data.api.ApiLogin
-import com.ven.app.data.api.ApiPencarian
 import com.ven.app.data.api.SessionManager
-import com.ven.app.util.DateFormatter
-import com.ven.app.util.UnityLauncher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import com.ven.app.data.preference.AppLanguage
 import com.ven.app.data.preference.ThemePreferences
 import com.ven.app.ui.components.feature.CreateOptionsBottomSheet
-import com.ven.app.ui.components.layout.AppScaffold
 import com.ven.app.ui.screens.ai.AiChatScreen
 import com.ven.app.ui.screens.auth.ForgotPasswordEvent
 import com.ven.app.ui.screens.auth.ForgotPasswordScreen
@@ -61,8 +46,8 @@ import com.ven.app.ui.screens.unity.UnityLoadingScreen
 import com.ven.app.ui.screens.create.post.CreatePostScreen
 import com.ven.app.ui.screens.explore.ExploreScreen
 import com.ven.app.ui.screens.explore.ExploreViewModel
-import com.ven.app.ui.screens.explore.PostsFeedItem
 import com.ven.app.ui.screens.explore.PostsFeedScreen
+import com.ven.app.ui.screens.explore.UserPostsFeedRoute
 import com.ven.app.ui.screens.home.HomeScreen
 import com.ven.app.ui.screens.home.HomeUiState
 import com.ven.app.ui.screens.home.HomeViewModel
@@ -88,7 +73,6 @@ import com.ven.app.ui.screens.settings.SettingsScreen
 import com.ven.app.ui.screens.settings.ThemeScreen
 import com.ven.app.ui.screens.settings.VerifyEmailRoute
 import com.ven.app.ui.screens.splash.SplashScreen
-import com.ven.app.ui.theme.VexTheme
 
 @Composable
 fun AppNavHost(showExplore: Boolean = false) {
@@ -334,14 +318,16 @@ fun AppNavHost(showExplore: Boolean = false) {
                         val finalTemplateId = template.unityTemplateId.ifBlank { template.id }
 
                         var resolvedBanner = latest.bannerUrl
-                        if (resolvedBanner.isBlank() && latest.bannerUri != null) {
-                            try {
-                                val cacheBanner = java.io.File(context.cacheDir, "exhibit_banner_preview.jpg")
-                                context.contentResolver.openInputStream(latest.bannerUri!!)?.use { input ->
-                                    cacheBanner.outputStream().use { output -> input.copyTo(output) }
-                                }
-                                resolvedBanner = cacheBanner.absolutePath
-                            } catch (_: Exception) {}
+                        if (resolvedBanner.isBlank()) {
+                            latest.bannerUri?.let { bannerUri ->
+                                try {
+                                    val cacheBanner = java.io.File(context.cacheDir, "exhibit_banner_preview.jpg")
+                                    context.contentResolver.openInputStream(bannerUri)?.use { input ->
+                                        cacheBanner.outputStream().use { output -> input.copyTo(output) }
+                                    }
+                                    resolvedBanner = cacheBanner.absolutePath
+                                } catch (_: Exception) {}
+                            }
                         }
 
                         navController.navigate(
@@ -448,90 +434,47 @@ fun AppNavHost(showExplore: Boolean = false) {
             val userId = backStackEntry.arguments?.getString("userId").orEmpty()
             val exploreFeed by exploreViewModel.uiState.collectAsStateWithLifecycle()
             val homeFeed by homeViewModel.uiState.collectAsStateWithLifecycle()
-            val profileViewModel: ProfileViewModel = viewModel()
-            val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
-
-            val apiPencarian = remember { ApiClient.createService(ApiPencarian::class.java) }
-            var userPosts by remember(userId) { mutableStateOf<List<PostsFeedItem>>(emptyList()) }
-            var isUserLoading by remember(userId) { mutableStateOf(false) }
-
-            val scope = rememberCoroutineScope()
-            val loadUserPosts: () -> Unit = {
-                if (userId.isNotBlank() && userId != "me") {
-                    scope.launch {
-                        isUserLoading = true
-                        try {
-                            val res = apiPencarian.getDetailPengguna(userId)
-                            if (res.isSuccessful) {
-                                val detail = res.body()?.data
-                                val mapped = detail?.karya?.map { k ->
-                                    val author = detail.pengguna?.namaPanggilan ?: detail.pengguna?.nama
-                                        ?: AppStrings.get(R.string.common_creator)
-                                    PostsFeedItem(
-                                        id = k.idKarya,
-                                        username = "@$author",
-                                        title = k.judul,
-                                        category = k.kategori?.nama
-                                            ?: AppStrings.get(R.string.common_artwork),
-                                        timestampText = DateFormatter.formatRelativeTime(k.createdAt),
-                                        description = k.deskripsi.orEmpty(),
-                                        imageUrl = k.fileUrl ?: k.file,
-                                        userId = detail.pengguna?.idPengguna,
-                                        userAvatarUrl = detail.pengguna?.fotoProfil,
-                                        pameranId = k.idPameran?.toString(),
-                                    )
-                                } ?: emptyList()
-                                userPosts = mapped
-                            }
-                        } catch (_: Exception) { }
-                        isUserLoading = false
-                    }
-                }
-            }
-
-            LaunchedEffect(userId) {
-                if (userId == "me") {
-                    profileViewModel.muat()
-                } else if (userId.isNotBlank()) {
-                    loadUserPosts()
-                }
-            }
-
             val finalPosts = when {
-                userId == "me" -> profileState.feedPosts
-                userId.isNotBlank() -> userPosts
+                userId.isNotBlank() -> emptyList()
                 else -> (exploreFeed.feedPosts + homeFeed.posts.map { it.toFeedItem() }).distinctBy { it.id }
             }
 
-            PostsFeedScreen(
-                posts = finalPosts,
-                isRefreshing = when {
-                    userId == "me" -> profileState.isLoading
-                    userId.isNotBlank() -> isUserLoading
-                    else -> exploreFeed.isRefreshing || homeFeed.isRefreshing
-                },
-                onRefresh = {
-                    when {
-                        userId == "me" -> profileViewModel.muat()
-                        userId.isNotBlank() -> loadUserPosts()
-                        else -> {
-                            exploreViewModel.muatUlang(filterSeen = true)
-                            homeViewModel.muatUlang(filterSeen = true)
-                        }
-                    }
-                },
-                onBackClick = { navController.popBackStack() },
-                onRequestMeetingClick = { id ->
-                    navController.navigate(Screen.RequestMeeting.createRoute(id))
-                },
-                onView3dClick = { id ->
-                    navController.navigate(Screen.ViewExhibit.createRoute(id))
-                },
-                initialPostId = postId.ifBlank { null },
-                onUserClick = { clickedUserId ->
-                    navController.navigate(Screen.UserProfile.createRoute(clickedUserId))
-                },
-            )
+            if (userId.isNotBlank()) {
+                UserPostsFeedRoute(
+                    userId = userId,
+                    initialPostId = postId.ifBlank { null },
+                    onBackClick = { navController.popBackStack() },
+                    onRequestMeetingClick = { id ->
+                        navController.navigate(Screen.RequestMeeting.createRoute(id))
+                    },
+                    onView3dClick = { id ->
+                        navController.navigate(Screen.ViewExhibit.createRoute(id))
+                    },
+                    onUserClick = { clickedUserId ->
+                        navController.navigate(Screen.UserProfile.createRoute(clickedUserId))
+                    },
+                )
+            } else {
+                PostsFeedScreen(
+                    posts = finalPosts,
+                    isRefreshing = exploreFeed.isRefreshing || homeFeed.isRefreshing,
+                    onRefresh = {
+                        exploreViewModel.muatUlang(filterSeen = true)
+                        homeViewModel.muatUlang(filterSeen = true)
+                    },
+                    onBackClick = { navController.popBackStack() },
+                    onRequestMeetingClick = { id ->
+                        navController.navigate(Screen.RequestMeeting.createRoute(id))
+                    },
+                    onView3dClick = { id ->
+                        navController.navigate(Screen.ViewExhibit.createRoute(id))
+                    },
+                    initialPostId = postId.ifBlank { null },
+                    onUserClick = { clickedUserId ->
+                        navController.navigate(Screen.UserProfile.createRoute(clickedUserId))
+                    },
+                )
+            }
         }
 
         composable(

@@ -1,4 +1,4 @@
-package com.ven.app.ui.screens.create.exhibit.editor.components
+﻿package com.ven.app.ui.screens.create.exhibit.editor.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -20,7 +19,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ven.app.R
 import com.ven.app.ui.icons.VexIcon
-import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.screens.create.exhibit.editor.ExhibitFurnitureCategory
 import com.ven.app.ui.screens.create.exhibit.editor.ExhibitFurnitureItem
 import com.ven.app.ui.screens.create.exhibit.editor.ExhibitFurnitureType
@@ -56,7 +53,7 @@ import com.ven.app.ui.theme.VexTheme
  * Menampilkan:
  * 1. 4 Tab Kategori: "Light", "Chair", "Plant", "Other" dengan indikator garis bawah aktif.
  * 2. Baris 3 Kartu Objek berbentuk rounded square yang dapat diklik untuk menambahkan objek ke ruangan.
- * 3. Indikator Paginasi Titik (• • •).
+ * 3. Indikator Paginasi Titik (â€¢ â€¢ â€¢).
  */
 @Composable
 fun ExhibitFurnitureBottomPanel(
@@ -146,7 +143,7 @@ fun ExhibitFurnitureBottomPanel(
                 }
             }
 
-            // Indikator Paginasi Titik (• • •)
+            // Indikator Paginasi Titik (â€¢ â€¢ â€¢)
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,

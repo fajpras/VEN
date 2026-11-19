@@ -74,6 +74,7 @@ class AuthController extends Controller
 
         if (! $pengguna || ! $pengguna->kata_sandi || ! Hash::check($validated['kata_sandi'], $pengguna->kata_sandi)) {
             if (! $pengguna) {
+                // Samakan waktu respons dengan kasus pengguna ditemukan agar tidak membocorkan keberadaan akun.
                 Hash::make($validated['kata_sandi']);
             }
 

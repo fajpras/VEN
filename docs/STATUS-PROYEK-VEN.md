@@ -4,7 +4,9 @@
 >
 > **Branch aktif:** `main`
 >
-> **Commit terakhir:** `4638982` — `style(mobile): restyle feed cards like an Instagram post` (commit ini: desain ulang halaman profil & perbaikan padding form edit profil)
+> **Commit terakhir:** `8d1a7ec` — `Merge branch 'main' of https://github.com/fajpras/ven` (HEAD saat verifikasi; perapian koding bersih pada sesi ini belum di-commit)
+>
+> **Perbaikan koding bersih (19 November 2026):** Seluruh aplikasi dirapikan tanpa mengubah perilaku fitur. Backend: penghapusan pencatatan OTP plaintext, 9 import tak terpakai, tag penutup PHP, variabel/komentar mati, dan penyatuan FQCN di `PameranController`. Android: penghapusan ~50 import tak terpakai, pembatasan logging `UnityBridge` hanya pada build debug, penghapusan seluruh operator `!!` (API, cache, navigasi), ekstraksi `sesiBerakhir` ke `util/SessionErrorExt.kt`, pemindahan alur feed pengguna ke `UserPostsFeedRoute.kt`, serta pemisahan 6 `Route` dari file `Screen.kt` menjadi file tersendiri. Verifikasi: **93/93 test backend** (454 assertion), **70/70 test Android**, build/test Android sukses, `git diff --check` bersih. Perapian ini masih berada di working tree (belum di-commit).
 >
 > **Perubahan terbaru:** Halaman profil ditata ulang mengikuti prinsip Konsistensi & Standar (Jakob's Law): kiri atas dikosongkan, username ditengah, tombol `+` dan menu (gear) dipindah ke kanan atas berdampingan; tab Posts/Exhibits dinaikkan ke bawah statistik; statistik disebar dengan `SpaceEvenly`; pill keahlian disatukan warnanya (`colors.primary`, tanpa bintang) dan dibungkus `FlowRow` agar tidak terpotong (bottom sheet disamakan); Email/Phone diberi `HorizontalDivider` dan affordance klik (`mailto:`/`tel:`) dengan ikon serta warna `primaryText`, ditambah tombol aksi Edit Profile & Share Profile. Form edit profil (`VexTextField` Boxed) diperbaiki: label lebih jelas, padding horizontal 24→16dp, field multiline tumbuh (`heightIn(min=100.dp)`) dengan align atas, jarak antar field 16→20dp. Resolusi 2 blok konflik merge di dokumen ini (ringkasan verifikasi Android & kendala prioritas tinggi) dengan mempertahankan hasil terverifikasi: build Android sukses, APK ~124,9 MB, 70/70 unit test. Kartu feed (`PostCard`) ditata ulang bergaya Instagram: avatar + username tebal dengan judul sebagai sub-judul, tombol aksi (Request Meeting, View 3D) dipindah ke bawah media tanpa latar lingkaran, caption jadi paragraf username + deskripsi, "see more" abu dan timestamp polos. Judul dibersihkan dari sisa markdown (`>`, `_`, `**`). Pill kategori dihapus dari kartu feed (`PostCard`), beserta parameter `category` dan import yang tak terpakai. `VexSkillChip` (dipakai ulang `VexTagChip` di profil & banner explore) dibuat lebih clean: latar tipis transparan dari warna kategori, teks & ikon memakai aksen warna kategori yang disesuaikan kontrasnya per tema, tanpa gradient/glow; tinggi 24→26dp. Penguatan keamanan aplikasi Android: token & data sesi kini terenkripsi AES-256-GCM via AndroidKeyStore (`SecurePrefs` + migrasi transparan `SessionManager`), logging HTTP level BODY hanya pada build debug, cleartext dimatikan untuk release (`network_security_config.xml` HTTPS-only; emulator tetap diizinkan pada src/debug), token dikecualikan dari cloud backup, kedua activity Unity tidak lagi `exported`, URL cleartext hardcode `10.0.2.2` dihapus dari kode, `proguard-rules.pro` disiapkan (minify masih nonaktif), cooldown 60 detik untuk kirim ulang OTP registrasi. Koreksi: fallback dummy data dihapus total dari jalur production (Schedule, History, Explore), `ScreenRouteTest` diperbaiki, tanggal awal Request Meeting kini dinamis (tidak lagi Sept 2026), pesan galat Request Meeting dilokalisasi, dead code dibersihkan (`com/ven/app/unity/UnityLauncher`, test template `com.example.venmobile`, warna template), `RegisterRoute` & `ProfileViewModel` dipindah ke file sendiri. Polish UI: tombol Outline adaptif tema, window background terang/gelap sesuai mode (tidak ada kilatan gelap di mode terang), Request Meeting memakai `VexTextArea` + indikator loading banner, warna hardcode dipindah ke token tema (`accentWarning`). **70 dari 70 unit test Android lulus.**
 >
@@ -22,7 +24,7 @@ Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang s
 |---|---|---|
 | Konfigurasi backend | `php artisan about` | ✅ Laravel 13.34.0, PHP 8.3.30, DB MySQL, storage link aktif |
 | Daftar route backend | `php artisan route:list` | ✅ 99 route terdaftar |
-| Test backend | `php artisan test` | ✅ **87 test — 87 lulus** (406 assertion) |
+| Test backend | `php artisan test` | ✅ **93 test — 93 lulus** (454 assertion), diverifikasi per grup: 87 test utama + 4 AI Chat + 2 Audit Backup/Restore |
 | Fallback galat API | `php artisan test --filter=PenanganKesalahanApiTest` | ✅ **9 test lulus** — 401, 403, 404, 405, 422, 500 tanpa kebocoran detail internal + redirect browser & JSON untuk klien API |
 | Halaman galat web | `GET /halaman-tidak-ada` | ✅ Blade 404 minimalis (tanpa kartu/dekorasi), mandiri (tanpa aset Vite), merek "Value Exhibition Network", respons `text/html`, tanpa tautan ke beranda |
 | Akar situs | `GET /` | ✅ HTTP **404** — panel admin tidak terekspos, tidak redirect ke login/beranda |
@@ -32,11 +34,12 @@ Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang s
 | Build Android | `.\gradlew.bat assembleDebug` | ✅ **BUILD SUCCESSFUL** |
 | Artefak APK | `app/build/outputs/apk/debug/app-debug.apk` | ✅ Ada, 124.950.674 byte (~124,9 MB) |
 | Test Android | `.\gradlew.bat testDebugUnitTest` | ✅ **70 test — 70 lulus** (2 test template `com.example.venmobile` dihapus; `ScreenRouteTest` diperbaiki) |
+| Audit & perapian koding bersih | `git diff --check` + build/test | ✅ Tidak ada `dd/dump`, `!!`, `TODO/FIXME`, import tak terpakai, atau logging debug di rilis;struktur `Route`/`Screen` dipisah sesuai konvensi |
 
 **Catatan lingkungan:** perintah `php` tidak tersedia di PATH. Gunakan path Laragon:
 
 ```powershell
-C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe artisan test
+C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe artisan test
 ```
 
 ---

@@ -3,10 +3,15 @@
 namespace App\Http\Controllers\Pengguna;
 
 use App\Http\Controllers\Controller;
+use App\Models\Kategori;
+use App\Models\Karya;
 use App\Models\Model3D;
+use App\Models\Objek;
 use App\Models\Pameran;
+use App\Models\PosisiObjek;
+use App\Services\LogSistem;
+use App\Services\ProfanityFilter;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -36,7 +41,6 @@ class PameranController extends Controller
     public function rekomendasi(Request $request)
     {
         $user = $request->user();
-        $page = $request->integer('page', 1);
         $perPage = min($request->integer('per_page', 8), 16);
 
         $userCategories = $user ? $user->kategori()->get() : collect();
@@ -196,7 +200,7 @@ class PameranController extends Controller
         ]);
 
         // 1. Validasi kata kasar (profanity check)
-        if (\App\Services\ProfanityFilter::containsProfanity($validated['title'], $validated['description'] ?? '')) {
+        if (ProfanityFilter::containsProfanity($validated['title'], $validated['description'] ?? '')) {
             return response()->json([
                 'message' => 'mengandung kata kasar',
             ], 422);
@@ -295,11 +299,11 @@ class PameranController extends Controller
                 'jenis' => 'privat',
             ]);
 
-            $defaultCategory = \App\Models\Kategori::first();
+            $defaultCategory = Kategori::first();
 
             if (!empty($items)) {
                 foreach ($items as $item) {
-                    $posisi = \App\Models\PosisiObjek::create([
+                    $posisi = PosisiObjek::create([
                         'posisi_x' => (float) ($item['x'] ?? 0.0),
                         'posisi_y' => (float) ($item['y'] ?? 0.0),
                         'posisi_z' => (float) ($item['z'] ?? 0.0),
@@ -320,7 +324,7 @@ class PameranController extends Controller
                     $itemPrefab = strtolower($item['prefabId'] ?? '');
                     $isItemPanel = ($itemSurface === 'wall') || str_contains($itemPrefab, 'panel') || str_contains($itemPrefab, 'poster') || str_contains($itemPrefab, 'frame');
 
-                    $objek = \App\Models\Objek::create([
+                    $objek = Objek::create([
                         'id_pameran' => $pameran->id_pameran,
                         'id_posisi' => $posisi->id_posisi,
                         'id_model' => $objekModel->id_model,
@@ -333,7 +337,7 @@ class PameranController extends Controller
                         $categoryId = !empty($item['categoryId']) ? (int) $item['categoryId'] : ($defaultCategory?->id_kategori ?? 1);
                         $fileUrl = !empty($item['contentUrl']) ? $item['contentUrl'] : 'karya/default_artwork.jpg';
 
-                        \App\Models\Karya::create([
+                        Karya::create([
                             'id_kategori' => $categoryId,
                             'id_pengguna' => $user->id_pengguna,
                             'id_pameran' => $pameran->id_pameran,
@@ -351,7 +355,7 @@ class PameranController extends Controller
         });
 
         // 3. Catat aktivitas ke LogKeamanan SETELAH commit selesai
-        \App\Services\LogSistem::keamanan(
+        LogSistem::keamanan(
             event: 'pameran_dipublikasi',
             pesan: 'Pameran berhasil dipublikasi',
             statusKode: 200,

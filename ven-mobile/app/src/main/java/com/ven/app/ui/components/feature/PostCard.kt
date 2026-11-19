@@ -1,4 +1,4 @@
-package com.ven.app.ui.components.feature
+﻿package com.ven.app.ui.components.feature
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
@@ -53,7 +53,6 @@ import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.theme.ThemeMode
-import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 

@@ -85,8 +85,9 @@ object ApiRegister {
                 otp = otp.trim()
             )
             val response = service.register(request)
-            if (response.isSuccessful && response.body()?.data != null) {
-                Result.success(response.body()!!.data!!)
+            val data = response.body()?.data
+            if (response.isSuccessful && data != null) {
+                Result.success(data)
             } else {
                 val errorMsg = ApiClient.parseError(response.errorBody()?.string())
                 Result.failure(Exception(errorMsg))
@@ -103,8 +104,9 @@ object ApiRegister {
                 accessToken = accessToken
             )
             val response = service.registerGoogle(request)
-            if (response.isSuccessful && response.body()?.data != null) {
-                Result.success(response.body()!!.data!!)
+            val data = response.body()?.data
+            if (response.isSuccessful && data != null) {
+                Result.success(data)
             } else {
                 val errorMsg = ApiClient.parseError(response.errorBody()?.string())
                 Result.failure(Exception(errorMsg))

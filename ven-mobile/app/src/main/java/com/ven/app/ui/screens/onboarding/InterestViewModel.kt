@@ -3,6 +3,7 @@ package com.ven.app.ui.screens.onboarding
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ven.app.data.api.ApiProfil
+import com.ven.app.util.isSessionExpired
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,7 +46,7 @@ class InterestViewModel : ViewModel() {
                                 .toSet(),
                             isLoading = false,
                             errorMessage = pesan,
-                            isSessionExpired = sesiBerakhir(pesan),
+                            isSessionExpired = pesan.isSessionExpired(),
                         )
                     }
                 }
@@ -55,7 +56,7 @@ class InterestViewModel : ViewModel() {
                         it.copy(
                             isLoading = false,
                             errorMessage = pesan,
-                            isSessionExpired = sesiBerakhir(pesan),
+                            isSessionExpired = pesan.isSessionExpired(),
                         )
                     }
                 }
@@ -100,16 +101,10 @@ class InterestViewModel : ViewModel() {
                         it.copy(
                             isSaving = false,
                             errorMessage = pesan,
-                            isSessionExpired = sesiBerakhir(pesan),
+                            isSessionExpired = pesan.isSessionExpired(),
                         )
                     }
                 }
         }
-    }
-
-    private fun sesiBerakhir(pesan: String?): Boolean {
-        val teks = pesan.orEmpty().lowercase()
-        return "unauthenticated" in teks || "tidak terautentikasi" in teks ||
-            "tidak_terautentikasi" in teks
     }
 }

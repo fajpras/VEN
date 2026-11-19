@@ -128,33 +128,6 @@ fun ChangePasswordScreen(
     }
 }
 
-/**
- * Menghubungkan [ChangePasswordScreen] dengan [ChangePasswordViewModel].
- */
-@Composable
-fun ChangePasswordRoute(
-    onBackClick: () -> Unit,
-    onSaved: () -> Unit,
-    viewModel: ChangePasswordViewModel = viewModel(),
-) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(state.isSuccess) {
-        if (state.isSuccess) {
-            onSaved()
-        }
-    }
-
-    ChangePasswordScreen(
-        state = state,
-        onCurrentPasswordChange = viewModel::onKataSandiSaatIniChange,
-        onNewPasswordChange = viewModel::onKataSandiChange,
-        onConfirmPasswordChange = viewModel::onKonfirmasiChange,
-        onBackClick = onBackClick,
-        onSubmitClick = viewModel::simpan,
-    )
-}
-
 // ---------------------------------------------------------
 // Previews
 // ---------------------------------------------------------

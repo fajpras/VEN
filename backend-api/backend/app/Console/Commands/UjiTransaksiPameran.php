@@ -125,10 +125,6 @@ class UjiTransaksiPameran extends Command
         $fileAwal = Storage::disk('public')->allFiles('pameran/banner');
         $logAwal = $this->idLogTerakhir();
 
-        // $this->info('KONDISI AWAL');
-        // $this->cetakSnapshot($this->snapshot($fileAwal, $logAwal));
-        // $this->newLine();
-
         try {
             if (in_array($skenario, ['both', 'commit'], true)) {
                 $this->jalankanCommit($fileAwal, $logAwal);

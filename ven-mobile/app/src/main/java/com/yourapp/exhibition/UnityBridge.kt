@@ -52,11 +52,11 @@ object UnityBridge {
                             if (BuildConfig.DEBUG) Log.i(TAG, "Fetched room DTO from backend for room $roomId")
                         }
                     } else {
-                        Log.w(TAG, "Backend room-dto returned HTTP ${conn.responseCode}")
+                        if (BuildConfig.DEBUG) Log.w(TAG, "Backend room-dto returned HTTP ${conn.responseCode}")
                     }
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "Failed to fetch room-dto from backend, using fallback: ${e.message}")
+                if (BuildConfig.DEBUG) Log.w(TAG, "Failed to fetch room-dto from backend, using fallback: ${e.message}")
             }
 
             if (json.isNullOrBlank()) {
@@ -68,7 +68,7 @@ object UnityBridge {
                     {"prefabId":"sculpture_01","position":{"x":2,"y":0,"z":0},"rotation":{"x":0,"y":-45,"z":0}},
                     {"prefabId":"bench_01","position":{"x":-2,"y":0,"z":0},"rotation":{"x":0,"y":90,"z":0}}
                 ]}"""
-                Log.i(TAG, "Delivering fallback RoomDto to Unity PlayBridge")
+                if (BuildConfig.DEBUG) Log.i(TAG, "Delivering fallback RoomDto to Unity PlayBridge")
             }
             UnityPlayer.UnitySendMessage("PlayBridge", "OnRoomData", json)
         }.start()
@@ -76,7 +76,7 @@ object UnityBridge {
 
     @JvmStatic
     fun openSchedule(roomId: String) {
-        Log.d(TAG, "Unity requested open schedule for room: $roomId")
+        if (BuildConfig.DEBUG) Log.d(TAG, "Unity requested open schedule for room: $roomId")
         onScheduleRequested?.invoke(roomId)
     }
 

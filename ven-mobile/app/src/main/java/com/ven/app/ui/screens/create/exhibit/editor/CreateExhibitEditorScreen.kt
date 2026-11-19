@@ -1,4 +1,4 @@
-package com.ven.app.ui.screens.create.exhibit.editor
+﻿package com.ven.app.ui.screens.create.exhibit.editor
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
@@ -39,19 +38,19 @@ import com.ven.app.ui.theme.VexTheme
  *    - Kanvas 3D Isometrik memenuhi area atas dengan indikator badge "X/9 panels" di kiri-bawah.
  *    - Tombol Back di kiri-atas dan 4 Tombol Alat Melayang di kanan-atas:
  *      (1) Aa (Details), (2) Panel (Karya), (3) Sofa (Furnitur), (4) Warna (Wall Color).
- *    - Panel Bawah: Checklist 2 kriteria ("title & description" dan "a panel") dengan status ✕ merah atau ✓ hijau,
+ *    - Panel Bawah: Checklist 2 kriteria ("title & description" dan "a panel") dengan status âœ• merah atau âœ“ hijau,
  *      serta tombol CTA "Publish" yang aktif jika kedua kriteria terpenuhi.
  * 2. Layar Details (Aa):
- *    - Header "Details" dengan tombol Centang (✓) di kanan-atas untuk simpan & kembali.
+ *    - Header "Details" dengan tombol Centang (âœ“) di kanan-atas untuk simpan & kembali.
  *    - Pratinjau banner thumbnail 16:9, bidang input Title, dan bidang input Description.
  * 3. Mode Panel Karya (Panels):
- *    - Kanvas 3D tetap terlihat di atas dengan tombol Centang (✓) di kanan-atas.
- *    - Panel Bawah: Tab "Poster" & "Video" dengan 3 kartu karya rounded square dan paginasi titik (• • •).
+ *    - Kanvas 3D tetap terlihat di atas dengan tombol Centang (âœ“) di kanan-atas.
+ *    - Panel Bawah: Tab "Poster" & "Video" dengan 3 kartu karya rounded square dan paginasi titik (â€¢ â€¢ â€¢).
  * 4. Mode Furnitur (Objects):
- *    - Kanvas 3D dengan badge "X/9 objects" dan tombol Centang (✓) di kanan-atas.
+ *    - Kanvas 3D dengan badge "X/9 objects" dan tombol Centang (âœ“) di kanan-atas.
  *    - Panel Bawah: 4 Tab ("Light", "Chair", "Plant", "Other") dengan 3 kartu objek dan paginasi titik.
  * 5. Mode Warna (Color):
- *    - Kanvas 3D berubah warna dinding secara real-time dengan tombol Centang (✓) di kanan-atas.
+ *    - Kanvas 3D berubah warna dinding secara real-time dengan tombol Centang (âœ“) di kanan-atas.
  *    - Panel Bawah: Judul "Color" dan 12 lingkaran warna terbagi dalam 2 baris x 6 kolom.
  */
 @Composable

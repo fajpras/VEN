@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.ven.app.data.api.ApiProfil
 import com.ven.app.data.api.models.KategoriModel
 import com.ven.app.data.api.models.UserModel
+import com.ven.app.util.isSessionExpired
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -51,7 +52,7 @@ class ProfileSettingsViewModel : ViewModel() {
                     it.copy(
                         isLoading = false,
                         errorMessage = pesan,
-                        isSessionExpired = sesiBerakhir(pesan),
+                        isSessionExpired = pesan.isSessionExpired(),
                     )
                 }
                 return@launch
@@ -66,7 +67,7 @@ class ProfileSettingsViewModel : ViewModel() {
                         selectedIds = emptySet(),
                         isLoading = false,
                         errorMessage = pesan,
-                        isSessionExpired = sesiBerakhir(pesan),
+                        isSessionExpired = pesan.isSessionExpired(),
                     )
                 }
                 return@launch
@@ -104,7 +105,7 @@ class ProfileSettingsViewModel : ViewModel() {
                     it.copy(
                         isSaving = false,
                         errorMessage = pesan,
-                        isSessionExpired = sesiBerakhir(pesan),
+                        isSessionExpired = pesan.isSessionExpired(),
                     )
                 }
                 return@launch
@@ -122,7 +123,7 @@ class ProfileSettingsViewModel : ViewModel() {
                         it.copy(
                             isSaving = false,
                             errorMessage = pesan,
-                            isSessionExpired = sesiBerakhir(pesan),
+                            isSessionExpired = pesan.isSessionExpired(),
                         )
                     }
                     return@launch
@@ -162,16 +163,10 @@ class ProfileSettingsViewModel : ViewModel() {
                     it.copy(
                         isUploadingPhoto = false,
                         errorMessage = pesan,
-                        isSessionExpired = sesiBerakhir(pesan),
+                        isSessionExpired = pesan.isSessionExpired(),
                     )
                 }
             }
         }
-    }
-
-    private fun sesiBerakhir(pesan: String?): Boolean {
-        val teks = pesan.orEmpty().lowercase()
-        return "unauthenticated" in teks || "tidak terautentikasi" in teks ||
-            "tidak_terautentikasi" in teks
     }
 }

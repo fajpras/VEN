@@ -12,7 +12,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class KaryaDanPameranSeeder extends Seeder
 {

@@ -72,20 +72,21 @@ object ImageCacheManager {
 
         memoryCache.get(memKey)?.let { return it }
 
-        var deferred: CompletableDeferred<Bitmap?>? = null
         var isInitiator = false
-
-        mutex.withLock {
-            deferred = inFlightRequests[memKey]
-            if (deferred == null) {
-                deferred = CompletableDeferred()
-                inFlightRequests[memKey] = deferred!!
+        val deferred = mutex.withLock {
+            val existing = inFlightRequests[memKey]
+            if (existing != null) {
+                existing
+            } else {
+                val created = CompletableDeferred<Bitmap?>()
+                inFlightRequests[memKey] = created
                 isInitiator = true
+                created
             }
         }
 
         if (!isInitiator) {
-            return deferred!!.await()
+            return deferred.await()
         }
 
         return try {
@@ -113,10 +114,10 @@ object ImageCacheManager {
                 }
                 bmp
             }
-            deferred!!.complete(result)
+            deferred.complete(result)
             result
         } catch (e: Exception) {
-            deferred!!.complete(null)
+            deferred.complete(null)
             null
         } finally {
             inFlightRequests.remove(memKey)

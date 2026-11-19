@@ -1,9 +1,7 @@
-package com.ven.app.ui.screens.settings
+﻿package com.ven.app.ui.screens.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -27,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ven.app.R
 import com.ven.app.ui.components.layout.VexTopBar
@@ -41,7 +37,7 @@ import kotlinx.coroutines.delay
 
 /**
  * Halaman Verifikasi Email melalui OTP.
- * Sesuai wireframe `Wireframe - Setting Email-1.png` dan DESIGN.md §8.9:
+ * Sesuai wireframe `Wireframe - Setting Email-1.png` dan DESIGN.md Â§8.9:
  * - Label "OTP".
  * - 6 kotak [OtpInput] (konsisten dengan arsitektur backend).
  * - Fitur resend dengan hitung mundur cooldown.
@@ -169,34 +165,6 @@ fun VerifyEmailScreen(
             }
         }
     }
-}
-
-/**
- * Menghubungkan [VerifyEmailScreen] dengan [ChangeEmailViewModel] yang dibagikan
- * dengan [ChangeEmailRoute]. Setelah verifikasi sukses, memicu [onVerified].
- */
-@Composable
-fun VerifyEmailRoute(
-    viewModel: ChangeEmailViewModel,
-    onBackClick: () -> Unit,
-    onVerified: () -> Unit,
-) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(state.isSuccess) {
-        if (state.isSuccess) {
-            onVerified()
-        }
-    }
-
-    VerifyEmailScreen(
-        email = state.emailBaru,
-        state = state,
-        onOtpChange = viewModel::onOtpChange,
-        onVerifyClick = viewModel::gantiEmail,
-        onResendClick = viewModel::kirimUlangOtp,
-        onBackClick = onBackClick,
-    )
 }
 
 // ---------------------------------------------------------

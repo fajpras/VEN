@@ -1,4 +1,4 @@
-package com.ven.app.ui.screens.create.exhibit.editor.components
+﻿package com.ven.app.ui.screens.create.exhibit.editor.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,7 +36,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,7 +57,7 @@ import com.ven.app.ui.theme.VexTheme
  * Menampilkan:
  * 1. Tab Navigasi: "Poster" dan "Video" dengan indikator garis bawah aktif.
  * 2. Baris 3 Kartu Karya berbentuk rounded square yang dapat langsung diklik untuk assign / unassign.
- * 3. Indikator Paginasi Titik (• • •).
+ * 3. Indikator Paginasi Titik (â€¢ â€¢ â€¢).
  */
 @Composable
 fun ExhibitPanelsBottomPanel(
@@ -142,7 +140,7 @@ fun ExhibitPanelsBottomPanel(
                 }
             }
 
-            // Indikator Paginasi Titik (• • •)
+            // Indikator Paginasi Titik (â€¢ â€¢ â€¢)
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,

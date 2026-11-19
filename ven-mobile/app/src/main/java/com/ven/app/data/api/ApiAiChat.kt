@@ -35,8 +35,9 @@ object ApiAiChat {
     suspend fun tanya(pertanyaan: String): Result<String> {
         return try {
             val response = service.tanyaAi(AiChatRequest(pertanyaan = pertanyaan.trim()))
-            if (response.isSuccessful && response.body()?.data?.jawaban != null) {
-                Result.success(response.body()!!.data!!.jawaban!!)
+            val jawaban = response.body()?.data?.jawaban
+            if (response.isSuccessful && jawaban != null) {
+                Result.success(jawaban)
             } else if (response.code() == 429) {
                 Result.failure(Exception("Batas permintaan tercapai. Silakan coba beberapa saat lagi."))
             } else {

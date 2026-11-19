@@ -1,4 +1,4 @@
-package com.ven.app.ui.screens.ai.components
+﻿package com.ven.app.ui.screens.ai.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ven.app.R
 import com.ven.app.ui.icons.VexIcon
@@ -37,7 +36,7 @@ import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
 /**
- * Konten Drawer Laci Riwayat Percakapan AI (DESIGN.md §8.12.5).
+ * Konten Drawer Laci Riwayat Percakapan AI (DESIGN.md Â§8.12.5).
  * Sesuai wireframe `Wireframe - AI Chat-2.png`:
  * - Lebar laci: 300dp (VexSize.drawerWidth).
  * - Latar Belakang: Warna dasar #1F1F1F (colors.bg).

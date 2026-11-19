@@ -1,4 +1,4 @@
-package com.ven.app.ui.screens.auth
+﻿package com.ven.app.ui.screens.auth
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -29,14 +29,12 @@ import com.ven.app.ui.components.ui.VexPasswordField
 import com.ven.app.ui.components.ui.VexTextField
 import com.ven.app.ui.components.ui.VexTextFieldVariant
 import com.ven.app.ui.theme.ThemeMode
-import com.ven.app.ui.theme.VexRadius
-import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
 /**
  * Layar Login Aplikasi VEN (Virtual Exhibition).
- * Sesuai spesifikasi DESIGN.md §8.2 (Figma node 3946:17).
+ * Sesuai spesifikasi DESIGN.md Â§8.2 (Figma node 3946:17).
  */
 @Composable
 fun LoginScreen(
@@ -148,34 +146,6 @@ fun LoginScreen(
                 )
             }
         },
-    )
-}
-
-@Composable
-fun LoginRoute(
-    onNavigateToHome: () -> Unit,
-    onNavigateToOnboarding: () -> Unit,
-    onNavigateToRegister: () -> Unit,
-    onForgotPassword: () -> Unit,
-    viewModel: LoginViewModel = viewModel(),
-) {
-    val context = LocalContext.current
-    val onAuthenticated: (Boolean) -> Unit = { needsOnboarding ->
-        if (needsOnboarding) {
-            onNavigateToOnboarding()
-        } else {
-            onNavigateToHome()
-        }
-    }
-
-    LoginScreen(
-        state = viewModel.state,
-        onIdentifierChange = viewModel::onIdentifierChange,
-        onPasswordChange = viewModel::onPasswordChange,
-        onLoginClick = { viewModel.login(context, onAuthenticated) },
-        onForgotPasswordClick = onForgotPassword,
-        onGoogleClick = { viewModel.loginWithGoogle(context, onAuthenticated) },
-        onRegisterClick = onNavigateToRegister,
     )
 }
 

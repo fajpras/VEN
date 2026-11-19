@@ -40,10 +40,6 @@ final class LayananOtp
 
         $this->kirimEmail($otp, $tujuan, $email, $kode);
 
-        if (app()->environment('local')) {
-            \Illuminate\Support\Facades\Log::info("Kode OTP [{$tujuan->value}] untuk {$email}: {$kode}");
-        }
-
         LogSistem::keamanan('otp_terbit', $tujuan->value, 200, $idPengguna);
     }
 
