@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\LogAktivitas;
+use App\Support\AdminListOptions;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
@@ -14,7 +15,8 @@ class AdminLogController extends Controller
     public function index(Request $request): View
     {
         $cari = $request->query('cari');
-        $perPage = (int) $request->query('per_page', 5);
+        $perPage = AdminListOptions::perPage($request);
+        $viewMode = AdminListOptions::viewMode($request);
 
         try {
             $logs = LogAktivitas::query()
@@ -104,6 +106,8 @@ class AdminLogController extends Controller
             );
         }
 
-        return view('admin.logs.index', compact('logs'));
+        $perPageOptions = AdminListOptions::PER_PAGE_OPTIONS;
+
+        return view('admin.logs.index', compact('logs', 'viewMode', 'perPage', 'perPageOptions'));
     }
 }

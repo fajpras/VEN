@@ -71,28 +71,46 @@
         </div>
     </form>
 
-    {{-- 2-Column Responsive Card Grid --}}
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        @forelse ($karya as $post)
-            <div class="flex flex-col sm:flex-row gap-6 p-4 rounded-2xl bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-900/40 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-zinc-800">
-                {{-- Portrait Poster Thumbnail --}}
-                <div class="w-full sm:w-[170px] h-[230px] flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800">
-                    <img src="{{ $post->file_url ?? $post->thumbnail_url ?? 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%203%204%22%3E%3Crect%20width=%223%22%20height=%224%22%20fill=%22%23E5E7EB%22/%3E%3C/svg%3E' }}"
-                         alt="{{ $post->judul }}"
-                         class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
-                </div>
+    @include('admin.layouts.list-controls')
 
-                {{-- Post Content & Actions --}}
-                <div class="flex flex-col justify-between flex-1 py-1">
-                    <div>
-                        <h3 class="text-lg font-semibold text-[#0F172A] dark:text-white leading-snug">{{ $post->judul }}</h3>
-                        <p class="text-sm font-medium text-[#94A3B8] dark:text-[#71717A] mt-1">{{ $post->pengguna->nama_panggilan ?? '—' }}</p>
-                        <p class="text-sm text-[#0F172A] dark:text-[#D4D4D8] mt-4 line-clamp-3 leading-relaxed">
-                            {{ $post->deskripsi }}
-                        </p>
+    @if ($viewMode === 'list')
+        {{-- List Rows --}}
+        <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
+            @forelse ($karya as $post)
+                <div class="py-3 flex items-center gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
+                    {{-- Thumbnail --}}
+                    <div class="w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800">
+                        <img src="{{ $post->file_url ?? $post->thumbnail_url ?? 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%203%204%22%3E%3Crect%20width=%223%22%20height=%224%22%20fill=%22%23E5E7EB%22/%3E%3C/svg%3E' }}"
+                             alt="{{ $post->judul }}"
+                             class="w-full h-full object-cover">
                     </div>
 
-                    <div class="pt-4">
+                    {{-- Title --}}
+                    <div class="flex-1 min-w-0">
+                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">title</span>
+                        <span class="block text-sm font-semibold text-[#0F172A] dark:text-white truncate">{{ $post->judul }}</span>
+                    </div>
+
+                    {{-- Author --}}
+                    <div class="min-w-[120px]">
+                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">author</span>
+                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $post->pengguna->nama_panggilan ?? '—' }}</span>
+                    </div>
+
+                    {{-- Category --}}
+                    <div class="min-w-[120px]">
+                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">category</span>
+                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ $post->kategori->kategori ?? $post->kategori->nama_kategori ?? '—' }}</span>
+                    </div>
+
+                    {{-- Created --}}
+                    <div class="min-w-[80px]">
+                        <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium leading-none mb-1">created at</span>
+                        <span class="text-sm font-medium text-[#0F172A] dark:text-white">{{ ! empty($post->created_at) ? $post->created_at->format('d/m/y') : '—' }}</span>
+                    </div>
+
+                    {{-- Action --}}
+                    <div class="flex items-center">
                         <button type="button"
                                 onclick="openDeleteModal('{{ $post->id_karya }}', '{{ addslashes($post->judul) }}')"
                                 class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
@@ -100,13 +118,50 @@
                         </button>
                     </div>
                 </div>
-            </div>
-        @empty
-            <div class="col-span-full py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
-                No artwork posts found.
-            </div>
-        @endforelse
-    </div>
+            @empty
+                <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
+                    No artwork posts found.
+                </div>
+            @endforelse
+        </div>
+    @else
+        {{-- 2-Column Responsive Card Grid --}}
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            @forelse ($karya as $post)
+                <div class="flex flex-col sm:flex-row gap-6 p-4 rounded-2xl bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-900/40 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-zinc-800">
+                    {{-- Portrait Poster Thumbnail --}}
+                    <div class="w-full sm:w-[170px] h-[230px] flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800">
+                        <img src="{{ $post->file_url ?? $post->thumbnail_url ?? 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%203%204%22%3E%3Crect%20width=%223%22%20height=%224%22%20fill=%22%23E5E7EB%22/%3E%3C/svg%3E' }}"
+                             alt="{{ $post->judul }}"
+                             class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                    </div>
+
+                    {{-- Post Content & Actions --}}
+                    <div class="flex flex-col justify-between flex-1 py-1">
+                        <div>
+                            <h3 class="text-lg font-semibold text-[#0F172A] dark:text-white leading-snug">{{ $post->judul }}</h3>
+                            <p class="text-sm font-medium text-[#94A3B8] dark:text-[#71717A] mt-1">{{ $post->pengguna->nama_panggilan ?? '—' }}</p>
+                            <p class="text-sm text-[#0F172A] dark:text-[#D4D4D8] mt-4 line-clamp-3 leading-relaxed">
+                                {{ $post->deskripsi }}
+                            </p>
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="button"
+                                    onclick="openDeleteModal('{{ $post->id_karya }}', '{{ addslashes($post->judul) }}')"
+                                    class="h-9 px-6 rounded-full bg-[#FF0000] text-white font-semibold text-xs tracking-wide hover:bg-red-600 transition-colors cursor-pointer">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="col-span-full py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
+                    No artwork posts found.
+                </div>
+            @endforelse
+        </div>
+    @endif
 
     @if ($karya instanceof \Illuminate\Pagination\LengthAwarePaginator)
         {{ $karya->withQueryString()->links('admin.layouts.pagination') }}

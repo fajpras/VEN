@@ -19,37 +19,83 @@
         </div>
     </form>
 
-    {{-- Activity Log List Rows --}}
-    <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
-        @forelse ($logs as $log)
-            <div class="py-3 flex items-center justify-between gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
-                {{-- Action Description --}}
-                <div class="flex-1 pr-4">
-                    <p class="text-sm font-normal text-[#0F172A] dark:text-white leading-relaxed">
-                        {{ $log->pesan ?? $log->deskripsi ?? 'Admin action performed on system' }}
-                    </p>
-                </div>
+    @include('admin.layouts.list-controls')
 
-                {{-- Date --}}
-                <div class="text-xs font-medium text-[#94A3B8] dark:text-[#71717A] min-w-[70px] text-right">
-                    {{ $log->waktu ? $log->waktu->format('d/m/y') : ($log->created_at ? $log->created_at->format('d/m/y') : '—') }}
-                </div>
+    @if ($viewMode === 'list')
+        {{-- Activity Log List Rows --}}
+        <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
+            @forelse ($logs as $log)
+                <div class="py-3 flex items-center justify-between gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
+                    {{-- Action Description --}}
+                    <div class="flex-1 pr-4">
+                        <p class="text-sm font-normal text-[#0F172A] dark:text-white leading-relaxed">
+                            {{ $log->pesan ?? $log->deskripsi ?? 'Admin action performed on system' }}
+                        </p>
+                    </div>
 
-                {{-- Detail Link (Purple) --}}
-                <div class="min-w-[60px] text-right">
-                    <button type="button"
-                            onclick="openDetailModal({{ json_encode($log) }})"
-                            class="text-sm font-medium text-[#BA18F5] hover:text-[#9333EA] transition-colors cursor-pointer">
-                        Detail
-                    </button>
+                    {{-- Date --}}
+                    <div class="text-xs font-medium text-[#94A3B8] dark:text-[#71717A] min-w-[70px] text-right">
+                        {{ $log->waktu ? $log->waktu->format('d/m/y') : ($log->created_at ? $log->created_at->format('d/m/y') : '—') }}
+                    </div>
+
+                    {{-- Detail Link (Purple) --}}
+                    <div class="min-w-[60px] text-right">
+                        <button type="button"
+                                onclick="openDetailModal({{ json_encode($log) }})"
+                                class="text-sm font-medium text-[#BA18F5] hover:text-[#9333EA] transition-colors cursor-pointer">
+                            Detail
+                        </button>
+                    </div>
                 </div>
-            </div>
-        @empty
-            <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
-                No activity logs recorded.
-            </div>
-        @endforelse
-    </div>
+            @empty
+                <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
+                    No activity logs recorded.
+                </div>
+            @endforelse
+        </div>
+    @else
+        {{-- Activity Log Card Grid --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            @forelse ($logs as $log)
+                <div class="flex flex-col rounded-2xl p-5 gap-3 bg-white dark:bg-[#1E1E20] border border-[#E5E7EB] dark:border-[#2D2D30] hover:border-[#BA18F5]/50 transition-colors">
+                    <div class="p-3 bg-purple-50 dark:bg-purple-950/20 rounded-xl border border-purple-100 dark:border-purple-900/40">
+                        <p class="text-sm font-medium text-[#0F172A] dark:text-white leading-relaxed line-clamp-4">
+                            {{ $log->pesan ?? $log->deskripsi ?? 'Admin action performed on system' }}
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A]">administrator</span>
+                            <span class="font-medium text-[#0F172A] dark:text-white truncate block">{{ $log->pengguna->nama ?? '—' }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A]">timestamp</span>
+                            <span class="font-medium text-[#0F172A] dark:text-white">{{ $log->waktu ? $log->waktu->format('d/m/y') : ($log->created_at ? $log->created_at->format('d/m/y') : '—') }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A]">entity</span>
+                            <span class="font-medium text-[#0F172A] dark:text-white truncate block">{{ $log->entitas ?? $log->tipe_entitas ?? '—' }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-[#94A3B8] dark:text-[#71717A]">action</span>
+                            <span class="font-medium text-[#0F172A] dark:text-white truncate block">{{ $log->aksi ?? '—' }}</span>
+                        </div>
+                    </div>
+                    <div class="pt-2 mt-auto">
+                        <button type="button"
+                                onclick="openDetailModal({{ json_encode($log) }})"
+                                class="h-9 w-full rounded-full bg-[#BA18F5] text-white font-semibold text-xs hover:opacity-90 transition-opacity cursor-pointer">
+                            Detail
+                        </button>
+                    </div>
+                </div>
+            @empty
+                <div class="col-span-full py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
+                    No activity logs recorded.
+                </div>
+            @endforelse
+        </div>
+    @endif
 
     @if ($logs instanceof \Illuminate\Pagination\LengthAwarePaginator)
         {{ $logs->withQueryString()->links('admin.layouts.pagination') }}

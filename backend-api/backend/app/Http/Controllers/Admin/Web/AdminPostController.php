@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Karya;
 use App\Models\Kategori;
+use App\Support\AdminListOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -16,7 +17,8 @@ class AdminPostController extends Controller
     {
         $cari = $request->query('cari');
         $kategori = $request->query('kategori');
-        $perPage = (int) $request->query('per_page', 4);
+        $perPage = AdminListOptions::perPage($request);
+        $viewMode = AdminListOptions::viewMode($request);
 
         try {
             $karya = Karya::query()
@@ -109,7 +111,9 @@ class AdminPostController extends Controller
 
         $kategoriList = $kategoriList ?? ['Internet of Things', 'Virtual Reality', 'Artificial Intelligence', 'Game Development', 'Graphic Design'];
 
-        return view('admin.posts.index', compact('karya', 'kategoriList'));
+        $perPageOptions = AdminListOptions::PER_PAGE_OPTIONS;
+
+        return view('admin.posts.index', compact('karya', 'kategoriList', 'viewMode', 'perPage', 'perPageOptions'));
     }
 
     public function destroy(string $id): RedirectResponse
