@@ -117,11 +117,7 @@ fun VexButton(
             .background(bgColor)
             .then(
                 if (variant == VexButtonVariant.Outline) {
-<<<<<<< HEAD
                     Modifier.border(1.dp, Color.Black, buttonShape)
-=======
-                    Modifier.border(1.dp, colors.border, RoundedCornerShape(VexRadius.full))
->>>>>>> 0a6fc129fabb66ad63455a77f3013deb110cbb14
                 } else {
                     Modifier
                 }

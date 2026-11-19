@@ -1,14 +1,5 @@
 # Status Proyek VEN — Daftar Modul, Verifikasi, dan Kendala
 
-<<<<<<< HEAD
-> **Tanggal verifikasi:** 19 November 2026 (perubahan Auth; verifikasi Android terblokir NDK Unity)
->
-> **Branch aktif:** `main`
->
-> **Commit terakhir:** `ec8980d` (HEAD saat perubahan UI Auth belum di-commit)
->
-> **Perubahan terbaru:** enam field Login/Register menggunakan varian Boxed berlabel; tombol Login, Register, Google, dan Send OTP pada alur Auth memakai radius Boxed yang sama. Perubahan tampilan belum terverifikasi melalui build karena NDK Unity tidak valid — 19 November 2026.
-=======
 > **Tanggal verifikasi:** 19 November 2026
 >
 > **Branch aktif:** `main`
@@ -16,7 +7,6 @@
 > **Commit terakhir:** `6772ce3` — `fix(build): update NDK toolchain path and add error logging for compilation failures` (commit berikutnya memuat penguatan keamanan & polish UI mobile)
 >
 > **Perubahan terbaru:** Penguatan keamanan aplikasi Android: token & data sesi kini terenkripsi AES-256-GCM via AndroidKeyStore (`SecurePrefs` + migrasi transparan `SessionManager`), logging HTTP level BODY hanya pada build debug, cleartext dimatikan untuk release (`network_security_config.xml` HTTPS-only; emulator tetap diizinkan pada src/debug), token dikecualikan dari cloud backup, kedua activity Unity tidak lagi `exported`, URL cleartext hardcode `10.0.2.2` dihapus dari kode, `proguard-rules.pro` disiapkan (minify masih nonaktif), cooldown 60 detik untuk kirim ulang OTP registrasi. Koreksi: fallback dummy data dihapus total dari jalur production (Schedule, History, Explore), `ScreenRouteTest` diperbaiki, tanggal awal Request Meeting kini dinamis (tidak lagi Sept 2026), pesan galat Request Meeting dilokalisasi, dead code dibersihkan (`com/ven/app/unity/UnityLauncher`, test template `com.example.venmobile`, warna template), `RegisterRoute` & `ProfileViewModel` dipindah ke file sendiri. Polish UI: tombol Outline adaptif tema, window background terang/gelap sesuai mode (tidak ada kilatan gelap di mode terang), Request Meeting memakai `VexTextArea` + indikator loading banner, warna hardcode dipindah ke token tema (`accentWarning`). **70 dari 70 unit test Android lulus.**
->>>>>>> 0a6fc129fabb66ad63455a77f3013deb110cbb14
 >
 > **Lingkungan:** Windows + Laragon, PHP 8.3.30, Laravel 13.34.0, MySQL, Android Gradle 9.6
 
