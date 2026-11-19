@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +30,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -92,7 +94,9 @@ fun VexTextField(
         if (variant == VexTextFieldVariant.Boxed && label.isNotEmpty()) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium,
+                ),
                 color = colors.text,
                 modifier = Modifier.padding(bottom = VexSpace.s2),
             )
@@ -110,17 +114,28 @@ fun VexTextField(
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = textColor),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(VexSize.control)
+                .then(
+                    if (!singleLine && variant == VexTextFieldVariant.Boxed) {
+                        Modifier.heightIn(min = 100.dp)
+                    } else {
+                        Modifier.height(VexSize.control)
+                    }
+                )
                 .then(borderModifier)
                 .clip(shape)
                 .background(bgColor)
                 .onFocusChanged { isFocused = it.isFocused },
             decorationBox = { innerTextField ->
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = VexSpace.s6),
+                        .padding(
+                            start = VexSpace.s4,
+                            end = VexSpace.s4,
+                            top = if (singleLine) 0.dp else VexSpace.s3,
+                            bottom = if (singleLine) 0.dp else VexSpace.s3,
+                        ),
                 ) {
                     Box(modifier = Modifier.weight(1f)) {
                         if (value.isEmpty()) {

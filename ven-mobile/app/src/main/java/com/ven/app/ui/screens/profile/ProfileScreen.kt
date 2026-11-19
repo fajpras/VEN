@@ -1,6 +1,8 @@
 package com.ven.app.ui.screens.profile
 
+import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,7 +24,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -32,6 +36,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,9 +54,9 @@ import com.ven.app.ui.components.ui.VexBottomSheet
 import com.ven.app.ui.components.ui.VexCounterChip
 import com.ven.app.ui.components.ui.VexIconTabs
 import com.ven.app.ui.components.ui.VexSkillChip
+import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.navigation.BottomNavTab
-import com.ven.app.ui.theme.CategoryColorMap
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexAspect
 import com.ven.app.ui.theme.VexSpace
@@ -67,9 +73,12 @@ fun ProfileScreen(
     onSkillSheetToggle: (Boolean) -> Unit,
     onMediaClick: (MediaGridItem) -> Unit,
     modifier: Modifier = Modifier,
+    onEditProfileClick: () -> Unit = {},
     onRetryClick: () -> Unit = {},
 ) {
     val colors = VexTheme.colors
+    val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
     val profile = uiState.profile
 
     AppScaffold(
@@ -183,7 +192,8 @@ fun ProfileScreen(
 
                                     // Stat Block: posts & exhibits
                                     Row(
-                                        horizontalArrangement = Arrangement.spacedBy(VexSpace.s8),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly,
                                     ) {
                                         Column {
                                             Text(
@@ -220,19 +230,37 @@ fun ProfileScreen(
 
                             Spacer(modifier = Modifier.height(VexSpace.s5))
 
-                            // Baris 2: Skill Chips (Maks 4 + chip "+N")
-                            Row(
+                            VexIconTabs(
+                                tabs = listOf(ProfileTab.Posts, ProfileTab.Exhibits),
+                                selectedTab = uiState.selectedTab,
+                                onTabSelected = onProfileTabChange,
+                                iconFor = { tab, isSelected ->
+                                    when (tab) {
+                                        ProfileTab.Posts -> if (isSelected) VexIcons.Tab.Posts.filled else VexIcons.Tab.Posts.outline
+                                        ProfileTab.Exhibits -> if (isSelected) VexIcons.Tab.Exhibits.filled else VexIcons.Tab.Exhibits.outline
+                                    }
+                                },
+                                contentDescriptionFor = { tab ->
+                                    when (tab) {
+                                        ProfileTab.Posts -> stringResource(R.string.profile_tab_posts)
+                                        ProfileTab.Exhibits -> stringResource(R.string.profile_tab_exhibits)
+                                    }
+                                },
+                            )
+
+                            Spacer(modifier = Modifier.height(VexSpace.s5))
+
+                            // Baris 2: Skill Chips — warna seragam, turun baris bila penuh
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(VexSpace.s2),
-                                verticalAlignment = Alignment.CenterVertically,
+                                verticalArrangement = Arrangement.spacedBy(VexSpace.s2),
                             ) {
                                 uiState.visibleSkills.forEach { skill ->
-                                    val catColor = CategoryColorMap[skill.label]
-                                        ?: CategoryColorMap["Others"]
-                                        ?: colors.primary
-
                                     VexSkillChip(
                                         text = skill.label,
-                                        categoryColor = catColor,
+                                        categoryColor = colors.primary,
+                                        iconRes = null,
                                         onClick = { onSkillSheetToggle(true) },
                                     )
                                 }
@@ -257,54 +285,124 @@ fun ProfileScreen(
                                 Spacer(modifier = Modifier.height(VexSpace.s4))
                             }
 
-                            // Baris 4: Email
-                            if (profile.email.isNotBlank()) {
-                                Text(
-                                    text = stringResource(R.string.profile_email_label),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = colors.textMuted,
-                                )
-                                Text(
-                                    text = profile.email,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = colors.text,
-                                )
-                                Spacer(modifier = Modifier.height(VexSpace.s3))
-                            }
-
-                            // Baris 5: Phone
-                            if (profile.phone.isNotBlank()) {
-                                Text(
-                                    text = stringResource(R.string.profile_phone_label),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = colors.textMuted,
-                                )
-                                Text(
-                                    text = profile.phone,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = colors.text,
-                                )
-                                Spacer(modifier = Modifier.height(VexSpace.s4))
-                            }
-
-                            // Baris 6: Tab Switcher (Posts / Exhibits)
-                            VexIconTabs(
-                                tabs = listOf(ProfileTab.Posts, ProfileTab.Exhibits),
-                                selectedTab = uiState.selectedTab,
-                                onTabSelected = onProfileTabChange,
-                                iconFor = { tab, isSelected ->
-                                    when (tab) {
-                                        ProfileTab.Posts -> if (isSelected) VexIcons.Tab.Posts.filled else VexIcons.Tab.Posts.outline
-                                        ProfileTab.Exhibits -> if (isSelected) VexIcons.Tab.Exhibits.filled else VexIcons.Tab.Exhibits.outline
-                                    }
-                                },
-                                contentDescriptionFor = { tab ->
-                                    when (tab) {
-                                        ProfileTab.Posts -> stringResource(R.string.profile_tab_posts)
-                                        ProfileTab.Exhibits -> stringResource(R.string.profile_tab_exhibits)
-                                    }
-                                },
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = VexSpace.s2),
+                                color = colors.border.copy(alpha = 0.6f),
                             )
+
+                            // Baris 4: Email — diklik untuk membuka aplikasi email
+                            if (profile.email.isNotBlank()) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            runCatching { uriHandler.openUri("mailto:${profile.email}") }
+                                        }
+                                        .padding(vertical = VexSpace.s2),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(VexSpace.s3),
+                                ) {
+                                    VexIcon(
+                                        id = VexIcons.SettingsEmail,
+                                        contentDescription = stringResource(R.string.profile_email_label),
+                                        size = 18.dp,
+                                        tint = colors.primaryText,
+                                    )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = stringResource(R.string.profile_email_label),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = colors.textMuted,
+                                        )
+                                        Text(
+                                            text = profile.email,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = colors.primaryText,
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Baris 5: Phone — diklik untuk membuka dialer
+                            if (profile.phone.isNotBlank()) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            runCatching { uriHandler.openUri("tel:${profile.phone}") }
+                                        }
+                                        .padding(vertical = VexSpace.s2),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(VexSpace.s3),
+                                ) {
+                                    VexIcon(
+                                        id = VexIcons.ContactPhone,
+                                        contentDescription = stringResource(R.string.profile_phone_label),
+                                        size = 18.dp,
+                                        tint = colors.primaryText,
+                                    )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = stringResource(R.string.profile_phone_label),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = colors.textMuted,
+                                        )
+                                        Text(
+                                            text = profile.phone,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = colors.primaryText,
+                                        )
+                                    }
+                                }
+                            }
+
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = VexSpace.s2),
+                                color = colors.border.copy(alpha = 0.6f),
+                            )
+
+                            // Baris 6: Aksi utama — Edit Profile & Share Profile
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = VexSpace.s1),
+                                horizontalArrangement = Arrangement.spacedBy(VexSpace.s3),
+                            ) {
+                                Button(
+                                    onClick = onEditProfileClick,
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colors.primary,
+                                        contentColor = colors.onPrimary,
+                                    ),
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.profile_edit_profile),
+                                        style = MaterialTheme.typography.titleSmall.copy(
+                                            fontWeight = FontWeight.SemiBold,
+                                        ),
+                                    )
+                                }
+                                OutlinedButton(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_SEND).apply {
+                                            type = "text/plain"
+                                            putExtra(Intent.EXTRA_TEXT, "https://ven.app/@${profile.username}")
+                                        }
+                                        runCatching {
+                                            context.startActivity(Intent.createChooser(intent, "Share Profile"))
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.profile_share_profile),
+                                        style = MaterialTheme.typography.titleSmall.copy(
+                                            fontWeight = FontWeight.SemiBold,
+                                        ),
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -384,13 +482,10 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(VexSpace.s2),
                     ) {
                         uiState.allSkills.forEach { skill ->
-                            val catColor = CategoryColorMap[skill.label]
-                                ?: CategoryColorMap["Others"]
-                                ?: colors.primary
-
                             VexSkillChip(
                                 text = skill.label,
-                                categoryColor = catColor,
+                                categoryColor = colors.primary,
+                                iconRes = null,
                             )
                         }
                     }

@@ -76,6 +76,8 @@
     <string name="profile_stat_exhibits">exhibits</string>
     <string name="profile_email_label">Email</string>
     <string name="profile_phone_label">Phone</string>
+    <string name="profile_edit_profile">Edit Profile</string>
+    <string name="profile_share_profile">Share Profile</string>
     <string name="profile_skills_title">Skills</string>
     <string name="profile_menu">Menu</string>
     <string name="profile_add">Create</string>
