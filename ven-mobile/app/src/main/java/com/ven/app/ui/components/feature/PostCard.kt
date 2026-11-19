@@ -53,11 +53,9 @@ import androidx.compose.ui.unit.sp
 import com.ven.app.R
 import com.ven.app.ui.components.ui.Avatar
 import com.ven.app.ui.components.ui.AvatarSize
-import com.ven.app.ui.components.ui.VexSkillChip
 import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
-import com.ven.app.ui.theme.CategoryColorMap
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
@@ -298,7 +296,6 @@ fun PostCard(
     modifier: Modifier = Modifier,
     userAvatarUrl: String? = null,
     title: String? = null,
-    category: String? = null,
     timestampText: String? = null,
     description: String = "",
     imageUrl: String? = null,
@@ -440,29 +437,6 @@ fun PostCard(
                         )
                     }
                 }
-            }
-        }
-
-        if (!category.isNullOrBlank()) {
-            val catColor = CategoryColorMap[category]
-                ?: CategoryColorMap["Others"]
-                ?: colors.primary
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = VexSpace.s6,
-                        end = VexSpace.s6,
-                        top = VexSpace.s3,
-                        bottom = 2.dp,
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                VexSkillChip(
-                    text = category,
-                    categoryColor = catColor,
-                    onClick = {},
-                )
             }
         }
 
