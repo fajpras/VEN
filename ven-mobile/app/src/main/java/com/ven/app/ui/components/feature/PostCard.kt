@@ -5,7 +5,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,11 +18,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -285,10 +281,10 @@ fun PostCaption(
         if (hasVisualOverflow || isExpanded) {
             Text(
                 text = if (isExpanded) seeLessText else seeMoreText,
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.Medium,
                 ),
-                color = colors.primaryText,
+                color = colors.textMuted,
                 modifier = Modifier
                     .padding(top = 2.dp)
                     .clickable(role = Role.Button) {
@@ -330,70 +326,42 @@ fun PostCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    start = VexSpace.s6,
-                    end = VexSpace.s6,
-                    top = VexSpace.s3,
-                    bottom = VexSpace.s3,
+                    horizontal = VexSpace.s4,
+                    vertical = VexSpace.s3,
                 ),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier
+                    .weight(1f)
                     .then(
                         if (onUsernameClick != null) Modifier.clickable(onClick = onUsernameClick) else Modifier
                     ),
             ) {
                 Avatar(
                     initials = username.removePrefix("@").take(2).uppercase(),
-                    size = AvatarSize.Sm,
+                    size = AvatarSize.Md,
                     imageUrl = userAvatarUrl,
                 )
-                Text(
-                    text = if (username.startsWith("@")) username else "@$username",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                    color = colors.text,
-                )
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(
-                    onClick = onRequestMeetingClick,
-                    shape = CircleShape,
-                    color = colors.surface.copy(alpha = 0.65f),
-                    border = BorderStroke(1.dp, colors.border.copy(alpha = 0.35f)),
-                    modifier = Modifier.size(34.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        VexIcon(
-                            id = VexIcons.ScheduleAction,
-                            contentDescription = stringResource(R.string.home_request_meeting),
-                            size = 17.dp,
-                            tint = colors.text,
-                        )
-                    }
-                }
-
-                Surface(
-                    onClick = onView3dClick,
-                    shape = CircleShape,
-                    color = colors.surface.copy(alpha = 0.65f),
-                    border = BorderStroke(1.dp, colors.border.copy(alpha = 0.35f)),
-                    modifier = Modifier.size(34.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        VexIcon(
-                            id = VexIcons.Play,
-                            contentDescription = stringResource(R.string.home_view_3d),
-                            size = 17.dp,
-                            tint = colors.text,
+                Column {
+                    Text(
+                        text = if (username.startsWith("@")) username else "@$username",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                        ),
+                        color = colors.text,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (!title.isNullOrBlank()) {
+                        Text(
+                            text = sanitizeCaptionTitle(title),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -452,10 +420,33 @@ fun PostCard(
             }
         }
 
-        if (description.isNotBlank() || !title.isNullOrBlank()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = VexSpace.s2, vertical = VexSpace.s1),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onRequestMeetingClick) {
+                VexIcon(
+                    id = VexIcons.ScheduleAction,
+                    contentDescription = stringResource(R.string.home_request_meeting),
+                    size = 24.dp,
+                    tint = colors.text,
+                )
+            }
+            IconButton(onClick = onView3dClick) {
+                VexIcon(
+                    id = VexIcons.Play,
+                    contentDescription = stringResource(R.string.home_view_3d),
+                    size = 24.dp,
+                    tint = colors.text,
+                )
+            }
+        }
+
+        if (description.isNotBlank()) {
             PostCaption(
                 username = username,
-                title = title,
                 description = description,
                 collapsedMaxLines = collapsedMaxLines,
                 seeMoreText = seeMoreText,
@@ -465,29 +456,28 @@ fun PostCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = VexSpace.s6,
-                        end = VexSpace.s6,
-                        top = 2.dp,
-                        bottom = if (timestampText.isNullOrBlank()) VexSpace.s4 else 2.dp,
+                        start = VexSpace.s4,
+                        end = VexSpace.s4,
+                        bottom = if (timestampText.isNullOrBlank()) VexSpace.s3 else 2.dp,
                     ),
             )
         }
 
         if (!timestampText.isNullOrBlank()) {
             Text(
-                text = "•  ${timestampText.uppercase()}",
+                text = timestampText.uppercase(),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Medium,
                     letterSpacing = 0.6.sp,
                 ),
-                color = colors.textMuted.copy(alpha = 0.85f),
+                color = colors.textMuted,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = VexSpace.s6,
-                        end = VexSpace.s6,
-                        top = 4.dp,
-                        bottom = VexSpace.s4,
+                        start = VexSpace.s4,
+                        end = VexSpace.s4,
+                        top = 2.dp,
+                        bottom = VexSpace.s3,
                     ),
             )
         }
