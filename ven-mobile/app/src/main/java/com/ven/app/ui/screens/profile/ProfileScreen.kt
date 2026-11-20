@@ -1,7 +1,7 @@
 package com.ven.app.ui.screens.profile
 
-import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,22 +11,23 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -36,7 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +60,7 @@ import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.navigation.BottomNavTab
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexAspect
+import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
@@ -73,11 +75,9 @@ fun ProfileScreen(
     onSkillSheetToggle: (Boolean) -> Unit,
     onMediaClick: (MediaGridItem) -> Unit,
     modifier: Modifier = Modifier,
-    onEditProfileClick: () -> Unit = {},
     onRetryClick: () -> Unit = {},
 ) {
     val colors = VexTheme.colors
-    val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     val profile = uiState.profile
 
@@ -161,7 +161,7 @@ fun ProfileScreen(
                                 .background(colors.bg)
                                 .padding(horizontal = VexSpace.s6, vertical = VexSpace.s4),
                         ) {
-                            // Baris 1: Avatar 96dp + Nama Lengkap & Stats
+                            // Baris 1: Avatar besar + Nama & Statistik berdampingan
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -174,10 +174,11 @@ fun ProfileScreen(
                                     contentDescription = profile.fullName,
                                 )
 
-                                Column(
+                                Row(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(start = VexSpace.s5),
+                                        .padding(start = VexSpace.s4),
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
                                         text = profile.fullName,
@@ -186,69 +187,35 @@ fun ProfileScreen(
                                         ),
                                         color = colors.text,
                                         maxLines = 2,
+                                        modifier = Modifier.weight(1f),
                                     )
 
-                                    Spacer(modifier = Modifier.height(VexSpace.s3))
-
-                                    // Stat Block: posts & exhibits
                                     Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceEvenly,
+                                        horizontalArrangement = Arrangement.spacedBy(VexSpace.s5),
                                     ) {
-                                        Column {
-                                            Text(
-                                                text = "${profile.postCount}",
-                                                style = MaterialTheme.typography.titleMedium.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                ),
-                                                color = colors.text,
-                                            )
-                                            Text(
-                                                text = stringResource(R.string.profile_stat_posts),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = colors.textMuted,
-                                            )
-                                        }
-
-                                        Column {
-                                            Text(
-                                                text = "${profile.exhibitCount}",
-                                                style = MaterialTheme.typography.titleMedium.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                ),
-                                                color = colors.text,
-                                            )
-                                            Text(
-                                                text = stringResource(R.string.profile_stat_exhibits),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = colors.textMuted,
-                                            )
-                                        }
+                                        ProfileStat(
+                                            value = profile.postCount,
+                                            label = stringResource(R.string.profile_stat_posts),
+                                        )
+                                        ProfileStat(
+                                            value = profile.exhibitCount,
+                                            label = stringResource(R.string.profile_stat_exhibits),
+                                        )
                                     }
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(VexSpace.s5))
+                            // Deskripsi/bio pengguna (tanpa label "Deskripsi")
+                            if (profile.bio.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(VexSpace.s4))
+                                Text(
+                                    text = profile.bio,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = colors.text,
+                                )
+                            }
 
-                            VexIconTabs(
-                                tabs = listOf(ProfileTab.Posts, ProfileTab.Exhibits),
-                                selectedTab = uiState.selectedTab,
-                                onTabSelected = onProfileTabChange,
-                                iconFor = { tab, isSelected ->
-                                    when (tab) {
-                                        ProfileTab.Posts -> if (isSelected) VexIcons.Tab.Posts.filled else VexIcons.Tab.Posts.outline
-                                        ProfileTab.Exhibits -> if (isSelected) VexIcons.Tab.Exhibits.filled else VexIcons.Tab.Exhibits.outline
-                                    }
-                                },
-                                contentDescriptionFor = { tab ->
-                                    when (tab) {
-                                        ProfileTab.Posts -> stringResource(R.string.profile_tab_posts)
-                                        ProfileTab.Exhibits -> stringResource(R.string.profile_tab_exhibits)
-                                    }
-                                },
-                            )
-
-                            Spacer(modifier = Modifier.height(VexSpace.s5))
+                            Spacer(modifier = Modifier.height(VexSpace.s4))
 
                             // Baris 2: Skill Chips — warna seragam, turun baris bila penuh
                             FlowRow(
@@ -275,132 +242,120 @@ fun ProfileScreen(
 
                             Spacer(modifier = Modifier.height(VexSpace.s4))
 
-                            // Baris 3: Bio Pengguna
-                            if (profile.bio.isNotBlank()) {
-                                Text(
-                                    text = profile.bio,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = colors.text,
-                                )
-                                Spacer(modifier = Modifier.height(VexSpace.s4))
-                            }
-
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = VexSpace.s2),
-                                color = colors.border.copy(alpha = 0.6f),
+                            // Baris 3: Tab Posts / Exhibits (di bawah skill, seperti desain)
+                            VexIconTabs(
+                                tabs = listOf(ProfileTab.Posts, ProfileTab.Exhibits),
+                                selectedTab = uiState.selectedTab,
+                                onTabSelected = onProfileTabChange,
+                                iconFor = { tab, isSelected ->
+                                    when (tab) {
+                                        ProfileTab.Posts -> if (isSelected) VexIcons.Tab.Posts.filled else VexIcons.Tab.Posts.outline
+                                        ProfileTab.Exhibits -> if (isSelected) VexIcons.Tab.Exhibits.filled else VexIcons.Tab.Exhibits.outline
+                                    }
+                                },
+                                contentDescriptionFor = { tab ->
+                                    when (tab) {
+                                        ProfileTab.Posts -> stringResource(R.string.profile_tab_posts)
+                                        ProfileTab.Exhibits -> stringResource(R.string.profile_tab_exhibits)
+                                    }
+                                },
                             )
 
-                            // Baris 4: Email — diklik untuk membuka aplikasi email
-                            if (profile.email.isNotBlank()) {
-                                Row(
+                            Spacer(modifier = Modifier.height(VexSpace.s4))
+
+                            // Kartu kontak: garis tipis dengan aksen pink di sisi kiri
+                            if (profile.email.isNotBlank() || profile.phone.isNotBlank()) {
+                                Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable {
-                                            runCatching { uriHandler.openUri("mailto:${profile.email}") }
-                                        }
-                                        .padding(vertical = VexSpace.s2),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(VexSpace.s3),
+                                        .border(
+                                            width = 1.dp,
+                                            color = colors.border,
+                                            shape = RoundedCornerShape(VexRadius.md),
+                                        )
+                                        .clip(RoundedCornerShape(VexRadius.md)),
                                 ) {
-                                    VexIcon(
-                                        id = VexIcons.SettingsEmail,
-                                        contentDescription = stringResource(R.string.profile_email_label),
-                                        size = 18.dp,
-                                        tint = colors.primaryText,
-                                    )
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = stringResource(R.string.profile_email_label),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = colors.textMuted,
+                                    Row(modifier = Modifier.fillMaxWidth()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .width(3.dp)
+                                                .fillMaxHeight()
+                                                .background(colors.primaryText),
                                         )
-                                        Text(
-                                            text = profile.email,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = colors.primaryText,
-                                        )
+
+                                        Column(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .padding(
+                                                    vertical = VexSpace.s2,
+                                                    horizontal = VexSpace.s3,
+                                                ),
+                                        ) {
+                                            if (profile.email.isNotBlank()) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clickable {
+                                                            runCatching { uriHandler.openUri("mailto:${profile.email}") }
+                                                        }
+                                                        .padding(vertical = VexSpace.s1),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(VexSpace.s3),
+                                                ) {
+                                                    VexIcon(
+                                                        id = VexIcons.SettingsEmail,
+                                                        contentDescription = stringResource(R.string.profile_email_label),
+                                                        size = 18.dp,
+                                                        tint = colors.primaryText,
+                                                    )
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text(
+                                                            text = stringResource(R.string.profile_email_label),
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = colors.primaryText,
+                                                        )
+                                                        Text(
+                                                            text = profile.email,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            color = colors.text,
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            if (profile.phone.isNotBlank()) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clickable {
+                                                            runCatching { uriHandler.openUri("tel:${profile.phone}") }
+                                                        }
+                                                        .padding(vertical = VexSpace.s1),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(VexSpace.s3),
+                                                ) {
+                                                    VexIcon(
+                                                        id = VexIcons.ContactPhone,
+                                                        contentDescription = stringResource(R.string.profile_phone_label),
+                                                        size = 18.dp,
+                                                        tint = colors.primaryText,
+                                                    )
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text(
+                                                            text = stringResource(R.string.profile_phone_label),
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = colors.primaryText,
+                                                        )
+                                                        Text(
+                                                            text = profile.phone,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            color = colors.text,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
-                                }
-                            }
-
-                            // Baris 5: Phone — diklik untuk membuka dialer
-                            if (profile.phone.isNotBlank()) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            runCatching { uriHandler.openUri("tel:${profile.phone}") }
-                                        }
-                                        .padding(vertical = VexSpace.s2),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(VexSpace.s3),
-                                ) {
-                                    VexIcon(
-                                        id = VexIcons.ContactPhone,
-                                        contentDescription = stringResource(R.string.profile_phone_label),
-                                        size = 18.dp,
-                                        tint = colors.primaryText,
-                                    )
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = stringResource(R.string.profile_phone_label),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = colors.textMuted,
-                                        )
-                                        Text(
-                                            text = profile.phone,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = colors.primaryText,
-                                        )
-                                    }
-                                }
-                            }
-
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = VexSpace.s2),
-                                color = colors.border.copy(alpha = 0.6f),
-                            )
-
-                            // Baris 6: Aksi utama — Edit Profile & Share Profile
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = VexSpace.s1),
-                                horizontalArrangement = Arrangement.spacedBy(VexSpace.s3),
-                            ) {
-                                Button(
-                                    onClick = onEditProfileClick,
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = colors.primary,
-                                        contentColor = colors.onPrimary,
-                                    ),
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.profile_edit_profile),
-                                        style = MaterialTheme.typography.titleSmall.copy(
-                                            fontWeight = FontWeight.SemiBold,
-                                        ),
-                                    )
-                                }
-                                OutlinedButton(
-                                    onClick = {
-                                        val intent = Intent(Intent.ACTION_SEND).apply {
-                                            type = "text/plain"
-                                            putExtra(Intent.EXTRA_TEXT, "https://ven.app/@${profile.username}")
-                                        }
-                                        runCatching {
-                                            context.startActivity(Intent.createChooser(intent, "Share Profile"))
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.profile_share_profile),
-                                        style = MaterialTheme.typography.titleSmall.copy(
-                                            fontWeight = FontWeight.SemiBold,
-                                        ),
-                                    )
                                 }
                             }
                         }
@@ -492,6 +447,29 @@ fun ProfileScreen(
                 }
             }
         }
+    }
+}
+
+/** Satu blok statistik profil: angka di atas, label di bawah. */
+@Composable
+private fun ProfileStat(
+    value: Int,
+    label: String,
+) {
+    val colors = VexTheme.colors
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = "$value",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+            ),
+            color = colors.text,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.textMuted,
+        )
     }
 }
 

@@ -243,9 +243,6 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
                 },
-                onNavigateToEditProfile = {
-                    navController.navigate(Screen.SettingsProfile.route)
-                },
                 onNavigateToPostsFeed = { postId, userId ->
                     navController.navigate(Screen.PostsFeed.createRoute(postId = postId, userId = userId))
                 },
@@ -699,7 +696,6 @@ fun MainHomeScreen(
     initialTab: BottomNavTab = BottomNavTab.Home,
     onRequestMeetingClick: (postId: String) -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
-    onNavigateToEditProfile: () -> Unit = {},
     onNavigateToPostsFeed: (postId: String, userId: String) -> Unit = { _, _ -> },
     onNavigateToCreatePost: () -> Unit = {},
     onNavigateToCreateExhibit: () -> Unit = {},
@@ -841,8 +837,7 @@ fun MainHomeScreen(
                     onMenuClick = onNavigateToSettings,
                     onProfileTabChange = profileViewModel::pilihTab,
                     onSkillSheetToggle = profileViewModel::aturSkillSheet,
-                    onEditProfileClick = onNavigateToEditProfile,
-                    onRetryClick = profileViewModel::muat,
+                        onRetryClick = profileViewModel::muat,
                     onMediaClick = { media ->
                         if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
                             onNavigateToExhibitViewer(media.id)
