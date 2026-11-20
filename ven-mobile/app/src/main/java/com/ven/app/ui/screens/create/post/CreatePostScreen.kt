@@ -1,6 +1,5 @@
-﻿package com.ven.app.ui.screens.create.post
+package com.ven.app.ui.screens.create.post
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -12,10 +11,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,34 +19,27 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
-import com.ven.app.ui.components.feature.MediaGridItem
+import com.ven.app.data.api.models.KategoriModel
 import com.ven.app.ui.components.layout.VexTopBar
 import com.ven.app.ui.components.ui.CreateContentType
 import com.ven.app.ui.components.ui.SegmentedPill
@@ -58,64 +47,31 @@ import com.ven.app.ui.components.ui.VexDropdown
 import com.ven.app.ui.components.ui.VexTextArea
 import com.ven.app.ui.components.ui.VexTextField
 import com.ven.app.ui.components.ui.VexTextFieldVariant
+import com.ven.app.ui.icons.VexIcons
+import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.theme.ThemeMode
-import com.ven.app.ui.theme.VexAspect
+import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
+/**
+ * Layar Create Post (stateless) � Langkah 1 pemilihan media dan Langkah 2 formulir detail.
+ *
+ * Seluruh efek Android (photo picker, pratinjau bitmap, unggah berkas) ditangani oleh
+ * [CreatePostRoute] agar layar ini tetap murni dan dapat dipratinjau/diuji tanpa konteks.
+ */
 @Composable
 fun CreatePostScreen(
-    onCloseClick: () -> Unit,
-    onPostSuccess: () -> Unit,
-    onNavigateToExhibit: () -> Unit = {},
-    modifier: Modifier = Modifier,
-    viewModel: CreatePostViewModel = viewModel(),
-) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                CreatePostEvent.PostSuccess -> onPostSuccess()
-                CreatePostEvent.SwitchToExhibit -> onNavigateToExhibit()
-            }
-        }
-    }
-
-    BackHandler {
-        if (!viewModel.onBackClick()) {
-            onCloseClick()
-        }
-    }
-
-    CreatePostContent(
-        state = state,
-        onCloseClick = onCloseClick,
-        onNextClick = viewModel::onNextClick,
-        onBackClick = { viewModel.onBackClick() },
-        onPostClick = viewModel::submitPost,
-        onMediaSelected = viewModel::onMediaSelected,
-        onContentTypeSelected = viewModel::onContentTypeSelected,
-        onTitleChange = viewModel::onTitleChange,
-        onCategoryChange = viewModel::onCategoryChange,
-        onProductLinkChange = viewModel::onProductLinkChange,
-        onDescriptionChange = viewModel::onDescriptionChange,
-        modifier = modifier,
-    )
-}
-
-@Composable
-fun CreatePostContent(
     state: CreatePostUiState,
+    mediaPreview: ImageBitmap?,
     onCloseClick: () -> Unit,
-    onNextClick: () -> Unit,
     onBackClick: () -> Unit,
+    onNextClick: () -> Unit,
+    onPickMediaClick: () -> Unit,
     onPostClick: () -> Unit,
-    onMediaSelected: (MediaGridItem) -> Unit,
     onContentTypeSelected: (CreateContentType) -> Unit,
     onTitleChange: (String) -> Unit,
-    onCategoryChange: (String) -> Unit,
-    onProductLinkChange: (String) -> Unit,
+    onCategoryChange: (Int) -> Unit,
     onDescriptionChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -138,26 +94,35 @@ fun CreatePostContent(
             label = "CreatePostStepTransition",
         ) { step ->
             when (step) {
-                CreatePostStep.MediaPicker -> {
-                    CreatePostMediaPickerStep(
-                        state = state,
-                        onCloseClick = onCloseClick,
-                        onNextClick = onNextClick,
-                        onMediaSelected = onMediaSelected,
-                        onContentTypeSelected = onContentTypeSelected,
-                    )
-                }
-                CreatePostStep.Details -> {
-                    CreatePostDetailsStep(
-                        state = state,
-                        onBackClick = onBackClick,
-                        onPostClick = onPostClick,
-                        onTitleChange = onTitleChange,
-                        onCategoryChange = onCategoryChange,
-                        onProductLinkChange = onProductLinkChange,
-                        onDescriptionChange = onDescriptionChange,
-                    )
-                }
+                CreatePostStep.MediaPicker -> CreatePostMediaPickerStep(
+                    state = state,
+                    mediaPreview = mediaPreview,
+                    onCloseClick = onCloseClick,
+                    onNextClick = onNextClick,
+                    onPickMediaClick = onPickMediaClick,
+                    onContentTypeSelected = onContentTypeSelected,
+                )
+
+                CreatePostStep.Details -> CreatePostDetailsStep(
+                    state = state,
+                    mediaPreview = mediaPreview,
+                    onBackClick = onBackClick,
+                    onPostClick = onPostClick,
+                    onTitleChange = onTitleChange,
+                    onCategoryChange = onCategoryChange,
+                    onDescriptionChange = onDescriptionChange,
+                )
+            }
+        }
+
+        if (state.isSubmitting) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colors.bg.copy(alpha = 0.72f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(color = colors.primary)
             }
         }
     }
@@ -166,9 +131,10 @@ fun CreatePostContent(
 @Composable
 private fun CreatePostMediaPickerStep(
     state: CreatePostUiState,
+    mediaPreview: ImageBitmap?,
     onCloseClick: () -> Unit,
     onNextClick: () -> Unit,
-    onMediaSelected: (MediaGridItem) -> Unit,
+    onPickMediaClick: () -> Unit,
     onContentTypeSelected: (CreateContentType) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -179,115 +145,48 @@ private fun CreatePostMediaPickerStep(
             .fillMaxSize()
             .background(colors.bg),
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             VexTopBar.Create(
                 title = stringResource(R.string.create_post_title),
                 actionText = stringResource(R.string.create_post_next),
                 onActionClick = onNextClick,
                 onCloseOrBackClick = onCloseClick,
                 isBack = false,
-                actionEnabled = true,
+                actionEnabled = state.isMediaSelected,
             )
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-                contentPadding = PaddingValues(bottom = 88.dp),
+                    .weight(1f)
+                    .padding(
+                        start = VexSpace.s6,
+                        end = VexSpace.s6,
+                        top = VexSpace.s4,
+                        bottom = 96.dp,
+                    ),
+                verticalArrangement = Arrangement.spacedBy(VexSpace.s3),
             ) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(0.85f)
-                            .background(colors.surfaceInput),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (state.selectedMedia.imageRes != null) {
-                            Image(
-                                painter = painterResource(id = state.selectedMedia.imageRes),
-                                contentDescription = state.selectedMedia.title,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop,
-                            )
-                        } else {
-                            Text(
-                                text = state.selectedMedia.title,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = colors.textMuted,
-                            )
-                        }
-                    }
-                }
+                MediaPreviewCard(
+                    state = state,
+                    mediaPreview = mediaPreview,
+                    onClick = onPickMediaClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                )
 
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                start = VexSpace.s6,
-                                end = VexSpace.s6,
-                                top = VexSpace.s4,
-                                bottom = VexSpace.s3,
-                            ),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.create_post_recents),
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                            ),
-                            color = colors.text,
-                        )
-                    }
-                }
+                Text(
+                    text = if (state.isMediaSelected) {
+                        stringResource(R.string.create_post_change_media)
+                    } else {
+                        stringResource(R.string.create_post_media_formats)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.textMuted,
+                )
 
-                items(
-                    items = state.mediaItems,
-                    key = { it.id },
-                ) { item ->
-                    val isSelected = item.id == state.selectedMedia.id
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(VexAspect.poster)
-                            .background(colors.surfaceInput)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = ripple(color = colors.text.copy(alpha = 0.2f)),
-                                role = Role.Button,
-                                onClick = { onMediaSelected(item) },
-                            ),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (item.imageRes != null) {
-                            Image(
-                                painter = painterResource(id = item.imageRes),
-                                contentDescription = item.title,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop,
-                            )
-                        } else {
-                            Text(
-                                text = item.title,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.textMuted,
-                            )
-                        }
-
-                        if (isSelected) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(colors.text.copy(alpha = 0.15f)),
-                            )
-                        }
-                    }
-                }
+                FormErrorText(message = state.errorMessage(), visible = state.errorMessageRes != null)
             }
         }
 
@@ -305,18 +204,89 @@ private fun CreatePostMediaPickerStep(
 }
 
 @Composable
+private fun MediaPreviewCard(
+    state: CreatePostUiState,
+    mediaPreview: ImageBitmap?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = VexTheme.colors
+    val shape = RoundedCornerShape(VexRadius.md)
+    val interactionSource = remember { MutableInteractionSource() }
+
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(colors.surfaceInput)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(color = colors.text.copy(alpha = 0.12f)),
+                role = Role.Button,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (mediaPreview != null) {
+            Image(
+                bitmap = mediaPreview,
+                contentDescription = stringResource(R.string.create_post_selected_media_desc),
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        }
+
+        if (state.isMediaSelected) {
+            if (mediaPreview == null) {
+                VexIcon(
+                    id = VexIcons.Play,
+                    contentDescription = null,
+                    size = 56.dp,
+                    tint = colors.textMuted,
+                )
+            }
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(VexSpace.s3),
+                modifier = Modifier.padding(VexSpace.s8),
+            ) {
+                VexIcon(
+                    id = VexIcons.Add,
+                    contentDescription = null,
+                    size = 40.dp,
+                    tint = colors.textMuted,
+                )
+
+                Text(
+                    text = stringResource(R.string.create_post_choose_media),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = colors.text,
+                )
+
+                Text(
+                    text = stringResource(R.string.create_post_media_formats),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.textMuted,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun CreatePostDetailsStep(
     state: CreatePostUiState,
+    mediaPreview: ImageBitmap?,
     onBackClick: () -> Unit,
     onPostClick: () -> Unit,
     onTitleChange: (String) -> Unit,
-    onCategoryChange: (String) -> Unit,
-    onProductLinkChange: (String) -> Unit,
+    onCategoryChange: (Int) -> Unit,
     onDescriptionChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = VexTheme.colors
     val scrollState = rememberScrollState()
+    val categoryNames = state.categories.map { it.nama }
 
     Column(
         modifier = modifier
@@ -347,14 +317,21 @@ private fun CreatePostDetailsStep(
                     .background(colors.surfaceInput),
                 contentAlignment = Alignment.Center,
             ) {
-                if (state.selectedMedia.imageRes != null) {
+                if (mediaPreview != null) {
                     Image(
-                        painter = painterResource(id = state.selectedMedia.imageRes),
-                        contentDescription = state.title,
+                        bitmap = mediaPreview,
+                        contentDescription = stringResource(R.string.create_post_selected_media_desc),
                         modifier = Modifier
                             .fillMaxHeight()
                             .padding(vertical = VexSpace.s3),
                         contentScale = ContentScale.Fit,
+                    )
+                } else {
+                    VexIcon(
+                        id = VexIcons.Play,
+                        contentDescription = null,
+                        size = 56.dp,
+                        tint = colors.textMuted,
                     )
                 }
             }
@@ -375,40 +352,13 @@ private fun CreatePostDetailsStep(
 
                 VexDropdown(
                     label = stringResource(R.string.create_post_category_label),
-                    selectedOption = state.category,
-                    options = state.availableCategories,
-                    onOptionSelected = onCategoryChange,
+                    selectedOption = state.selectedCategoryName,
+                    options = categoryNames,
+                    onOptionSelected = { nama ->
+                        state.categories.firstOrNull { it.nama == nama }?.let { onCategoryChange(it.idKategori) }
+                    },
+                    enabled = !state.isLoadingCategories && categoryNames.isNotEmpty(),
                 )
-
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = VexSpace.s2),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.create_post_product_link_label),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = colors.text,
-                        )
-
-                        Text(
-                            text = stringResource(R.string.create_post_optional),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.textMuted,
-                        )
-                    }
-
-                    VexTextField(
-                        value = state.productLink,
-                        onValueChange = onProductLinkChange,
-                        variant = VexTextFieldVariant.Boxed,
-                        placeholder = stringResource(R.string.create_post_product_link_placeholder),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                    )
-                }
 
                 VexTextArea(
                     value = state.description,
@@ -418,31 +368,63 @@ private fun CreatePostDetailsStep(
                     minHeight = 175.dp,
                 )
 
+                FormErrorText(
+                    message = state.serverErrorMessage ?: state.errorMessage(),
+                    visible = state.serverErrorMessage != null || state.errorMessageRes != null,
+                )
+
                 Spacer(modifier = Modifier.height(VexSpace.s8))
             }
         }
     }
 }
 
+@Composable
+private fun FormErrorText(
+    message: String?,
+    visible: Boolean,
+) {
+    if (!visible || message == null) return
+
+    Text(
+        text = message,
+        style = MaterialTheme.typography.bodyMedium,
+        color = VexTheme.colors.danger,
+        modifier = Modifier.padding(top = VexSpace.s1),
+    )
+}
+
+@Composable
+private fun CreatePostUiState.errorMessage(): String? {
+    val resId = errorMessageRes ?: return null
+    return stringResource(resId)
+}
+
 // -------------------------------------------------------------
 // Previews
 // -------------------------------------------------------------
+
+private val previewCategories = listOf(
+    KategoriModel(idKategori = 1, nama = "3D"),
+    KategoriModel(idKategori = 2, nama = "UI/UX"),
+    KategoriModel(idKategori = 3, nama = "Animation"),
+)
 
 @Preview(name = "Step 1: Media Picker - Light", showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 private fun CreatePostMediaPickerLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
-        CreatePostContent(
-            state = CreatePostUiState(step = CreatePostStep.MediaPicker),
+        CreatePostScreen(
+            state = CreatePostUiState(step = CreatePostStep.MediaPicker, categories = previewCategories),
+            mediaPreview = null,
             onCloseClick = {},
-            onNextClick = {},
             onBackClick = {},
+            onNextClick = {},
+            onPickMediaClick = {},
             onPostClick = {},
-            onMediaSelected = {},
             onContentTypeSelected = {},
             onTitleChange = {},
             onCategoryChange = {},
-            onProductLinkChange = {},
             onDescriptionChange = {},
         )
     }
@@ -452,17 +434,17 @@ private fun CreatePostMediaPickerLightPreview() {
 @Composable
 private fun CreatePostMediaPickerDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
-        CreatePostContent(
-            state = CreatePostUiState(step = CreatePostStep.MediaPicker),
+        CreatePostScreen(
+            state = CreatePostUiState(step = CreatePostStep.MediaPicker, categories = previewCategories),
+            mediaPreview = null,
             onCloseClick = {},
-            onNextClick = {},
             onBackClick = {},
+            onNextClick = {},
+            onPickMediaClick = {},
             onPostClick = {},
-            onMediaSelected = {},
             onContentTypeSelected = {},
             onTitleChange = {},
             onCategoryChange = {},
-            onProductLinkChange = {},
             onDescriptionChange = {},
         )
     }
@@ -472,17 +454,24 @@ private fun CreatePostMediaPickerDarkPreview() {
 @Composable
 private fun CreatePostDetailsLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
-        CreatePostContent(
-            state = CreatePostUiState(step = CreatePostStep.Details),
+        CreatePostScreen(
+            state = CreatePostUiState(
+                step = CreatePostStep.Details,
+                mediaUriString = "content://preview",
+                categories = previewCategories,
+                categoryId = 1,
+                title = "Poster Karya",
+                description = "Deskripsi karya.",
+            ),
+            mediaPreview = null,
             onCloseClick = {},
-            onNextClick = {},
             onBackClick = {},
+            onNextClick = {},
+            onPickMediaClick = {},
             onPostClick = {},
-            onMediaSelected = {},
             onContentTypeSelected = {},
             onTitleChange = {},
             onCategoryChange = {},
-            onProductLinkChange = {},
             onDescriptionChange = {},
         )
     }
@@ -492,17 +481,24 @@ private fun CreatePostDetailsLightPreview() {
 @Composable
 private fun CreatePostDetailsDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
-        CreatePostContent(
-            state = CreatePostUiState(step = CreatePostStep.Details),
+        CreatePostScreen(
+            state = CreatePostUiState(
+                step = CreatePostStep.Details,
+                mediaUriString = "content://preview",
+                categories = previewCategories,
+                categoryId = 1,
+                title = "Poster Karya",
+                description = "Deskripsi karya.",
+            ),
+            mediaPreview = null,
             onCloseClick = {},
-            onNextClick = {},
             onBackClick = {},
+            onNextClick = {},
+            onPickMediaClick = {},
             onPostClick = {},
-            onMediaSelected = {},
             onContentTypeSelected = {},
             onTitleChange = {},
             onCategoryChange = {},
-            onProductLinkChange = {},
             onDescriptionChange = {},
         )
     }

@@ -33,7 +33,11 @@ object ApiClient {
         val originalRequest = chain.request()
         val requestBuilder = originalRequest.newBuilder()
             .header("Accept", "application/json")
-            .header("Content-Type", "application/json")
+
+        // Content-Type sengaja tidak di-set di sini: OkHttp sudah menurunkannya
+        // dari body (application/json untuk @Body, multipart/form-data + boundary
+        // untuk unggahan). Memaksanya menjadi application/json membuat endpoint
+        // unggah banner/foto/karya gagal mem-parsing multipart.
 
         val token = tokenProvider?.invoke()
         if (!token.isNullOrBlank()) {
@@ -93,6 +97,15 @@ object ApiClient {
             when {
                 json.has("message") -> json.get("message").asString
                 json.has("error") -> json.get("error").asString
+                json.has("errors") -> json.getAsJsonObject("errors")
+                    ?.entrySet()
+                    ?.firstOrNull()
+                    ?.value
+                    ?.takeIf { it.isJsonArray }
+                    ?.asJsonArray
+                    ?.firstOrNull()
+                    ?.asString
+                    ?: "Terjadi kesalahan pada permintaan"
                 else -> "Terjadi kesalahan pada permintaan"
             }
         } catch (e: Exception) {

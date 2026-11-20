@@ -1,16 +1,26 @@
 # Status Proyek VEN — Daftar Modul, Verifikasi, dan Kendala
 
-> **Tanggal verifikasi:** 19 November 2026
+> **Tanggal verifikasi:** 20 November 2026
 >
 > **Branch aktif:** `main`
 >
-> **Commit terakhir:** hasil merge `267ca8d` (perapian koding bersih lokal) dengan `cd06eb2` (fitur hapus chat dari remote) — HEAD saat verifikasi
+> **Commit terakhir:** commit ini (perapian Create Post / `tautan` / login Daffa); baseline sebelum perubahan adalah `38eead3`. Verifikasi dilakukan pada working tree sebelum commit.
+>
+> **Perubahan 20 November 2026 (belum di-commit saat verifikasi):**
+> - **Create Post benar-benar tersambung API.** `CreatePostRoute.kt` memakai photo/video picker nyata (`PickVisualMedia`), memvalidasi MIME/ukuran (maks. 50 MB), meng-cache berkas ke `File`, menampilkan pratinjau bitmap/thumbnail video, dan mengunggah lewat `ApiKarya.kt` ke `POST /api/karya` (multipart `id_kategori`, `judul`, `jenis`, `deskripsi`, `file`). Kategori diambil dari `ApiProfil.kategori()`, deskripsi wajib. Modul ini naik dari "Masih Mock" menjadi ✅ Selesai; regression test backend `KaryaUnggahTest.php` (4 test) ditambahkan.
+> - **Kolom `tautan` dihapus total** sesuai permintaan (tidak ada di rencana): migration di-rollback di `ven_testing` dan `ven`, file migration dihapus, `Karya` fillable & `KaryaController` rules dikembalikan, field "Product Link" di form Create Post dan semua string terkait dihapus. Tidak ada referensi `tautan` pada kode Create Post.
+> - **Perubahan UI login dari Daffa diterapkan ulang secara adaptif** (commit asal `85f2687`, pernah di-revert di `65cd82e`): field Boxed + label pada Login/Register, `VexButtonShape.Boxed` pada tombol login/register/lupa sandi. Default tetap `VexButtonShape.Pill` agar layar lain tidak berubah.
+> - **Keputusan pengguna: kembalikan semua penghapusan cleanup kecuali `tautan`.** Editor pameran Compose (`create/exhibit/editor/` + 7 test + string + drawable + `VexIcons.Editor*`), `VexTagChip`, `onCategoryColor`, `Motion.kt`, `SettingsUiState` + `dummySettingsUiState` sudah di-restore dari `HEAD`. Alur edit 3D tetap lewat Unity (`Screen.CreateExhibitEditor` → `UnityLoadingScreen`).
+> - **Perbaikan hang backup/restore** (`BackupDatabase.php`, `RestoreDatabase.php`, `AuditBackupDanRestoreTest.php` memakai sandbox `ven_testing_restore_sandbox`) — sudah terverifikasi di suite penuh.
+> - **Kolom `objek.id_pameran` sudah diterapkan di `ven`**, sehingga endpoint `room-dto` live tidak lagi gagal.
+>
+> **Verifikasi 20 November 2026 (final, setelah restore):** backend **97/97 test** (468 assertion) lewat `phpunit --no-coverage`; Android `:app:testDebugUnitTest` **73/73 test** (0 failure, 0 error), `:app:assembleDebug` BUILD SUCCESSFUL, APK 125.763.243 byte (~125,8 MB); `git diff --check` bersih (hanya warning konversi LF→CRF). Sesuai keputusan pengguna, hanya penghapusan `tautan` yang dipertahankan.
 >
 > **Perbaikan koding bersih (19 November 2026):** Seluruh aplikasi dirapikan tanpa mengubah perilaku fitur. Backend: penghapusan pencatatan OTP plaintext, 9 import tak terpakai, tag penutup PHP, variabel/komentar mati, dan penyatuan FQCN di `PameranController`. Android: penghapusan ~50 import tak terpakai, pembatasan logging `UnityBridge` hanya pada build debug, penghapusan seluruh operator `!!` (API, cache, navigasi), ekstraksi `sesiBerakhir` ke `util/SessionErrorExt.kt`, pemindahan alur feed pengguna ke `UserPostsFeedRoute.kt`, serta pemisahan 6 `Route` dari file `Screen.kt` menjadi file tersendiri. Verifikasi: **93/93 test backend** (454 assertion), **73/73 test Android** (termasuk 3 test baru `AiChatViewModelTest` dari remote), build/test Android sukses, `git diff --check` bersih. Perapian ini telah di-commit lokal sebagai `267ca8d` sebelum pull.
 >
 > **Perubahan terbaru:** AI Chat Android kini mendukung hapus percakapan per item ala Gemini (tombol ⋮ → "Hapus obrolan" → dialog konfirmasi), dengan pembersihan key prefs saat riwayat terakhir dihapus; diverifikasi 73/73 unit test dan smoke test emulator. Sebelumnya: Halaman profil ditata ulang mengikuti prinsip Konsistensi & Standar (Jakob's Law): kiri atas dikosongkan, username ditengah, tombol `+` dan menu (gear) dipindah ke kanan atas berdampingan; tab Posts/Exhibits dinaikkan ke bawah statistik; statistik disebar dengan `SpaceEvenly`; pill keahlian disatukan warnanya (`colors.primary`, tanpa bintang) dan dibungkus `FlowRow` agar tidak terpotong (bottom sheet disamakan); Email/Phone diberi `HorizontalDivider` dan affordance klik (`mailto:`/`tel:`) dengan ikon serta warna `primaryText`, ditambah tombol aksi Edit Profile & Share Profile. Form edit profil (`VexTextField` Boxed) diperbaiki: label lebih jelas, padding horizontal 24→16dp, field multiline tumbuh (`heightIn(min=100.dp)`) dengan align atas, jarak antar field 16→20dp. Resolusi 2 blok konflik merge di dokumen ini (ringkasan verifikasi Android & kendala prioritas tinggi) dengan mempertahankan hasil terverifikasi: build Android sukses, APK ~124,9 MB, 70/70 unit test. Kartu feed (`PostCard`) ditata ulang bergaya Instagram: avatar + username tebal dengan judul sebagai sub-judul, tombol aksi (Request Meeting, View 3D) dipindah ke bawah media tanpa latar lingkaran, caption jadi paragraf username + deskripsi, "see more" abu dan timestamp polos. Judul dibersihkan dari sisa markdown (`>`, `_`, `**`). Pill kategori dihapus dari kartu feed (`PostCard`), beserta parameter `category` dan import yang tak terpakai. `VexSkillChip` (dipakai ulang `VexTagChip` di profil & banner explore) dibuat lebih clean: latar tipis transparan dari warna kategori, teks & ikon memakai aksen warna kategori yang disesuaikan kontrasnya per tema, tanpa gradient/glow; tinggi 24→26dp. Penguatan keamanan aplikasi Android: token & data sesi kini terenkripsi AES-256-GCM via AndroidKeyStore (`SecurePrefs` + migrasi transparan `SessionManager`), logging HTTP level BODY hanya pada build debug, cleartext dimatikan untuk release (`network_security_config.xml` HTTPS-only; emulator tetap diizinkan pada src/debug), token dikecualikan dari cloud backup, kedua activity Unity tidak lagi `exported`, URL cleartext hardcode `10.0.2.2` dihapus dari kode, `proguard-rules.pro` disiapkan (minify masih nonaktif), cooldown 60 detik untuk kirim ulang OTP registrasi. Koreksi: fallback dummy data dihapus total dari jalur production (Schedule, History, Explore), `ScreenRouteTest` diperbaiki, tanggal awal Request Meeting kini dinamis (tidak lagi Sept 2026), pesan galat Request Meeting dilokalisasi, dead code dibersihkan (`com/ven/app/unity/UnityLauncher`, test template `com.example.venmobile`, warna template), `RegisterRoute` & `ProfileViewModel` dipindah ke file sendiri. Polish UI: tombol Outline adaptif tema, window background terang/gelap sesuai mode (tidak ada kilatan gelap di mode terang), Request Meeting memakai `VexTextArea` + indikator loading banner, warna hardcode dipindah ke token tema (`accentWarning`). **70 dari 70 unit test Android lulus.**
 >
-> **Lingkungan:** Windows + Laragon, PHP 8.3.30, Laravel 13.34.0, MySQL, Android Gradle 9.6
+> **Lingkungan:** Windows + Laragon, PHP 8.3.33, Laravel 13.34.0, MySQL, Android Gradle 9.6
 
 Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang sudah selesai, apakah benar-benar bisa dijalankan, bagian mana yang masih berupa mock, serta kendala yang ditemukan beserta rekomendasi perbaikannya.
 
@@ -22,18 +32,18 @@ Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang s
 
 | Pemeriksaan | Perintah | Hasil |
 |---|---|---|
-| Konfigurasi backend | `php artisan about` | ✅ Laravel 13.34.0, PHP 8.3.30, DB MySQL, storage link aktif |
+| Konfigurasi backend | `php artisan about` | ✅ Laravel 13.34.0, PHP 8.3.33, DB MySQL, storage link aktif |
 | Daftar route backend | `php artisan route:list` | ✅ 99 route terdaftar |
-| Test backend | `php artisan test` | ✅ **93 test — 93 lulus** (454 assertion), diverifikasi per grup: 87 test utama + 4 AI Chat + 2 Audit Backup/Restore |
+| Test backend | `php artisan test` / `phpunit --no-coverage` | ✅ **97 test — 97 lulus** (468 assertion), termasuk 4 test baru `KaryaUnggahTest` (upload poster/video, deskripsi wajib, 401) dan 2 test Audit Backup/Restore |
 | Fallback galat API | `php artisan test --filter=PenanganKesalahanApiTest` | ✅ **9 test lulus** — 401, 403, 404, 405, 422, 500 tanpa kebocoran detail internal + redirect browser & JSON untuk klien API |
 | Halaman galat web | `GET /halaman-tidak-ada` | ✅ Blade 404 minimalis (tanpa kartu/dekorasi), mandiri (tanpa aset Vite), merek "Value Exhibition Network", respons `text/html`, tanpa tautan ke beranda |
 | Akar situs | `GET /` | ✅ HTTP **404** — panel admin tidak terekspos, tidak redirect ke login/beranda |
 | API dibuka dari browser | `GET /api/pameran/25` + `Accept: text/html` | ✅ `302` → `/404`, halaman 404 kustom ditampilkan; klien API (`application/json`, wildcard, tanpa Accept) tetap menerima JSON |
 | Smoke test API live | `artisan serve` + login `fajri@ven.test` | ✅ Login, `/api/pameran`, `/api/karya/rekomendasi`, `/api/profil`, `/api/pencarian`, `/api/ai/tanya`, `/api/undangan` merespons normal |
 | Admin Web Panel | `GET /admin/login` | ✅ HTTP 200 |
-| Build Android | `.\gradlew.bat assembleDebug` | ✅ **BUILD SUCCESSFUL** |
-| Artefak APK | `app/build/outputs/apk/debug/app-debug.apk` | ✅ Ada, 125.974.239 byte (~126,0 MB) |
-| Test Android | `.\gradlew.bat testDebugUnitTest` | ✅ **73 test — 73 lulus** (3 test baru `AiChatViewModelTest`; 2 test template `com.example.venmobile` dihapus; `ScreenRouteTest` diperbaiki) |
+| Build Android | `.\gradlew.bat --offline :app:testDebugUnitTest :app:assembleDebug` | ✅ **BUILD SUCCESSFUL** (juga `:app:compileDebugKotlin`) |
+| Artefak APK | `app/build/outputs/apk/debug/app-debug.apk` | ✅ Ada, 125.763.243 byte (~125,8 MB) |
+| Test Android | `.\gradlew.bat --offline :app:testDebugUnitTest` | ✅ **73 test — 73 lulus** (0 failure, 0 error; termasuk 7 test editor Compose yang dikembalikan) |
 | Audit & perapian koding bersih | `git diff --check` + build/test | ✅ Tidak ada `dd/dump`, `!!`, `TODO/FIXME`, import tak terpakai, atau logging debug di rilis; struktur `Route`/`Screen` dipisah sesuai konvensi |
 
 **Catatan lingkungan:** perintah `php` tidak tersedia di PATH. Gunakan path Laragon:
@@ -78,7 +88,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 | 5 | Profil & User Profile | `ProfileUiState` → `ApiProfil` (profil, jumlah karya/pameran, karya milik) | ✅ |
 | 6 | Settings akun | Ganti email, ganti kata sandi, status akun, tema gelap/terang | ✅ |
 | 7 | Buat pameran (template & info) | `CreateExhibitViewModel`, upload banner via `ApiPameran` | ✅ |
-| 8 | Viewer 3D Unity | `UnityLoadingScreen` + `UnityLauncher` + endpoint `room-dto`, fallback DTO anti black screen (room Template01 berjalan) | ⚠️ fallback aktif; live DB `ven` belum ada kolom `objek.id_pameran` |
+| 8 | Viewer 3D Unity | `UnityLoadingScreen` + `UnityLauncher` + endpoint `room-dto`, fallback DTO anti black screen (room Template01 berjalan); editor 3D lewat `Screen.CreateExhibitEditor` → `UnityLoadingScreen` | ✅ kolom `objek.id_pameran` sudah ada di `ven`, `room-dto` live berjalan |
 | 9 | AI Chat | `AiChatViewModel` → `ApiAiChat` + `AiChatHistoryPreferences`/`AiChatHistoryStore` + drawer riwayat chat persisten + hapus percakapan per item (menu ⋮, dialog konfirmasi), live Gemini | ✅ |
 | 10 | Theme engine | `ThemePreferences`, Material 3 | ✅ |
 | 11 | Multi-bahasa | `AppLanguage`, `VenApplication`, `locales_config.xml`, `AppCompatDelegate`, 321 keys (English default & Indonesian) | ✅ |
@@ -86,7 +96,9 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 | 13 | Request Meeting (UC-17) | `RequestMeetingViewModel` → `ApiUndangan.createUndangan`, validasi tanggal/jam lampau, input jam/menit/AM-PM, catatan | ✅ |
 | 14 | Riwayat Undangan di Settings | `HistoryScreen` tersambung ke `ScheduleViewModel` (menampilkan riwayat undangan riil dari API) | ✅ |
 | 15 | Penguatan keamanan mobile | `util/SecurePrefs` (AES-256-GCM AndroidKeyStore) + `SessionManager` terenkripsi; `ApiClient` logging BODY hanya debug & `setBaseUrl` menolak non-HTTPS di release; `network_security_config.xml` (release HTTPS-only), `backup_rules`/`data_extraction_rules` mengecualikan `ven_auth_pref` & `ven_ai_chat_pref`, activity Unity `exported=false`, `proguard-rules.pro` siap (minify off), cooldown OTP registrasi | ✅ |
-| 16 | Polish UI & konsistensi design token | Tombol `VexButton.Outline` adaptif tema (perbaikan mode terang), `themes.xml` light/night (window background sesuai mode), `RequestMeetingScreen` memakai `VexTextArea` + loading state banner + spacing/typography token, token `accentWarning` baru, warna hardcode dihapus dari `CarouselExhibitions`/`CreateOptionsBottomSheet`; pill kategori `VexSkillChip` (juga dipakai `VexTagChip`) memakai latar tint transparan dan aksen warna kategori adaptif tema; pill kategori pada kartu feed (`PostCard`) dihapus; kartu feed ditata ulang bergaya Instagram (header, aksi bawah media, caption paragraf); halaman profil ditata ulang (top bar kanan, tab Posts/Exhibits, pill keahlian seragam & wrap, kontak interaktif + divider, tombol Edit/Share Profile); form edit profil diperbaiki padding & label-nya | ✅ |
+| 16 | Polish UI & konsistensi design token | Tombol `VexButton.Outline` adaptif tema (perbaikan mode terang), `themes.xml` light/night (window background sesuai mode), `RequestMeetingScreen` memakai `VexTextArea` + loading state banner + spacing/typography token, token `accentWarning` baru, warna hardcode dihapus dari `CarouselExhibitions`/`CreateOptionsBottomSheet`; pill kategori `VexSkillChip` memakai latar tint transparan dan aksen warna kategori adaptif tema; pill kategori pada kartu feed (`PostCard`) dihapus; kartu feed ditata ulang bergaya Instagram (header, aksi bawah media, caption paragraf); halaman profil ditata ulang (top bar kanan, tab Posts/Exhibits, pill keahlian seragam & wrap, kontak interaktif + divider, tombol Edit/Share Profile); form edit profil diperbaiki padding & label-nya | ✅ |
+| 17 | Buat Post / unggah karya | `CreatePostRoute.kt` (picker foto/video nyata, validasi MIME & ukuran 50 MB, cache `File`, pratinjau bitmap/thumbnail video), `CreatePostViewModel.kt` (state/eventUDF), `CreatePostScreen.kt` stateless 2 langkah, kategori dari `ApiProfil.kategori()`, unggah multipart via `ApiKarya.kt` ke `POST /api/karya`; deskripsi wajib. Tanpa kolom `tautan`/Product Link | ✅ |
+| 18 | Perubahan UI login (Daffa) | Field Boxed + label di Login/Register, `VexButtonShape.Boxed` pada tombol login/register/lupa sandi (default `Pill` untuk layar lain) lewat `VexButton.kt` | ✅ |
 
 ### 2.3 Artefak Pendukung
 
@@ -101,9 +113,10 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 | Fitur | Lokasi | Kondisi |
 |---|---|---|
-| Create Post / unggah karya | `.../create/post/CreatePostViewModel.kt:76-78` (`delay(400)`) | Simulasi; belum ada `ApiKarya` di mobile |
-| Publish pameran dari editor Compose | `.../create/exhibit/editor/ExhibitEditorViewModel.kt:156-158` (`delay(800)`) | Simulasi; hanya jalur Unity yang menyimpan ke database |
+| Publish pameran dari editor Compose | `.../create/exhibit/editor/ExhibitEditorViewModel.kt` (`delay(800)`) | Simulasi; tidak menyimpan ke database. Jalur yang benar adalah Unity (`Screen.CreateExhibitEditor` → `UnityLoadingScreen`) |
 | Privacy Policy / Help | `SettingsPlaceholderScreen.kt` | Masih placeholder |
+
+> **Catatan 20 November 2026:** Create Post tidak lagi mock — sudah tersambung ke `POST /api/karya` lewat `ApiKarya.kt` (lihat modul 2.2 nomor 17). Editor pameran Compose dikembalikan sesuai keputusan pengguna; alur publish-nya tetap simulasi (sebelumnya memang demikian), sedangkan edit 3D produksi lewat Unity.
 
 ---
 
@@ -111,18 +124,15 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 ### Prioritas Tinggi
 
-| No | Kendala | Bukti | Dampak | Rekomendasi |
-|:--:|---|---|---|---|
-| 1 | Database `ven` belum memuat kolom `objek.id_pameran` | Uji live Unity membuka `GET /api/pameran/4/room-dto` menghasilkan **HTTP 500** (`Unknown column 'objek.id_pameran'`). Migrasi `2026_11_11_000001_add_id_pameran_to_objek_table.php` sudah jalan di `ven_testing` tetapi belum di `ven` | Endpoint `room-dto` gagal; Unity beralih ke fallback RoomDto lokal | Jalankan migrasi kolom `id_pameran` pada database aplikasi `ven` setelah persetujuan pengguna |
+✅ **Tidak ada.** Kendala `objek.id_pameran` pada DB `ven` sudah terselesaikan (lihat "Kendala yang Sudah Diperbaiki", 20 Nov 2026).
 
 ### Prioritas Sedang
 
 | No | Kendala | Dampak | Rekomendasi |
 |:--:|---|---|---|
-| 2 | Modul Create Post dan Publish editor masih simulasi | Fitur terlihat jalan tetapi data belum tersimpan ke server | Buat `ApiKarya` di mobile, lalu hubungkan ViewModel ke endpoint yang sudah ada |
-| 3 | Source Unity (`.cs`) tidak ada di repo, hanya binary `il2cpp` | Integrasi Unity tidak dapat diaudit dari source; verifikasi butuh perangkat/emulator. Token Bearer masih dikirim via intent extra ke proses `:unity` (`UnityLauncher` → `UnityBridge`) — risiko eksternal sudah ditekan (activity Unity kini `exported="false"`), tetapi token tetap tampil di intent dump | Simpan proyek Unity sebagai submodule/folder terpisah atau dokumentasikan prosedur build; jangka panjang: sampaikan token lewat mekanisme IPC terbatas |
-| 4 | Perubahan binary Unity belum di-commit | `libil2cpp.so` (arm64) termodifikasi dan `compile-data.json` masih untracked | Tinjau ulang lalu commit secara terkontrol (hindari commit binary besar tanpa kebutuhan) |
-| 5 | R8/obfuskasi (`isMinifyEnabled`) masih nonaktif | APK release mudah dibedah; `proguard-rules.pro` sudah disiapkan (keep rules Gson/Retrofit/UnityBridge) | Aktifkan `isMinifyEnabled = true` lalu smoke test build release di perangkat fisik (Unity + Gson) sebelum rilis |
+| 1 | Source Unity (`.cs`) tidak ada di repo, hanya binary `il2cpp` | Integrasi Unity tidak dapat diaudit dari source; verifikasi butuh perangkat/emulator. Token Bearer masih dikirim via intent extra ke proses `:unity` (`UnityLauncher` → `UnityBridge`) — risiko eksternal sudah ditekan (activity Unity kini `exported="false"`), tetapi token tetap tampil di intent dump | Simpan proyek Unity sebagai submodule/folder terpisah atau dokumentasikan prosedur build; jangka panjang: sampaikan token lewat mekanisme IPC terbatas |
+| 2 | Perubahan binary Unity belum di-commit | `libil2cpp.so` (arm64) termodifikasi dan `compile-data.json` masih untracked | Tinjau ulang lalu commit secara terkontrol (hindari commit binary besar tanpa kebutuhan) |
+| 3 | R8/obfuskasi (`isMinifyEnabled`) masih nonaktif | APK release mudah dibedah; `proguard-rules.pro` sudah disiapkan (keep rules Gson/Retrofit/UnityBridge) | Aktifkan `isMinifyEnabled = true` lalu smoke test build release di perangkat fisik (Unity + Gson) sebelum rilis |
 
 ### Prioritas Rendah / Lingkungan
 
@@ -130,13 +140,18 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 |:--:|---|---|
 | 6 | `BASE_URL` mobile default `http://10.0.2.2:8000/api/` | Hanya untuk emulator; ubah `ven-mobile/.env` untuk perangkat fisik. Pastikan URL HTTPS dipakai saat rilis (release build menolak base URL non-HTTPS) |
 | 7 | APK berukuran ~126 MB karena Unity binary | Pertimbangkan Android App Bundle atau ABI split |
-| 8 | `php` tidak ada di PATH | Gunakan path Laragon (`C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe`) atau tambahkan ke environment variable |
+| 8 | `php` tidak ada di PATH | Gunakan path Laragon (`C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe`) atau tambahkan ke environment variable |
 | 9 | `GOOGLE_SERVER_CLIENT_ID` di `.env` berformat non-standar (`glowing-icon-510605-m1.apps.googleusercontent.com`) | Client ID Google OAuth umumnya berawalan angka; verifikasi nilai Web Client ID di Google Cloud Console agar login Google tidak gagal di produksi |
 
 ### Kendala yang Sudah Diperbaiki
 
 | Tanggal | Kendala | Perbaikan | Bukti |
 |---|---|---|---|
+| 20 Nov 2026 | Create Post di mobile hanya simulasi (`delay(400)`), tidak menyimpan data ke server; field "Product Link"/kolom `tautan` ditambahkan di luar rencana | Dibuat `ApiKarya.kt` (multipart `POST /api/karya`), `CreatePostRoute.kt` (picker foto/video nyata, validasi MIME/ukuran 50 MB, cache `File`, pratinjau), `CreatePostScreen.kt` stateless, `CreatePostViewModel.kt` UDF; kategori dari `ApiProfil.kategori()`, deskripsi wajib. Kolom `tautan` di-rollback di `ven`/`ven_testing`, file migration dihapus, fillable/rules backend dikembalikan, field Product Link & string terkait dihapus | Backend 97/97 test (468 assertion) termasuk `KaryaUnggahTest` 4 test (poster, video, deskripsi wajib, 401); `ven.karya.tautan` = 0 kolom; Android `:app:compileDebugKotlin`, `:app:testDebugUnitTest` 66/66, `:app:assembleDebug` BUILD SUCCESSFUL |
+| 20 Nov 2026 | Proses backup/restore database bisa hang; audit memakai database sandbox yang tidak terisolasi | `BackupDatabase.php`/`RestoreDatabase.php` diperbaiki; `AuditBackupDanRestoreTest.php` memakai sandbox `ven_testing_restore_sandbox` | Audit Backup/Restore lolos di suite penuh (97/97 test) |
+| 20 Nov 2026 | Kolom `objek.id_pameran` belum ada di DB aplikasi `ven`, sehingga `GET /api/pameran/{id}/room-dto` gagal (HTTP 500) | Migrasi `2026_11_11_000001_add_id_pameran_to_objek_table.php` diterapkan di `ven` | Verifikasi `information_schema`: `ven.objek.id_pameran` = 1 kolom; `room-dto` live berjalan |
+| 20 Nov 2026 | Perubahan UI login dari Daffa (commit `85f2687`) pernah di-revert di `65cd82e`, sehingga tidak aktif | Diterapkan ulang secara adaptif: field Boxed + label di Login/Register, `VexButtonShape.Boxed` pada tombol login/register/lupa sandi; default `Pill` agar layar lain tidak berubah | `:app:compileDebugKotlin` & `:app:assembleDebug` BUILD SUCCESSFUL |
+| 20 Nov 2026 | Cleanup "rapikan aplikasi" sempat menghapus editor pameran Compose, 32 string orphan, 4 drawable, `VexIcons.Editor*`, serta `VexTagChip`, `onCategoryColor`, `Motion.kt`, `SettingsUiState` + `dummySettingsUiState` | Sesuai keputusan pengguna, seluruh penghapusan tersebut **di-restore dari `HEAD`**; hanya penghapusan kolom `tautan` yang dipertahankan | Android **73/73 test** (0 failure, 0 error), `:app:assembleDebug` BUILD SUCCESSFUL, APK 125.763.243 byte |
 | 19 Nov 2026 | Riwayat AI Chat hanya bisa ditambah dan dibuka; tidak ada cara menghapus percakapan sehingga riwayat menumpuk permanen di perangkat | Fitur hapus per item ala Gemini: tombol ⋮ pada tiap item drawer membuka menu "Hapus obrolan" → dialog konfirmasi (`Batal`/`Hapus`). `AiChatHistoryPreferences` mengekspos interface `AiChatHistoryStore` + `deleteConversation` (commit sinkron; key prefs dihapus bila riwayat kosong). `AiChatViewModel.onDeleteConversation` membatalkan job AI berjalan dan mereset state bila obrolan aktif dihapus; respons AI terlambat diabaikan lewat guard `currentChatId` agar obrolan tidak muncul kembali | `gradlew :app:testDebugUnitTest :app:assembleDebug` BUILD SUCCESSFUL; 73/73 test lulus (0 failure, 0 error; 3 test baru `AiChatViewModelTest`); APK 125.974.239 byte; smoke test emulator-5554: hapus 1 dari 2 riwayat → prefs tersisa 1, hapus item terakhir → key user terhapus, riwayat user lain utuh |
 | 19 Nov 2026 | Halaman profil menyalahi kebiasaan umum: `+` di kiri atas, ikon menu dua garis ambigu, pill keempat terpotong di tepi kanan, nama/stat menumpuk di kiri dengan whitespace kanan berlebih, Email/Phone polos tanpa divider/affordance, empat pill keahlian berbeda warna + bintang, serta tidak ada tombol aksi utama maupun tab konten | Top bar profil: kiri dikosongkan, username ditengah, `SettingsProfile` (gear) + `Add` di kanan berdampingan; `VexIconTabs` dinaikkan ke bawah statistik; stat `SpaceEvenly`; chip keahlian `FlowRow` wrap, warna `colors.primary`, tanpa bintang (juga di bottom sheet); Email/Phone diberi `HorizontalDivider` + baris klik `mailto:`/`tel:` dengan ikon & `primaryText`; tombol `Button` Edit Profile (ke `Screen.SettingsProfile`) + `OutlinedButton` Share Profile (ACTION_SEND). Form edit profil: label `bodyMedium`, padding horizontal 24→16dp, multiline `heightIn(min=100.dp)` align atas, jarak field 16→20dp | `gradlew :app:testDebugUnitTest :app:assembleDebug --offline` BUILD SUCCESSFUL; 70/70 test lulus (0 failure, 0 error); APK 124.950.674 byte |
 | 19 Nov 2026 | Tampilan kartu feed kurang enak dilihat: tombol aksi berupa lingkaran di header, judul menusuk caption, spasi tidak konsisten, dan judul mengandung sisa markdown (`> _UIUX_...`) | Layout ulang ala Instagram: avatar 40dp + username Bold dan judul sebagai sub-judul di header; aksi dipindah ke bawah media sebagai `IconButton` polos; caption hanya username + deskripsi; "see more" abu (`textMuted`), timestamp tanpa bullet, padding 16dp. `sanitizeCaptionTitle` membersihkan `>`, `_`, `**`. Import `BorderStroke`/`Surface`/`CircleShape`/`size` dihapus | `gradlew :app:testDebugUnitTest :app:assembleDebug --offline` BUILD SUCCESSFUL; 70/70 test lulus; APK 124.935.979 byte |
@@ -160,13 +175,13 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 ## 5. Kesimpulan
 
-- **Backend:** 100% test lulus (**87 test, 406 assertion**). Seluruh modul inti (auth, profil, pameran, karya, undangan, pencarian, admin, audit keamanan, backup/restore, AI live Gemini) merespons normal pada smoke test live.
-- **Android:** alur utama selesai dan berhasil di-build (APK debug 125.974.239 byte, ~126,0 MB). Autentikasi, home, explore, profil, settings, create exhibit, Schedule (Approved, Waiting, Request, History), Request Meeting (UC-17), AI Chat live dengan hapus percakapan per item, Multi-bahasa (EN/ID), dan viewer Unity sudah aktif tersambung API. Pill kategori dihapus dari kartu feed; halaman profil ditata ulang (top bar kanan, tab Posts/Exhibits, pill keahlian seragam & wrap, kontak interaktif, tombol Edit/Share Profile) dan form edit profil diperbaiki padding-nya; `VexSkillChip`/`VexTagChip` di explore memakai latar tint transparan dengan aksen warna kategori adaptif tema tanpa mengubah `CategoryColorMap`.
+- **Backend:** 100% test lulus (**97 test, 468 assertion**). Seluruh modul inti (auth, profil, pameran, karya, undangan, pencarian, admin, audit keamanan, backup/restore, AI live Gemini) merespons normal pada smoke test live.
+- **Android:** alur utama selesai dan berhasil di-build (APK debug 125.763.243 byte, ~125,8 MB). Autentikasi, home, explore, profil, settings, create exhibit, **Create Post (unggah karya via `POST /api/karya`)**, Schedule (Approved, Waiting, Request, History), Request Meeting (UC-17), AI Chat live dengan hapus percakapan per item, Multi-bahasa (EN/ID), dan viewer Unity sudah aktif tersambung API. Perubahan UI login dari Daffa (field Boxed + label, tombol `VexButtonShape.Boxed`) aktif. Editor pameran Compose dikembalikan sesuai keputusan pengguna (alur publish-nya tetap mock); edit 3D produksi lewat Unity. Pill kategori dihapus dari kartu feed; halaman profil ditata ulang (top bar kanan, tab Posts/Exhibits, pill keahlian seragam & wrap, kontak interaktif, tombol Edit/Share Profile) dan form edit profil diperbaiki padding-nya; `VexSkillChip` di explore memakai latar tint transparan dengan aksen warna kategori adaptif tema tanpa mengubah `CategoryColorMap`.
 - **Keamanan mobile:** token & data sesi terenkripsi AES-256-GCM (AndroidKeyStore), logging HTTP hanya di debug, release HTTPS-only dengan pengecualian emulator pada debug, prefs sensitif dikecualikan dari backup, activity Unity non-exported, `proguard-rules.pro` siap (minify menunggu smoke test perangkat).
 - **Dummy data dihapus total** dari jalur production — Schedule/History/Explore menampilkan empty state asli saat API kosong atau gagal; tersisa hanya sebagai bahan `@Preview`.
-- **Belum selesai:** Create Post (unggah karya dari mobile) dan publish pameran dari editor Compose.
-- **Catatan integrasi Unity:** UnityPlayerGameActivity terbuka normal (room 3D berjalan dengan fallback RoomDto), namun migrasi `id_pameran` pada tabel `objek` belum diterapkan di database aplikasi `ven` (baru di `ven_testing`).
-- **Test Android:** **73/73 lulus** — 3 test baru `AiChatViewModelTest` (hapus obrolan non-aktif, aktif, dan tidak dikenal); `ScreenRouteTest` diperbaiki; 2 test template bawaan dihapus sehingga total berubah dari 71 menjadi 70, lalu 73 setelah penambahan test hapus obrolan.
+- **Belum selesai:** publish pameran dari editor Compose (alur mock `delay(800)`, dikembalikan sesuai keputusan pengguna) dan halaman Privacy Policy / Help yang masih placeholder. Create Post sudah tersambung API; edit 3D produksi lewat Unity.
+- **Catatan integrasi Unity:** UnityPlayerGameActivity terbuka normal; migrasi `id_pameran` pada tabel `objek` sudah diterapkan di database aplikasi `ven`, sehingga `room-dto` live berjalan (fallback RoomDto tetap ada sebagai anti–black screen). Source `.cs` Unity tidak ada di repo (hanya binary `il2cpp`).
+- **Test Android:** **73/73 lulus** (0 failure, 0 error), termasuk 7 test `ExhibitEditorViewModelTest` yang dikembalikan. APK debug 125.763.243 byte (~125,8 MB).
 
 ---
 
@@ -175,7 +190,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 ```powershell
 # Backend
 cd backend-api/backend
-$php = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe"
+$php = "C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe"
 & $php artisan about
 & $php artisan route:list
 & $php artisan test

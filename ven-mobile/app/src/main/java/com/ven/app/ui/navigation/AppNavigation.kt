@@ -43,7 +43,7 @@ import com.ven.app.ui.screens.create.exhibit.CreateExhibitTemplateScreen
 import com.ven.app.ui.screens.create.exhibit.CreateExhibitViewModel
 import com.ven.app.ui.screens.create.exhibit.info.CreateExhibitInfoScreen
 import com.ven.app.ui.screens.unity.UnityLoadingScreen
-import com.ven.app.ui.screens.create.post.CreatePostScreen
+import com.ven.app.ui.screens.create.post.CreatePostRoute
 import com.ven.app.ui.screens.explore.ExploreScreen
 import com.ven.app.ui.screens.explore.ExploreViewModel
 import com.ven.app.ui.screens.explore.PostsFeedScreen
@@ -268,7 +268,7 @@ fun AppNavHost(showExplore: Boolean = false) {
         }
 
         composable(Screen.CreatePost.route) {
-            CreatePostScreen(
+            CreatePostRoute(
                 onCloseClick = { navController.popBackStack() },
                 onPostSuccess = {
                     navController.popBackStack()
