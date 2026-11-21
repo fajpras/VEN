@@ -60,11 +60,14 @@ object UnityLauncher {
         }
     }
 
-    fun createViewerIntent(context: Context, roomIdOrExhibitId: String): Intent {
+    fun createViewerIntent(context: Context, roomIdOrExhibitId: String, roomId: Int? = null): Intent {
         val sessionManager = SessionManager.getInstance(context)
         val token = sessionManager.getToken().orEmpty()
         val baseUrl = AppConfig.baseUrl
         val finalTemplateId = mapTemplateId(roomIdOrExhibitId)
+        // Ruangan privat memakai endpoint room-dto tersendiri (menurut id ruangan).
+        val roomType = if (roomId != null) "ruangan" else "pameran"
+        val targetId = roomId?.toString() ?: roomIdOrExhibitId
 
         // Pre-populate UnityBridge with valid room DTO matching template & room id
         if (com.yourapp.exhibition.UnityBridge.currentRoomJson.isNullOrBlank()) {
@@ -81,10 +84,11 @@ object UnityLauncher {
 
         return Intent(context, UnityPlayerGameActivity::class.java).apply {
             putExtra("mode", "viewer")
+            putExtra("roomType", roomType)
             putExtra("templateId", finalTemplateId)
             putExtra("template_id", finalTemplateId)
-            putExtra("roomId", roomIdOrExhibitId)
-            putExtra("room_id", roomIdOrExhibitId)
+            putExtra("roomId", targetId)
+            putExtra("room_id", targetId)
             putExtra("authToken", token)
             putExtra("token", token)
             putExtra("apiBaseUrl", baseUrl)
@@ -105,8 +109,8 @@ object UnityLauncher {
         context.startActivity(intent)
     }
 
-    fun launchViewer(context: Context, roomIdOrExhibitId: String) {
-        val intent = createViewerIntent(context, roomIdOrExhibitId).apply {
+    fun launchViewer(context: Context, roomIdOrExhibitId: String, roomId: Int? = null) {
+        val intent = createViewerIntent(context, roomIdOrExhibitId, roomId).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         context.startActivity(intent)

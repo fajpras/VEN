@@ -21,6 +21,9 @@ data class ScheduleEventItem(
     @param:DrawableRes val bannerRes: Int = R.drawable.poster_1,
     val bannerUrl: String? = null,
     val exhibitId: String? = null,
+
+    /** Id ruangan privat (null untuk ruangan umum); kunci voice chat & room-dto privat. */
+    val roomId: Int? = null,
     val isApproved: Boolean = true,
     val status: String = "disetujui",
     val note: String? = null,

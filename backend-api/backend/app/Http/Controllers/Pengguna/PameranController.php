@@ -10,6 +10,7 @@ use App\Models\Objek;
 use App\Models\Pameran;
 use App\Models\PosisiObjek;
 use App\Services\LogSistem;
+use App\Services\Pameran\PenyusunRoomDto;
 use App\Services\ProfanityFilter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,8 @@ use Illuminate\Validation\Rule;
 class PameranController extends Controller
 {
     private const PENGGUNA_PUBLIK = 'pengguna:id_pengguna,nama,nama_panggilan,foto_profil';
+
+    public function __construct(private readonly PenyusunRoomDto $penyusunRoomDto) {}
 
     public function index(Request $request)
     {
@@ -370,65 +373,7 @@ class PameranController extends Controller
 
     public function roomDto(Pameran $pameran, Request $request)
     {
-        $pameran->load([
-            'model3d', 'ruangan',
-            'objek.posisi', 'objek.model3d', 'objek.karya.kategori',
-        ]);
-
-        $items = [];
-        foreach ($pameran->objek as $obj) {
-            $posisi = $obj->posisi;
-            $karya = $obj->karya->first();
-            $items[] = [
-                'prefabId' => $obj->model3d?->nama ?? 'panel',
-                'position' => [
-                    'x' => (float) ($posisi?->posisi_x ?? 0.0),
-                    'y' => (float) ($posisi?->posisi_y ?? 0.0),
-                    'z' => (float) ($posisi?->posisi_z ?? 0.0),
-                ],
-                'rotation' => [
-                    'x' => 0.0,
-                    'y' => (float) ($posisi?->rotasi_z ?? 0.0),
-                    'z' => 0.0,
-                ],
-                'contentType' => $karya?->jenis ?? '',
-                'contentUrl' => $karya?->file ?? '',
-                'title' => $karya?->judul ?? '',
-                'description' => $karya?->deskripsi ?? '',
-            ];
-        }
-
-        if (empty($items)) {
-            $items = [
-                ['prefabId' => 'hpanel_01', 'position' => ['x' => 0.0, 'y' => 1.8, 'z' => 5.2], 'rotation' => ['x' => 0.0, 'y' => 180.0, 'z' => 0.0], 'contentType' => 'poster', 'contentUrl' => '', 'title' => $pameran->judul, 'description' => 'Karya Utama'],
-                ['prefabId' => 'vpanel_01', 'position' => ['x' => -4.8, 'y' => 1.8, 'z' => 1.5], 'rotation' => ['x' => 0.0, 'y' => 90.0, 'z' => 0.0], 'contentType' => 'poster', 'contentUrl' => '', 'title' => 'Karya Visual 1', 'description' => ''],
-                ['prefabId' => 'vpanel_02', 'position' => ['x' => 4.8, 'y' => 1.8, 'z' => 1.5], 'rotation' => ['x' => 0.0, 'y' => -90.0, 'z' => 0.0], 'contentType' => 'poster', 'contentUrl' => '', 'title' => 'Karya Visual 2', 'description' => ''],
-                ['prefabId' => 'sculpture_01', 'position' => ['x' => 2.0, 'y' => 0.0, 'z' => 0.0], 'rotation' => ['x' => 0.0, 'y' => -45.0, 'z' => 0.0], 'contentType' => '3d', 'contentUrl' => '', 'title' => 'Instalasi 3D', 'description' => ''],
-                ['prefabId' => 'bench_01', 'position' => ['x' => -2.0, 'y' => 0.0, 'z' => 0.0], 'rotation' => ['x' => 0.0, 'y' => 90.0, 'z' => 0.0], 'contentType' => 'aset', 'contentUrl' => '', 'title' => '', 'description' => ''],
-            ];
-        }
-
-        $rawTpl = $pameran->model3d?->file ? strtolower(basename($pameran->model3d->file, '.glb')) : '';
-        if (!in_array($rawTpl, ['template01', 'template02', 'template03', 'template04'], true)) {
-            $rawTpl = match (strtolower((string) $pameran->tipe)) {
-                'sedang' => 'template02',
-                'besar' => 'template03',
-                'acara' => 'template04',
-                default => 'template01',
-            };
-        }
-
-        $dto = [
-            'roomId' => (string) $pameran->id_pameran,
-            'templateId' => $rawTpl,
-            'title' => $pameran->judul,
-            'description' => 'Pameran Virtual 3D',
-            'wallColor' => $pameran->warna ?? '#FFFFFF',
-            'isPublic' => true,
-            'ownerId' => (string) $pameran->id_pengguna,
-            'viewerId' => (string) ($request->user()?->id_pengguna ?? ''),
-            'items' => $items,
-        ];
+        $dto = $this->penyusunRoomDto->susun($pameran, $request->user());
 
         return response()->json($dto);
     }

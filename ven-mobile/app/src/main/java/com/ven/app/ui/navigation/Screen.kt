@@ -44,8 +44,12 @@ sealed class Screen(val route: String) {
         }
     }
 
-    data object ViewExhibit : Screen("view_exhibit/{exhibitId}") {
-        fun createRoute(exhibitId: String) = "view_exhibit/$exhibitId"
+    data object ViewExhibit : Screen("view_exhibit/{exhibitId}?roomId={roomId}") {
+        /** [roomId] diisi untuk membuka ruangan privat (room-dto ruangan, bukan pameran). */
+        fun createRoute(exhibitId: String, roomId: Int? = null): String {
+            val base = "view_exhibit/$exhibitId"
+            return if (roomId != null) "$base?roomId=$roomId" else base
+        }
     }
     data object RequestMeeting : Screen("request_meeting/{postId}") {
         fun createRoute(postId: String) = "request_meeting/$postId"

@@ -178,6 +178,24 @@
     <string name="schedule_action_rejected_success">Request rejected</string>
     <string name="schedule_action_join_room_sim">Entering meeting room...</string>
 
+    <!-- Voice Chat (private room only) Strings -->
+    <string name="voice_panel_judul">Private voice chat</string>
+    <string name="voice_panel_deskripsi">Voice chat starts automatically when you join this private room.</string>
+    <string name="voice_status_menyiapkan">Connecting voice chat…</string>
+    <string name="voice_status_tersambung">Voice chat connected</string>
+    <string name="voice_status_gagal">Voice chat is unavailable right now</string>
+    <string name="voice_izin_ditolak">Microphone permission is required for voice chat</string>
+    <string name="voice_error_token">Voice session token is invalid</string>
+    <string name="voice_error_gagal">Could not connect to the voice server</string>
+    <string name="voice_notif_judul">Private room voice chat</string>
+    <string name="voice_notif_menyiapkan">Connecting to the discussion room…</string>
+    <string name="voice_notif_tersambung">Connected to the discussion room</string>
+    <string name="voice_notif_bisu">Mute</string>
+    <string name="voice_notif_nyala">Unmute</string>
+    <string name="voice_notif_tutup">End</string>
+    <string name="voice_channel_nama">Voice chat</string>
+    <string name="voice_channel_deskripsi">Active voice chat session in a private exhibition room</string>
+
     <!-- Explore Strings -->
     <string name="explore_search_placeholder">Search</string>
     <string name="explore_filter_action">Filter</string>

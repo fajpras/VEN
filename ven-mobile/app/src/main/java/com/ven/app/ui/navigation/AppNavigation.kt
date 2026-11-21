@@ -255,8 +255,8 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onNavigateToExhibitEditor = { id ->
                     navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "template01" }))
                 },
-                onNavigateToExhibitViewer = { id ->
-                    navController.navigate(Screen.ViewExhibit.createRoute(id))
+                onNavigateToExhibitViewer = { id, roomId ->
+                    navController.navigate(Screen.ViewExhibit.createRoute(id, roomId))
                 },
                 onNavigateToUserProfile = { userId ->
                     navController.navigate(Screen.UserProfile.createRoute(userId))
@@ -402,12 +402,18 @@ fun AppNavHost(showExplore: Boolean = false) {
                     type = NavType.StringType
                     defaultValue = ""
                 },
+                navArgument("roomId") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                },
             ),
         ) { backStackEntry ->
             val exhibitId = backStackEntry.arguments?.getString("exhibitId") ?: ""
+            val roomId = backStackEntry.arguments?.getInt("roomId")?.takeIf { it > 0 }
             UnityLoadingScreen(
                 targetId = exhibitId,
                 isEditor = false,
+                roomId = roomId,
                 onBackClick = {
                     navController.popBackStack()
                 },
@@ -700,7 +706,7 @@ fun MainHomeScreen(
     onNavigateToCreatePost: () -> Unit = {},
     onNavigateToCreateExhibit: () -> Unit = {},
     onNavigateToExhibitEditor: (templateIdOrExhibitId: String) -> Unit = {},
-    onNavigateToExhibitViewer: (exhibitId: String) -> Unit = {},
+    onNavigateToExhibitViewer: (exhibitId: String, roomId: Int?) -> Unit = { _, _ -> },
     onNavigateToUserProfile: (userId: String) -> Unit = {},
 ) {
     var currentTab by rememberSaveable { mutableStateOf(initialTab) }
@@ -782,8 +788,8 @@ fun MainHomeScreen(
                     onRefresh = { homeViewModel.muatUlang(filterSeen = true) },
                     onCreateClick = handleCreateClick,
                     onRequestMeetingClick = onRequestMeetingClick,
-                    onView3dClick = { pameranId -> pameranId?.let { onNavigateToExhibitViewer(it) } ?: onNavigateToExhibitViewer("tpl_small") },
-                    onBannerClick = { eventId -> onNavigateToExhibitViewer(eventId) },
+                    onView3dClick = { pameranId -> pameranId?.let { onNavigateToExhibitViewer(it, null) } ?: onNavigateToExhibitViewer("tpl_small", null) },
+                    onBannerClick = { eventId -> onNavigateToExhibitViewer(eventId, null) },
                     onLoadMore = homeViewModel::loadNextChunk,
                     onUserClick = onNavigateToUserProfile,
                 )
@@ -791,8 +797,8 @@ fun MainHomeScreen(
             BottomNavTab.Schedule -> {
                 ScheduleScreen(
                     onTabSelected = { currentTab = it },
-                    onJoinRoom = { exhibitId ->
-                        onNavigateToExhibitViewer(exhibitId?.ifBlank { "4" } ?: "4")
+                    onJoinRoom = { exhibitId, roomId ->
+                        onNavigateToExhibitViewer(exhibitId?.ifBlank { "4" } ?: "4", roomId)
                     },
                 )
             }
@@ -824,7 +830,7 @@ fun MainHomeScreen(
                     },
                     onRefresh = { exploreViewModel.muatUlang(filterSeen = true) },
                     onMediaClick = { media -> onNavigateToPostsFeed(media.id, "") },
-                    onExhibitClick = { exhibit -> onNavigateToExhibitViewer(exhibit.id) },
+                    onExhibitClick = { exhibit -> onNavigateToExhibitViewer(exhibit.id, null) },
                     onAccountClick = onNavigateToUserProfile,
                     viewModel = exploreViewModel,
                 )
@@ -840,7 +846,7 @@ fun MainHomeScreen(
                         onRetryClick = profileViewModel::muat,
                     onMediaClick = { media ->
                         if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
-                            onNavigateToExhibitViewer(media.id)
+                            onNavigateToExhibitViewer(media.id, null)
                         } else {
                             onNavigateToPostsFeed(media.id, "me")
                         }

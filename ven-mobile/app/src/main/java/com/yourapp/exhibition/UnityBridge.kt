@@ -31,9 +31,14 @@ object UnityBridge {
                     ?: intent?.getStringExtra("api_base_url")?.takeIf { it.isNotBlank() }
                     ?: BuildConfig.BASE_URL
                 val authToken = intent?.getStringExtra("authToken").orEmpty()
+                val roomType = intent?.getStringExtra("roomType")?.takeIf { it.isNotBlank() } ?: "pameran"
 
                 if (!roomId.isNullOrBlank() && roomId.all { it.isDigit() }) {
-                    val endpoint = apiBaseUrl.trimEnd('/') + "/pameran/$roomId/room-dto"
+                    val endpoint = if (roomType == "ruangan") {
+                        apiBaseUrl.trimEnd('/') + "/ruangan/$roomId/room-dto"
+                    } else {
+                        apiBaseUrl.trimEnd('/') + "/pameran/$roomId/room-dto"
+                    }
                     if (BuildConfig.DEBUG) Log.d(TAG, "Fetching room DTO from: $endpoint")
                     val conn = (java.net.URL(endpoint).openConnection() as java.net.HttpURLConnection).apply {
                         requestMethod = "GET"

@@ -229,6 +229,7 @@ class ScheduleViewModel(
             bannerRes = R.drawable.poster_1,
             bannerUrl = bannerUrl,
             exhibitId = exhibitId,
+            roomId = u.ruangan?.idRuangan,
             isApproved = isApproved,
             status = u.status,
             note = u.catatan,

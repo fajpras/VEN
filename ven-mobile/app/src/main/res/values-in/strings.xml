@@ -169,6 +169,24 @@
     <string name="schedule_action_rejected_success">Permintaan ditolak</string>
     <string name="schedule_action_join_room_sim">Memasuki ruang pertemuan...</string>
 
+    <!-- Voice Chat (khusus ruangan privat) Strings -->
+    <string name="voice_panel_judul">Voice chat privat</string>
+    <string name="voice_panel_deskripsi">Voice chat otomatis aktif saat Anda bergabung ke ruangan privat ini.</string>
+    <string name="voice_status_menyiapkan">Menyambungkan voice chat…</string>
+    <string name="voice_status_tersambung">Voice chat tersambung</string>
+    <string name="voice_status_gagal">Voice chat sedang tidak tersedia</string>
+    <string name="voice_izin_ditolak">Izin mikrofon diperlukan untuk voice chat</string>
+    <string name="voice_error_token">Token sesi voice tidak valid</string>
+    <string name="voice_error_gagal">Tidak dapat tersambung ke server voice</string>
+    <string name="voice_notif_judul">Voice chat ruangan privat</string>
+    <string name="voice_notif_menyiapkan">Menyambungkan ke ruang diskusi…</string>
+    <string name="voice_notif_tersambung">Tersambung ke ruang diskusi</string>
+    <string name="voice_notif_bisu">Bisu</string>
+    <string name="voice_notif_nyala">Nyala</string>
+    <string name="voice_notif_tutup">Tutup</string>
+    <string name="voice_channel_nama">Voice chat</string>
+    <string name="voice_channel_deskripsi">Sesi voice chat aktif di ruangan pameran privat</string>
+
     <!-- Explore Strings -->
     <string name="explore_search_placeholder">Cari</string>
     <string name="explore_filter_action">Filter</string>

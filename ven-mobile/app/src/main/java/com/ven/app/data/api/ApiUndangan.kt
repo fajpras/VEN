@@ -5,6 +5,7 @@ import com.ven.app.data.api.models.CreateUndanganRequest
 import com.ven.app.data.api.models.PaginatedData
 import com.ven.app.data.api.models.TanggapiUndanganRequest
 import com.ven.app.data.api.models.UndanganItemModel
+import com.ven.app.data.api.models.VoiceTokenModel
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -37,6 +38,11 @@ interface ApiUndanganService {
         @Path("id") id: String,
         @Body request: TanggapiUndanganRequest,
     ): Response<ApiResponse<UndanganItemModel>>
+
+    @GET("ruangan/{id}/voice")
+    suspend fun getVoiceToken(
+        @Path("id") id: Int,
+    ): Response<ApiResponse<VoiceTokenModel>>
 }
 
 object ApiUndangan {
@@ -94,6 +100,20 @@ object ApiUndangan {
     suspend fun tanggapiUndangan(id: String, request: TanggapiUndanganRequest): Result<UndanganItemModel> {
         return try {
             val response = service.tanggapiUndangan(id, request)
+            val data = response.body()?.data
+            if (response.isSuccessful && data != null) {
+                Result.success(data)
+            } else {
+                Result.failure(Exception(ApiClient.parseError(response.errorBody()?.string())))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun voiceToken(idRuangan: Int): Result<VoiceTokenModel> {
+        return try {
+            val response = service.getVoiceToken(idRuangan)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 Result.success(data)

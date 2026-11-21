@@ -97,3 +97,14 @@ data class TanggapiUndanganRequest(
     @SerializedName("catatan")
     val catatan: String? = null,
 )
+
+data class VoiceTokenModel(
+    @SerializedName("url")
+    val url: String? = null,
+
+    @SerializedName("room")
+    val room: String,
+
+    @SerializedName("token")
+    val token: String,
+)

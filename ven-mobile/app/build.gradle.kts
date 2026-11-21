@@ -119,6 +119,9 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation("androidx.games:games-activity:4.4.0")
 
+    // Voice chat (LiveKit) — hanya ruangan privat
+    implementation(libs.livekit.android)
+
     // Google Sign-In
     implementation("androidx.credentials:credentials:1.3.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
@@ -126,6 +129,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.3.0")
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

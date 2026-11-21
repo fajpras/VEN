@@ -33,6 +33,8 @@ import com.ven.app.ui.components.ui.VexBottomSheet
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonVariant
 import com.ven.app.ui.screens.schedule.ScheduleEventItem
+import com.ven.app.ui.screens.voice.VoiceChatPanel
+import com.ven.app.ui.screens.voice.VoiceSesi
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
@@ -54,6 +56,9 @@ fun EventDetailSheet(
     onDismissRequest: () -> Unit,
     onJoinRoom: () -> Unit,
     modifier: Modifier = Modifier,
+
+    /** Status voice chat saat ini; ditampilkan hanya untuk ruangan privat. */
+    voiceStatus: VoiceSesi = VoiceSesi.Jeda,
 ) {
     val colors = VexTheme.colors
 
@@ -123,6 +128,13 @@ fun EventDetailSheet(
             )
 
             Spacer(modifier = Modifier.height(32.dp))
+
+            // Kartu voice chat: hanya ruangan privat yang mendukung voice.
+            if (event.isApproved && event.roomId != null) {
+                VoiceChatPanel(status = voiceStatus)
+
+                Spacer(modifier = Modifier.height(VexSpace.s4))
+            }
 
             // Tombol Utama "Join Room"
             VexButton(

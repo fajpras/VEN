@@ -1,6 +1,10 @@
 package com.ven.app.ui.screens.schedule
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
@@ -40,6 +45,10 @@ import com.ven.app.ui.components.ui.VexTextTabs
 import com.ven.app.ui.navigation.BottomNavTab
 import com.ven.app.ui.screens.schedule.components.EventDetailSheet
 import com.ven.app.ui.screens.schedule.components.RequestDetailSheet
+import com.ven.app.ui.screens.voice.VoiceAcara
+import com.ven.app.ui.screens.voice.VoiceChatService
+import com.ven.app.ui.screens.voice.VoiceChatViewModel
+import com.ven.app.ui.screens.voice.VoiceSesi
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
@@ -51,15 +60,52 @@ fun ScheduleScreen(
     onTabSelected: (BottomNavTab) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ScheduleViewModel = viewModel(),
-    onJoinRoom: ((exhibitId: String?) -> Unit)? = null,
+    voiceViewModel: VoiceChatViewModel = viewModel(),
+    onJoinRoom: ((exhibitId: String?, roomId: Int?) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val voiceState by voiceViewModel.uiState.collectAsStateWithLifecycle()
+
+    // Ruangan privat yang menunggu persetujuan izin mikrofon sebelum token diambil.
+    var ruanganMenungguIzin by remember { mutableStateOf<Pair<Int, String?>?>(null) }
+
+    val izinMicLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { hasil ->
+        val target = ruanganMenungguIzin
+        ruanganMenungguIzin = null
+
+        if (hasil[Manifest.permission.RECORD_AUDIO] == true && target != null) {
+            voiceViewModel.mulaiSesi(target.first, target.second)
+        } else if (hasil[Manifest.permission.RECORD_AUDIO] == false) {
+            Toast.makeText(context, context.getString(R.string.voice_izin_ditolak), Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(uiState.userFeedbackMessage) {
         uiState.userFeedbackMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             viewModel.clearFeedbackMessage()
+        }
+    }
+
+    // Peristiwa voice: nyalakan service (koneksi bertahan selama di Unity) lalu buka ruangan 3D privat.
+    LaunchedEffect(Unit) {
+        voiceViewModel.acara.collect { peristiwa ->
+            when (peristiwa) {
+                is VoiceAcara.SiapGabung -> {
+                    VoiceChatService.mulai(context, peristiwa.token.url, peristiwa.token.token)
+                    if (onJoinRoom != null) {
+                        onJoinRoom(peristiwa.exhibitId, peristiwa.idRuangan)
+                    } else {
+                        UnityLauncher.launchViewer(context, peristiwa.exhibitId?.ifBlank { "4" } ?: "4", peristiwa.idRuangan)
+                    }
+                }
+
+                is VoiceAcara.Gagal ->
+                    Toast.makeText(context, peristiwa.pesan, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -77,9 +123,29 @@ fun ScheduleScreen(
             onEventClick = viewModel::selectEventDetail,
             onRequestClick = viewModel::selectRequestDetail,
             onDismissDetail = viewModel::dismissDetail,
+            voiceStatus = voiceState.sesi,
             onJoinRoom = { event ->
-                if (onJoinRoom != null) {
-                    onJoinRoom(event.exhibitId)
+                val roomId = event.roomId?.takeIf { event.isApproved }
+
+                if (roomId != null) {
+                    val sudahDiizinkan = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.RECORD_AUDIO,
+                    ) == PackageManager.PERMISSION_GRANTED
+
+                    if (sudahDiizinkan) {
+                        voiceViewModel.mulaiSesi(roomId, event.exhibitId)
+                    } else {
+                        ruanganMenungguIzin = roomId to event.exhibitId
+                        izinMicLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.RECORD_AUDIO,
+                                Manifest.permission.POST_NOTIFICATIONS,
+                            ),
+                        )
+                    }
+                } else if (onJoinRoom != null) {
+                    onJoinRoom(event.exhibitId, null)
                 } else {
                     val targetId = event.exhibitId?.ifBlank { "4" } ?: "4"
                     UnityLauncher.launchViewer(context, targetId)
@@ -108,6 +174,7 @@ fun ScheduleContent(
     modifier: Modifier = Modifier,
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
+    voiceStatus: VoiceSesi = VoiceSesi.Jeda,
 ) {
     val colors = VexTheme.colors
 
@@ -242,6 +309,7 @@ fun ScheduleContent(
             event = event,
             onDismissRequest = onDismissDetail,
             onJoinRoom = { onJoinRoom(event) },
+            voiceStatus = voiceStatus,
         )
     }
 

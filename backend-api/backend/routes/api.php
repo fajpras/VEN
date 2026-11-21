@@ -76,6 +76,7 @@ Route::middleware(CatatKeamanan::class)->group(function () {
             Route::get('undangan/{undangan}/status', 'status');
             Route::patch('undangan/{undangan}', 'tanggapi');
             Route::get('ruangan/{ruangan}/voice', 'voiceToken')->middleware('throttle:30,1');
+            Route::get('ruangan/{ruangan}/room-dto', 'roomDto')->whereNumber('ruangan');
         });
 
         Route::post('ai/tanya', [Pengguna\AIChatController::class, 'ask'])->middleware('throttle:10,1');

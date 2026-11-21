@@ -60,6 +60,9 @@ fun UnityLoadingScreen(
     bannerUrl: String = "",
     tipe: String = "kecil",
     isEditor: Boolean = true,
+
+    /** Id ruangan privat; tidak null berarti memuat room-dto ruangan privat. */
+    roomId: Int? = null,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -90,7 +93,7 @@ fun UnityLoadingScreen(
                     tipe = tipe,
                 )
             } else {
-                UnityLauncher.createViewerIntent(context, targetId)
+                UnityLauncher.createViewerIntent(context, targetId, roomId)
             }
             unityLauncher.launch(intent)
         }

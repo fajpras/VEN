@@ -15,6 +15,7 @@ use App\Models\SanksiAkun;
 use App\Models\Undangan;
 use App\Observers\AktivitasObserver;
 use App\Services\Crypto\LayananEnkripsi;
+use App\Services\Livekit\LayananTokenVoice;
 use App\Services\Otp\LayananOtp;
 use App\Services\Otp\PembuatKodeAcak;
 use Illuminate\Contracts\Foundation\Application;
@@ -34,6 +35,12 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(LayananEnkripsi::class, fn (Application $app): LayananEnkripsi => new LayananEnkripsi(
             (string) $app['config']->get('services.ven.encryption_key'),
+        ));
+
+        $this->app->singleton(LayananTokenVoice::class, fn (Application $app): LayananTokenVoice => new LayananTokenVoice(
+            $app['config']->get('services.livekit.url'),
+            $app['config']->get('services.livekit.key'),
+            $app['config']->get('services.livekit.secret'),
         ));
     }
 

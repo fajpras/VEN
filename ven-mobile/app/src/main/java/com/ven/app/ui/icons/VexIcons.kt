@@ -78,6 +78,11 @@ object VexIcons {
     @DrawableRes val StatusCheckFilled = R.drawable.ic_action_check
     @DrawableRes val StatusCircleOutline = 0
 
+    // Voice chat icons (ruangan privat)
+    @DrawableRes val Mic = R.drawable.ic_voice_mic
+    @DrawableRes val MicOff = R.drawable.ic_voice_mic_off
+    @DrawableRes val CallEnd = R.drawable.ic_voice_call_end
+
     // Logos
     @DrawableRes val LogoVen = R.drawable.logo_ven
     @DrawableRes val LogoVex = R.drawable.logo_ven // Alias for DESIGN.md compatibility

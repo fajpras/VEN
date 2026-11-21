@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Pengguna;
 use App\Http\Controllers\Controller;
 use App\Models\Karya;
 use App\Models\Pameran;
-use App\Models\Pengguna;
 use App\Models\Ruangan;
 use App\Models\Undangan;
+use App\Services\Pameran\PenyusunRoomDto;
+use App\Services\Livekit\LayananTokenVoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -152,56 +153,52 @@ class DiskusiController extends Controller
         return $this->ok($undangan->fresh(), 'Undangan ditolak.');
     }
 
-    public function voiceToken(Request $request, Ruangan $ruangan)
+    public function voiceToken(Request $request, Ruangan $ruangan, LayananTokenVoice $voice)
     {
-        $user = $request->user();
         $ruangan->loadMissing('pameran');
 
         abort_unless($ruangan->pameran, 404);
 
-        $namaRoom = 'ruangan-'.$ruangan->id_ruangan;
-
-        if ($ruangan->jenis === 'privat') {
-            $penyelenggara = hash_equals($ruangan->pameran->id_pengguna, $user->id_pengguna);
-
-            if ($penyelenggara) {
-                $undangan = Undangan::where('id_ruangan', $ruangan->id_ruangan)->where('status', 'disetujui')
-                    ->whereBetween('waktu', [now()->subHours(3), now()->addMinutes(15)])->latest('waktu')->first();
-            } else {
-                $undangan = Undangan::where('id_ruangan', $ruangan->id_ruangan)
-                    ->where('id_pengguna', $user->id_pengguna)->where('status', 'disetujui')
-                    ->whereBetween('waktu', [now()->subHours(3), now()->addMinutes(15)])->latest('waktu')->first();
-            }
-
-            abort_unless($undangan, 403, 'Anda tidak memiliki sesi diskusi aktif di ruangan ini.');
-
-            $namaRoom = 'diskusi-'.$ruangan->id_ruangan.'-'.$undangan->id_undangan;
-        }
-
-        $kunci = config('services.livekit.key');
-        $rahasia = config('services.livekit.secret');
-
-        if (! $kunci || ! $rahasia) {
+        if (! $voice->terkonfigurasi()) {
             return $this->error('Layanan voice chat belum dikonfigurasi.', 503);
         }
 
-        $now = time();
-        $token = $this->jwt([
-            'iss' => $kunci,
-            'sub' => $user->id_pengguna,
-            'name' => $user->nama_panggilan ?: $user->nama,
-            'nbf' => $now,
-            'exp' => $now + 3600,
-            'video' => [
-                'room' => $namaRoom,
-                'roomJoin' => true,
-                'canPublish' => true,
-                'canSubscribe' => true,
-                'canPublishData' => false,
-            ],
-        ], $rahasia);
+        return $this->ok($voice->sesiDiskusi($ruangan, $request->user()));
+    }
 
-        return $this->ok(['url' => config('services.livekit.url'), 'room' => $namaRoom, 'token' => $token]);
+    public function roomDto(Request $request, Ruangan $ruangan, PenyusunRoomDto $penyusun)
+    {
+        $ruangan->loadMissing('pameran');
+
+        abort_unless($ruangan->pameran, 404);
+
+        $this->pastikanAksesRuangan($request, $ruangan);
+
+        $dto = $penyusun->susun(
+            $ruangan->pameran,
+            $request->user(),
+            isPublic: false,
+            roomId: 'ruangan-'.$ruangan->id_ruangan,
+        );
+
+        return response()->json($dto);
+    }
+
+    private function pastikanAksesRuangan(Request $request, Ruangan $ruangan): void
+    {
+        $user = $request->user();
+
+        $peserta = Undangan::query()
+            ->where('id_ruangan', $ruangan->id_ruangan)
+            ->where('id_pengguna', $user->id_pengguna)
+            ->where('status', 'disetujui')
+            ->exists();
+
+        $boleh = $peserta
+            || hash_equals((string) $ruangan->pameran->id_pengguna, (string) $user->id_pengguna)
+            || $user->isAdmin();
+
+        abort_unless($boleh, 403, 'Anda tidak berhak mengakses ruangan ini.');
     }
 
     private function pemilikPameran(Undangan $undangan): ?string
@@ -224,14 +221,5 @@ class DiskusiController extends Controller
     private function pastikanPenyelenggara(Request $request, Undangan $undangan): void
     {
         $this->pastikanPemilik($request, $this->pemilikPameran($undangan), true, 'Anda tidak berhak menanggapi undangan ini.');
-    }
-
-    private function jwt(array $claims, string $secret): string
-    {
-        $b64 = fn (string $s) => rtrim(strtr(base64_encode($s), '+/', '-_'), '=');
-        $head = $b64(json_encode(['alg' => 'HS256', 'typ' => 'JWT']));
-        $body = $b64(json_encode($claims));
-
-        return "$head.$body.".$b64(hash_hmac('sha256', "$head.$body", $secret, true));
     }
 }

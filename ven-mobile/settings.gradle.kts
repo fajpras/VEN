@@ -16,6 +16,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://www.jitpack.io") // dependensi transitif LiveKit (audioswitch)
         flatDir {
             dirs("unityLibrary/libs")
         }

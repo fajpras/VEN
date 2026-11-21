@@ -1,12 +1,19 @@
 # Status Proyek VEN — Daftar Modul, Verifikasi, dan Kendala
 
-> **Tanggal verifikasi:** 20 November 2026
+> **Tanggal verifikasi:** 21 November 2026
 >
 > **Branch aktif:** `main`
 >
-> **Commit terakhir:** commit ini (perapian Create Post / `tautan` / login Daffa); baseline sebelum perubahan adalah `38eead3`. Verifikasi dilakukan pada working tree sebelum commit.
+> **Commit terakhir:** commit ini (voice chat privat + ruangan privat room-dto); baseline sebelum perubahan adalah `6f0f1cd`. Verifikasi dilakukan pada working tree sebelum commit.
 >
-> **Perubahan 20 November 2026 (belum di-commit saat verifikasi):**
+> **Perubahan 21 November 2026 (voice chat privat + ruangan privat):**
+> - **Voice chat kini hanya untuk ruangan privat.** Logika token dipindah dari `DiskusiController` ke service `app/Services/Livekit/LayananTokenVoice.php` (final class, JWT HS256 manual). Guard baru menolak (403) ruangan `umum` — sebelumnya token voice untuk ruangan umum justru dibuat tanpa cek, kontradiksi dengan desain publik/privat. Peserta wajib undangan `disetujui` dalam jendela sesi (mulai 3 jam sebelum jadwal s.d. 15 menit sesudah); penyelenggara bebas bergabung pada sesi mana pun di ruangannya. Exception baru `App\Exceptions\KesalahanVoice` mengikuti pola `KesalahanOtp` (method `render()`).
+> - **Endpoint baru `GET /api/ruangan/{ruangan}/room-dto`** (otorisasi: pemilik pameran, pengundang undangan `disetujui`, atau admin — tanpa jendela waktu). Payload identik room-dto pameran lewat service bersama `app/Services/Pameran/PenyusunRoomDto.php`, dengan `roomId => "ruangan-{id}"` dan `isPublic => false`. Badan `PameranController::roomDto` dipindah ke service tersebut (perilaku lama identik, tetap raw `response()->json`).
+> - **Android: voice chat LiveKit.** Dependensi `io.livekit:livekit-android:2.30.0` (+ repo JitPack untuk transitive `audioswitch`), izin `RECORD_AUDIO`/`MODIFY_AUDIO_SETTINGS`/`FOREGROUND_SERVICE(_MICROPHONE)`/`POST_NOTIFICATIONS`, service `VoiceChatService` di proses utama (koneksi bertahan saat Unity `:unity` terbuka) dengan notifikasi `CallStyle` (aksi Bisu/Tutup), `VoiceChatViewModel` (UDF, `PenyediaTokenVoice` injectable), `KlienVoice`/`KlienVoiceLivekit`, panel pre-join di `EventDetailSheet`, ikon mic/mic-off/call-end, strings `voice_*` EN+ID. Alur: Join Room pada undangan privat disetujui → izin mikrofon → token → service connect → Unity viewer.
+> - **Android: routing ruangan privat.** `ScheduleEventItem` membawa `roomId` (id_ruangan dari `UndanganItemModel.ruangan`), route `Screen.ViewExhibit` menambah argumen opsional `?roomId=`, `UnityLauncher` mengirim extra `roomType`, dan `UnityBridge.requestRoom` memilih endpoint `/ruangan/{id}/room-dto` untuk ruangan privat (fallback JSON anti–black screen tetap ada).
+> - **Kredensial LiveKit masih kosong** (`LIVEKIT_API_KEY`/`LIVEKIT_API_SECRET` di `.env`; `LIVEKIT_URL` masih placeholder) sehingga endpoint voice tetap mengembalikan 503 sampai server LiveKit disiapkan. Test backend memakai config fake; smoke test 2 perangkat menyusul setelah kredensial diisi.
+>
+> **Perubahan 20 November 2026 (Create Post / `tautan` / login Daffa):**
 > - **Create Post benar-benar tersambung API.** `CreatePostRoute.kt` memakai photo/video picker nyata (`PickVisualMedia`), memvalidasi MIME/ukuran (maks. 50 MB), meng-cache berkas ke `File`, menampilkan pratinjau bitmap/thumbnail video, dan mengunggah lewat `ApiKarya.kt` ke `POST /api/karya` (multipart `id_kategori`, `judul`, `jenis`, `deskripsi`, `file`). Kategori diambil dari `ApiProfil.kategori()`, deskripsi wajib. Modul ini naik dari "Masih Mock" menjadi ✅ Selesai; regression test backend `KaryaUnggahTest.php` (4 test) ditambahkan.
 > - **Kolom `tautan` dihapus total** sesuai permintaan (tidak ada di rencana): migration di-rollback di `ven_testing` dan `ven`, file migration dihapus, `Karya` fillable & `KaryaController` rules dikembalikan, field "Product Link" di form Create Post dan semua string terkait dihapus. Tidak ada referensi `tautan` pada kode Create Post.
 > - **Perubahan UI login dari Daffa diterapkan ulang secara adaptif** (commit asal `85f2687`, pernah di-revert di `65cd82e`): field Boxed + label pada Login/Register, `VexButtonShape.Boxed` pada tombol login/register/lupa sandi. Default tetap `VexButtonShape.Pill` agar layar lain tidak berubah.
@@ -35,16 +42,16 @@ Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang s
 |---|---|---|
 | Konfigurasi backend | `php artisan about` | ✅ Laravel 13.34.0, PHP 8.3.33, DB MySQL, storage link aktif |
 | Daftar route backend | `php artisan route:list` | ✅ 99 route terdaftar |
-| Test backend | `php artisan test` / `phpunit --no-coverage` | ✅ **97 test — 97 lulus** (468 assertion), termasuk 4 test baru `KaryaUnggahTest` (upload poster/video, deskripsi wajib, 401) dan 2 test Audit Backup/Restore |
+| Test backend | `php artisan test` / `phpunit --no-coverage` | ✅ **110 test — 110 lulus** (506 assertion), termasuk 13 test baru `DiskusiVoiceTest` (7) & `DiskusiRuanganRoomDtoTest` (6) |
 | Fallback galat API | `php artisan test --filter=PenanganKesalahanApiTest` | ✅ **9 test lulus** — 401, 403, 404, 405, 422, 500 tanpa kebocoran detail internal + redirect browser & JSON untuk klien API |
 | Halaman galat web | `GET /halaman-tidak-ada` | ✅ Blade 404 minimalis (tanpa kartu/dekorasi), mandiri (tanpa aset Vite), merek "Value Exhibition Network", respons `text/html`, tanpa tautan ke beranda |
 | Akar situs | `GET /` | ✅ HTTP **404** — panel admin tidak terekspos, tidak redirect ke login/beranda |
 | API dibuka dari browser | `GET /api/pameran/25` + `Accept: text/html` | ✅ `302` → `/404`, halaman 404 kustom ditampilkan; klien API (`application/json`, wildcard, tanpa Accept) tetap menerima JSON |
 | Smoke test API live | `artisan serve` + login `fajri@ven.test` | ✅ Login, `/api/pameran`, `/api/karya/rekomendasi`, `/api/profil`, `/api/pencarian`, `/api/ai/tanya`, `/api/undangan` merespons normal |
 | Admin Web Panel | `GET /admin/login` | ✅ HTTP 200 |
-| Build Android | `.\gradlew.bat --offline :app:testDebugUnitTest :app:assembleDebug` | ✅ **BUILD SUCCESSFUL** (juga `:app:compileDebugKotlin`) |
-| Artefak APK | `app/build/outputs/apk/debug/app-debug.apk` | ✅ Ada, 124.985.156 byte (~125,0 MB) |
-| Test Android | `.\gradlew.bat --offline :app:testDebugUnitTest` | ✅ **73 test — 73 lulus** (0 failure, 0 error; termasuk 7 test editor Compose yang dikembalikan) |
+| Build Android | `.\gradlew.bat :app:testDebugUnitTest :app:assembleDebug` | ✅ **BUILD SUCCESSFUL** (juga `:app:compileDebugKotlin`; build tanpa `--offline` karena dependensi LiveKit baru diunduh) |
+| Artefak APK | `app/build/outputs/apk/debug/app-debug.apk` | ✅ Ada, 134.739.756 byte (~134,7 MB; bertambah karena lib native WebRTC LiveKit) |
+| Test Android | `.\gradlew.bat :app:testDebugUnitTest` | ✅ **77 test — 77 lulus** (0 failure, 0 error; termasuk 3 test baru `VoiceChatViewModelTest` + 1 kasus `ScreenRouteTest`) |
 | Audit & perapian koding bersih | `git diff --check` + build/test | ✅ Tidak ada `dd/dump`, `!!`, `TODO/FIXME`, import tak terpakai, atau logging debug di rilis; struktur `Route`/`Screen` dipisah sesuai konvensi |
 
 **Catatan lingkungan:** perintah `php` tidak tersedia di PATH. Gunakan path Laragon:
@@ -66,7 +73,7 @@ C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe artisan test
 | 3 | Profil & minat | `profil` (GET/PUT), foto, ganti email via OTP, ganti kata sandi, status akun, kategori & minat | ✅ |
 | 4 | Pameran | CRUD `pameran`, template `model-3d`, rekomendasi, upload banner, ruangan, `room-dto`, `exhibitions` (dari Unity) | ✅ |
 | 5 | Karya | CRUD `karya`, upload media, penyajian file bertanda tangan, rekomendasi, update posisi objek | ✅ |
-| 6 | Diskusi & Undangan | `undangan` (index/store/show/status/tanggapi), voice token, otomatisasi ruangan privat pameran, pencegahan self-invitation & duplicate active, eager load banner & pengguna | ✅ |
+| 6 | Diskusi & Undangan | `undangan` (index/store/show/status/tanggapi), voice token privat-only (`LayananTokenVoice`, guard 403 untuk ruangan umum), `ruangan/{id}/room-dto` (otorisasi peserta via `PenyusunRoomDto`), otomatisasi ruangan privat pameran, pencegahan self-invitation & duplicate active, eager load banner & pengguna | ✅ kode; ⚠️ voice live menunggu kredensial LiveKit |
 | 7 | Pencarian terpadu | `pencarian` (akun, karya, pameran) | ✅ |
 | 8 | AI Chat | `ai/tanya` → Google Gemini (`gemini-2.5-flash-lite`), grounding konteks pameran & karya, penolakan out-of-scope | ✅ |
 | 9 | Admin API | pengguna, sanksi (`lockForUpdate`), moderasi karya/pameran, log aktivitas & keamanan | ✅ |
@@ -100,6 +107,8 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 | 16 | Polish UI & konsistensi design token | Tombol `VexButton.Outline` adaptif tema (perbaikan mode terang), `themes.xml` light/night (window background sesuai mode), `RequestMeetingScreen` memakai `VexTextArea` + loading state banner + spacing/typography token, token `accentWarning` baru, warna hardcode dihapus dari `CarouselExhibitions`/`CreateOptionsBottomSheet`; pill kategori `VexSkillChip` memakai latar tint transparan dan aksen warna kategori adaptif tema; pill kategori pada kartu feed (`PostCard`) dihapus; kartu feed ditata ulang bergaya Instagram (header, aksi bawah media, caption paragraf); halaman profil ditata ulang (top bar kanan, tab Posts/Exhibits, pill keahlian seragam & wrap, kontak interaktif + divider, tombol Edit/Share Profile); form edit profil diperbaiki padding & label-nya | ✅ |
 | 17 | Buat Post / unggah karya | `CreatePostRoute.kt` (picker foto/video nyata, validasi MIME & ukuran 50 MB, cache `File`, pratinjau bitmap/thumbnail video), `CreatePostViewModel.kt` (state/eventUDF), `CreatePostScreen.kt` stateless 2 langkah, kategori dari `ApiProfil.kategori()`, unggah multipart via `ApiKarya.kt` ke `POST /api/karya`; deskripsi wajib. Tanpa kolom `tautan`/Product Link | ✅ |
 | 18 | Perubahan UI login (Daffa) | Field Boxed + label di Login/Register, `VexButtonShape.Boxed` pada tombol login/register/lupa sandi (default `Pill` untuk layar lain) lewat `VexButton.kt` | ✅ |
+| 19 | Voice chat ruangan privat (LiveKit) | `VoiceChatService` (foreground, proses utama, notifikasi CallStyle Bisu/Tutup), `VoiceChatViewModel` (UDF, `PenyediaTokenVoice` injectable), `KlienVoice`/`KlienVoiceLivekit` (audio-only), `ApiUndangan.voiceToken`, panel pre-join `VoiceChatPanel` di `EventDetailSheet`, izin RECORD_AUDIO/FOREGROUND_SERVICE_MICROPHONE/POST_NOTIFICATIONS, ikon `ic_voice_*`, strings `voice_*` EN+ID | ⚠️ kode + test selesai; smoke 2 perangkat menunggu kredensial LiveKit |
+| 20 | Routing ruangan privat (Join Room → Unity) | `ScheduleEventItem.roomId` (dari `ruangan.idRuangan`), `Screen.ViewExhibit` arg opsional `?roomId=`, `UnityLauncher` extra `roomType`, `UnityBridge` memilih `/ruangan/{id}/room-dto`; Join Room memicu izin mic → token → voice service → viewer 3D privat | ⚠️ kode + test selesai; smoke menyusul setelah kredensial LiveKit |
 
 ### 2.3 Artefak Pendukung
 
@@ -131,9 +140,10 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 | No | Kendala | Dampak | Rekomendasi |
 |:--:|---|---|---|
-| 1 | Source Unity (`.cs`) tidak ada di repo, hanya binary `il2cpp` | Integrasi Unity tidak dapat diaudit dari source; verifikasi butuh perangkat/emulator. Token Bearer masih dikirim via intent extra ke proses `:unity` (`UnityLauncher` → `UnityBridge`) — risiko eksternal sudah ditekan (activity Unity kini `exported="false"`), tetapi token tetap tampil di intent dump | Simpan proyek Unity sebagai submodule/folder terpisah atau dokumentasikan prosedur build; jangka panjang: sampaikan token lewat mekanisme IPC terbatas |
-| 2 | Perubahan binary Unity belum di-commit | `libil2cpp.so` (arm64) termodifikasi dan `compile-data.json` masih untracked | Tinjau ulang lalu commit secara terkontrol (hindari commit binary besar tanpa kebutuhan) |
-| 3 | R8/obfuskasi (`isMinifyEnabled`) masih nonaktif | APK release mudah dibedah; `proguard-rules.pro` sudah disiapkan (keep rules Gson/Retrofit/UnityBridge) | Aktifkan `isMinifyEnabled = true` lalu smoke test build release di perangkat fisik (Unity + Gson) sebelum rilis |
+| 1 | Kredensial LiveKit kosong (`LIVEKIT_API_KEY`/`SECRET`; `LIVEKIT_URL` placeholder `wss://livekit.domain-anda.com`) | Endpoint `/api/ruangan/{id}/voice` mengembalikan 503; voice chat belum bisa diuji live | Daftar LiveKit Cloud (tier gratis) atau self-host Docker, lalu isi `.env`; smoke test 2 emulator: A buat pameran → B request meeting → A approve → keduanya Join Room (voice tersambung, mute lewat notifikasi) |
+| 2 | Source Unity (`.cs`) tidak ada di repo, hanya binary `il2cpp` | Integrasi Unity tidak dapat diaudit dari source; verifikasi butuh perangkat/emulator. Token Bearer masih dikirim via intent extra ke proses `:unity` (`UnityLauncher` → `UnityBridge`) — risiko eksternal sudah ditekan (activity Unity kini `exported="false"`), tetapi token tetap tampil di intent dump. **Multiplayer realtime pameran utama (Fase berikutnya) membutuhkan source ini** | Simpan proyek Unity sebagai submodule/folder terpisah atau dokumentasikan prosedur build; jangka panjang: sampaikan token lewat mekanisme IPC terbatas |
+| 3 | Perubahan binary Unity belum di-commit | `libil2cpp.so` (arm64) termodifikasi dan `compile-data.json` masih untracked | Tinjau ulang lalu commit secara terkontrol (hindari commit binary besar tanpa kebutuhan) |
+| 4 | R8/obfuskasi (`isMinifyEnabled`) masih nonaktif | APK release mudah dibedah; `proguard-rules.pro` sudah disiapkan (keep rules Gson/Retrofit/UnityBridge) | Aktifkan `isMinifyEnabled = true` lalu smoke test build release di perangkat fisik (Unity + Gson + LiveKit/WebRTC) sebelum rilis |
 
 ### Prioritas Rendah / Lingkungan
 
@@ -148,6 +158,8 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 | Tanggal | Kendala | Perbaikan | Bukti |
 |---|---|---|---|
+| 21 Nov 2026 | `voiceToken` justru mengizinkan voice di ruangan **umum** (tanpa cek apa pun), kontradiksi dengan desain publik/privat; logika token + JWT menumpuk di controller; ruangan privat tidak punya room-dto sendiri sehingga Join Room selalu memuat scene pameran utama | Guard baru: token voice hanya untuk `jenis === 'privat'` (`KesalahanVoice::hanyaPrivat`, 403). Ekstraksi `LayananTokenVoice` (service + JWT) dan `PenyusunRoomDto` (payload room 3D bersama). Endpoint baru `GET /api/ruangan/{id}/room-dto` berotorisasi peserta/pemilik/admin dengan `roomId => "ruangan-{id}"`, `isPublic => false`. Android: `ScheduleEventItem.roomId` → route `?roomId=` → extra `roomType` → `UnityBridge` memilih endpoint ruangan; voice LiveKit via foreground service + izin mikrofon | Backend **110/110 test** (506 assertion) termasuk `DiskusiVoiceTest` 7 test (200 peserta/penyelenggara, **403 ruangan umum**, 403 tanpa sesi, 403 di luar jendela, 503 tanpa kredensial, 404 yatim) & `DiskusiRuanganRoomDtoTest` 6 test; Android **77/77 test** (3 baru `VoiceChatViewModelTest`), `:app:compileDebugKotlin` & `:app:assembleDebug` BUILD SUCCESSFUL, APK 134.739.756 byte |
+| 20 Nov 2026 | Create Post di mobile hanya simulasi (`delay(400)`), tidak menyimpan data ke server; field "Product Link"/kolom `tautan` ditambahkan di luar rencana | Dibuat `ApiKarya.kt` (multipart `POST /api/karya`), `CreatePostRoute.kt` (picker foto/video nyata, validasi MIME/ukuran 50 MB, cache `File`, pratinjau), `CreatePostScreen.kt` stateless, `CreatePostViewModel.kt` UDF; kategori dari `ApiProfil.kategori()`, deskripsi wajib. Kolom `tautan` di-rollback di `ven`/`ven_testing`, file migration dihapus, fillable/rules backend dikembalikan, field Product Link & string terkait dihapus | Backend 97/97 test (468 assertion) termasuk `KaryaUnggahTest` 4 test (poster, video, deskripsi wajib, 401); `ven.karya.tautan` = 0 kolom; Android `:app:compileDebugKotlin`, `:app:testDebugUnitTest` 66/66, `:app:assembleDebug` BUILD SUCCESSFUL |
 | 20 Nov 2026 | Create Post di mobile hanya simulasi (`delay(400)`), tidak menyimpan data ke server; field "Product Link"/kolom `tautan` ditambahkan di luar rencana | Dibuat `ApiKarya.kt` (multipart `POST /api/karya`), `CreatePostRoute.kt` (picker foto/video nyata, validasi MIME/ukuran 50 MB, cache `File`, pratinjau), `CreatePostScreen.kt` stateless, `CreatePostViewModel.kt` UDF; kategori dari `ApiProfil.kategori()`, deskripsi wajib. Kolom `tautan` di-rollback di `ven`/`ven_testing`, file migration dihapus, fillable/rules backend dikembalikan, field Product Link & string terkait dihapus | Backend 97/97 test (468 assertion) termasuk `KaryaUnggahTest` 4 test (poster, video, deskripsi wajib, 401); `ven.karya.tautan` = 0 kolom; Android `:app:compileDebugKotlin`, `:app:testDebugUnitTest` 66/66, `:app:assembleDebug` BUILD SUCCESSFUL |
 | 20 Nov 2026 | Proses backup/restore database bisa hang; audit memakai database sandbox yang tidak terisolasi | `BackupDatabase.php`/`RestoreDatabase.php` diperbaiki; `AuditBackupDanRestoreTest.php` memakai sandbox `ven_testing_restore_sandbox` | Audit Backup/Restore lolos di suite penuh (97/97 test) |
 | 20 Nov 2026 | Kolom `objek.id_pameran` belum ada di DB aplikasi `ven`, sehingga `GET /api/pameran/{id}/room-dto` gagal (HTTP 500) | Migrasi `2026_11_11_000001_add_id_pameran_to_objek_table.php` diterapkan di `ven` | Verifikasi `information_schema`: `ven.objek.id_pameran` = 1 kolom; `room-dto` live berjalan |
@@ -177,13 +189,13 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 ## 5. Kesimpulan
 
-- **Backend:** 100% test lulus (**97 test, 468 assertion**). Seluruh modul inti (auth, profil, pameran, karya, undangan, pencarian, admin, audit keamanan, backup/restore, AI live Gemini) merespons normal pada smoke test live.
-- **Android:** alur utama selesai dan berhasil di-build (APK debug 124.985.156 byte, ~125,0 MB). Autentikasi, home, explore, profil, settings, create exhibit, **Create Post (unggah karya via `POST /api/karya`)**, Schedule (Approved, Waiting, Request, History), Request Meeting (UC-17), AI Chat live dengan hapus percakapan per item, Multi-bahasa (EN/ID), dan viewer Unity sudah aktif tersambung API. Perubahan UI login dari Daffa (field Boxed + label, tombol `VexButtonShape.Boxed`) aktif. Editor pameran Compose dikembalikan sesuai keputusan pengguna (alur publish-nya tetap mock); edit 3D produksi lewat Unity. Pill kategori dihapus dari kartu feed; halaman profil ditata ulang (top bar kanan, tab Posts/Exhibits, pill keahlian seragam & wrap, kontak interaktif, tombol Edit/Share Profile) dan form edit profil diperbaiki padding-nya; `VexSkillChip` di explore memakai latar tint transparan dengan aksen warna kategori adaptif tema tanpa mengubah `CategoryColorMap`.
-- **Keamanan mobile:** token & data sesi terenkripsi AES-256-GCM (AndroidKeyStore), logging HTTP hanya di debug, release HTTPS-only dengan pengecualian emulator pada debug, prefs sensitif dikecualikan dari backup, activity Unity non-exported, `proguard-rules.pro` siap (minify menunggu smoke test perangkat).
+- **Backend:** 100% test lulus (**110 test, 506 assertion**). Seluruh modul inti (auth, profil, pameran, karya, undangan, **voice privat-only + room-dto ruangan privat**, pencarian, admin, audit keamanan, backup/restore, AI live Gemini) merespons normal.
+- **Android:** alur utama selesai dan berhasil di-build (APK debug 134.739.756 byte, ~134,7 MB). Autentikasi, home, explore, profil, settings, create exhibit, Create Post, Schedule, Request Meeting (UC-17), AI Chat live, Multi-bahasa (EN/ID), viewer Unity, **voice chat ruangan privat (LiveKit)**, dan **routing ruangan privat** aktif tersambung API. Voice baru bisa live setelah kredensial LiveKit diisi.
+- **Keamanan mobile:** token & data sesi terenkripsi AES-256-GCM (AndroidKeyStore), logging HTTP hanya di debug, release HTTPS-only dengan pengecualian emulator pada debug, prefs sensitif dikecualikan dari backup, activity Unity non-exported, service voice `exported=false` + `foregroundServiceType="microphone"`, `proguard-rules.pro` siap (minify menunggu smoke test perangkat).
 - **Dummy data dihapus total** dari jalur production — Schedule/History/Explore menampilkan empty state asli saat API kosong atau gagal; tersisa hanya sebagai bahan `@Preview`.
-- **Belum selesai:** publish pameran dari editor Compose (alur mock `delay(800)`, dikembalikan sesuai keputusan pengguna) dan halaman Privacy Policy / Help yang masih placeholder. Create Post sudah tersambung API; edit 3D produksi lewat Unity.
-- **Catatan integrasi Unity:** UnityPlayerGameActivity terbuka normal; migrasi `id_pameran` pada tabel `objek` sudah diterapkan di database aplikasi `ven`, sehingga `room-dto` live berjalan (fallback RoomDto tetap ada sebagai anti–black screen). Source `.cs` Unity tidak ada di repo (hanya binary `il2cpp`).
-- **Test Android:** **73/73 lulus** (0 failure, 0 error), termasuk 7 test `ExhibitEditorViewModelTest` yang dikembalikan. APK debug 124.985.156 byte (~125,0 MB).
+- **Belum selesai:** kredensial LiveKit (voice belum bisa diuji live), smoke test 2 perangkat untuk voice + ruangan privat, publish pameran dari editor Compose (alur mock `delay(800)`, dikembalikan sesuai keputusan pengguna), dan halaman Privacy Policy / Help yang masih placeholder. **Multiplayer realtime pameran utama** menunggu source Unity `.cs` di repo — rencananya Laravel Reverb untuk presence + posisi avatar; kontrak `UnityBridge` yang ada siap jadi titik sambung.
+- **Catatan integrasi Unity:** UnityPlayerGameActivity terbuka normal; `room-dto` live berjalan (fallback RoomDto tetap ada sebagai anti–black screen). Source `.cs` Unity tidak ada di repo (hanya binary `il2cpp`).
+- **Test Android:** **77/77 lulus** (0 failure, 0 error), termasuk 3 test baru `VoiceChatViewModelTest` dan kasus route privat di `ScreenRouteTest`. APK debug 134.739.756 byte (~134,7 MB).
 
 ---
 
@@ -196,11 +208,13 @@ $php = "C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe"
 & $php artisan about
 & $php artisan route:list
 & $php artisan test
+& $php vendor\phpunit\phpunit\phpunit tests/Feature/DiskusiVoiceTest.php
+& $php vendor\phpunit\phpunit\phpunit tests/Feature/DiskusiRuanganRoomDtoTest.php
+& $php vendor\phpunit\phpunit\phpunit tests/Feature/DiskusiUndanganTest.php
 & $php vendor\phpunit\phpunit\phpunit tests/Feature/PenanganKesalahanApiTest.php
 & $php vendor\phpunit\phpunit\phpunit tests/Feature/Halaman404Test.php
 & $php vendor\phpunit\phpunit\phpunit tests/Feature/AdminPanelAksesTest.php
 & $php vendor\phpunit\phpunit\phpunit tests/Feature/AIChatGeminiTest.php
-& $php vendor\phpunit\phpunit\phpunit tests/Feature/DiskusiUndanganTest.php
 
 # Android — build & unit test
 cd ..\..\ven-mobile
@@ -214,6 +228,8 @@ cd ..\backend-api\backend
 # Login: POST http://127.0.0.1:8000/api/auth/masuk
 # Body: {"identitas":"fajri@ven.test","kata_sandi":"password123"}
 # Undangan: GET/POST/PATCH http://127.0.0.1:8000/api/undangan (Bearer token)
+# Voice privat: GET http://127.0.0.1:8000/api/ruangan/{id_ruangan}/voice (Bearer token; 503 tanpa kredensial LiveKit)
+# Room-dto privat: GET http://127.0.0.1:8000/api/ruangan/{id_ruangan}/room-dto (Bearer token)
 # AI Tanya: POST http://127.0.0.1:8000/api/ai/tanya (Bearer token)
 # Halaman 404 web: GET http://127.0.0.1:8000/halaman-tidak-ada
 # Browser membuka API: GET http://127.0.0.1:8000/api/pameran/25 + Accept text/html → 302 /404
