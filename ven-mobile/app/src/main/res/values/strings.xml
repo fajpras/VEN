@@ -403,4 +403,21 @@
 <string name="create_exhibit_tab_chair">Chair</string>
 <string name="create_exhibit_tab_plant">Plant</string>
 <string name="create_exhibit_tab_other">Other</string>
+
+    <!-- Splash & Intro Strings -->
+    <string name="splash_tagline">Virtual Exhibition Navigator</string>
+    <string name="splash_loading">Preparing your experience</string>
+    <string name="splash_logo_content_desc">VEN logo</string>
+
+    <string name="intro_skip">Skip</string>
+    <string name="intro_next">Next</string>
+    <string name="intro_start">Let\'s Start</string>
+    <string name="intro_3d_title">3D Exhibit</string>
+    <string name="intro_3d_description">Step into virtual gallery rooms and experience artworks in immersive 3D.</string>
+    <string name="intro_3d_content_desc">Interactive 3D exhibition illustration</string>
+    <string name="intro_meet_title">Meet &amp; Connect</string>
+    <string name="intro_meet_description">Discover creators, send invitations, and schedule meetings right inside the exhibition.</string>
+    <string name="intro_meet_content_desc">People meeting in a virtual exhibition illustration</string>
+    <string name="intro_start_title">Let\'s Start</string>
+    <string name="intro_start_description">Your virtual exhibition journey starts here.</string>
 </resources>

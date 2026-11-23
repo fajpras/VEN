@@ -38,4 +38,9 @@ class ScreenRouteTest {
         assertEquals("view_exhibit/ex1", Screen.ViewExhibit.createRoute("ex1"))
         assertEquals("view_exhibit/ex1?roomId=5", Screen.ViewExhibit.createRoute("ex1", 5))
     }
+
+    @Test
+    fun screenRoutes_intro_isCorrect() {
+        assertEquals("intro", Screen.Intro.route)
+    }
 }

@@ -8,6 +8,15 @@
         <item name="android:navigationBarColor">#FFFFFF</item>
     </style>
 
+    <!-- Splash native Android 12+ (core-splashscreen). Latar brand gelap dipakai
+         di kedua mode agar tidak ada kilatan putih sebelum Compose menggambar. -->
+    <style name="Theme.VEN.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#1F1F1F</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="windowSplashScreenAnimationDuration">300</item>
+        <item name="postSplashScreenTheme">@style/Theme.VEN</item>
+    </style>
+
     <style name="Theme.VEN.UnityLoading" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">#110E1C</item>
         <item name="android:statusBarColor">#110E1C</item>

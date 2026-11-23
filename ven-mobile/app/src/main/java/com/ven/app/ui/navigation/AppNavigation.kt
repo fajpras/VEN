@@ -29,6 +29,7 @@ import com.ven.app.data.api.ApiLogin
 import com.ven.app.data.api.SessionManager
 import kotlinx.coroutines.launch
 import com.ven.app.data.preference.AppLanguage
+import com.ven.app.data.preference.OnboardingPreferences
 import com.ven.app.data.preference.ThemePreferences
 import com.ven.app.ui.components.feature.CreateOptionsBottomSheet
 import com.ven.app.ui.screens.ai.AiChatScreen
@@ -53,6 +54,7 @@ import com.ven.app.ui.screens.home.HomeUiState
 import com.ven.app.ui.screens.home.HomeViewModel
 import com.ven.app.ui.screens.home.toFeedItem
 import com.ven.app.ui.screens.onboarding.InterestRoute
+import com.ven.app.ui.screens.onboarding.IntroRoute
 import com.ven.app.ui.screens.profile.ProfileScreen
 import com.ven.app.ui.screens.profile.ProfileViewModel
 import com.ven.app.ui.screens.profile.UserProfileDetailScreen
@@ -79,6 +81,7 @@ fun AppNavHost(showExplore: Boolean = false) {
     val context = LocalContext.current
     val themePreferences = remember { ThemePreferences.getInstance(context) }
     val sessionManager = remember { SessionManager.getInstance(context) }
+    val onboardingPreferences = remember { OnboardingPreferences.getInstance(context) }
     val coroutineScope = rememberCoroutineScope()
     val currentTheme by themePreferences.themeMode.collectAsStateWithLifecycle()
     var currentLanguage by remember { mutableStateOf(AppLanguage.current()) }
@@ -129,8 +132,34 @@ fun AppNavHost(showExplore: Boolean = false) {
         composable(Screen.Splash.route) {
             SplashScreen(
                 onSplashFinished = {
-                    navController.navigate(Screen.Login.route) {
+                    val introDone = onboardingPreferences.isIntroDone()
+                    if (isLoggedIn && !introDone) {
+                        // Pengguna lama yang sudah login tidak perlu melihat intro.
+                        onboardingPreferences.markIntroDone()
+                    }
+                    val target = StartDestinationResolver.resolve(
+                        showExplore = showExplore,
+                        isLoggedIn = isLoggedIn,
+                        introDone = introDone,
+                    )
+                    navController.navigate(target.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
+
+        composable(Screen.Intro.route) {
+            IntroRoute(
+                onFinished = {
+                    val target = if (isLoggedIn) Screen.Home else Screen.Login
+                    if (target == Screen.Home) {
+                        homeViewModel.muatUlang(filterSeen = false)
+                        exploreViewModel.muatUlang(filterSeen = false)
+                    }
+                    navController.navigate(target.route) {
+                        popUpTo(Screen.Intro.route) { inclusive = true }
                     }
                 },
             )
