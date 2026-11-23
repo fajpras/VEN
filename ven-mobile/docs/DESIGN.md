@@ -2004,6 +2004,7 @@ Untuk mengoptimalkan ergonomi dan estetika desktop admin panel, ditetapkan atura
 ---
 
 ## Changelog
+- **0.7.1**: **Standardisasi input form.** Default `VexTextField` dan `VexPasswordField` diubah dari `Pill` ke `Boxed` (radius 8dp, `surfaceInput` + border) sehingga field judul pada Create Exhibit Info dan editor exhibit ikut boxed dan konsisten dengan `VexTextArea`/`VexDropdown`. Varian `Pill` tidak lagi dipakai layar aplikasi.
 - **0.7.0**: **Splash native + Intro pra-login (3 slide)**:
   - **Splash native Android 12+** via `androidx.core:core-splashscreen:1.0.1`: `Theme.VEN.Splash` (background `#1F1F1F`, ikon `ic_splash_logo.xml` 288dp, `postSplashScreenTheme`), `installSplashScreen()` di `MainActivity`, dan penyelarasan `ndkVersion` modul app ke 27.2 agar tahap strip native tidak gagal.
   - **Splash Compose** menampilkan logo + tagline "Virtual Exhibition Navigator" + indikator memuat dengan animasi scale/fade.
