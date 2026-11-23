@@ -1,4 +1,4 @@
-﻿package com.ven.app.ui.screens.ai
+package com.ven.app.ui.screens.ai
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -154,8 +154,8 @@ fun AiChatScreenContent(
                                 modifier = Modifier
                                     .weight(1f)
                                     .fillMaxWidth(),
-                                contentPadding = PaddingValues(vertical = VexSpace.s4),
-                                verticalArrangement = Arrangement.spacedBy(20.dp),
+                                contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
+                                verticalArrangement = Arrangement.spacedBy(18.dp),
                             ) {
                                 items(
                                     items = uiState.messages,
@@ -184,7 +184,7 @@ fun AiChatScreenContent(
                                 onValueChange = onInputChange,
                                 onSend = onSendMessage,
                                 modifier = Modifier
-                                    .padding(horizontal = 24.dp)
+                                    .padding(horizontal = 16.dp)
                                     .padding(bottom = 12.dp),
                             )
                         }

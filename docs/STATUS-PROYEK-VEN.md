@@ -4,7 +4,11 @@
 >
 > **Branch aktif:** `main`
 >
-> **Commit terakhir:** commit ini (voice chat privat + ruangan privat room-dto); baseline sebelum perubahan adalah `6f0f1cd`. Verifikasi dilakukan pada working tree sebelum commit.
+> **Commit terakhir:** commit ini (polish UI minimalis halaman AI Assistant Android); baseline sebelum perubahan adalah `6704fd9`. Verifikasi dilakukan pada working tree sebelum commit.
+>
+> **Perubahan 23 November 2026 (polish UI minimalis halaman AI Assistant Android):**
+> - **AI Assistant UI (`ui/screens/ai/`):** `ChatMessageAi.kt` diubah dari `TextAlign.Justify` ke `TextAlign.Start` dengan badge avatar AI minimalis (`ic_nav_ai_filled` beraksen ungu halus) dan tipografi `15sp/23sp`; `ChatBubbleUser.kt` memakai aksen `colors.primary` dengan teks putih kontras (`20dp` radius, tail `6dp`); `AiChatInput.kt` dirampingkan (`52dp`, multi-line hingga 4 baris, *hairline border* reaktif, dan tombol Send melingkar); `AiChatEmptyState.kt` dilengkapi emblem AI minimalis + 3 *quick prompt chips* yang dapat diketuk langsung; `AiChatTopBar.kt` & `AiChatScreen.kt` diberi divider tipis `0.5dp` dan spasi percakapan lebih proporsional.
+> - **Verifikasi:** `:app:assembleDebug` **BUILD SUCCESSFUL** dan APK berhasil diinstal ke emulator (`emulator-5554`).
 >
 > **Perubahan 23 November 2026 (splash native + intro pra-login):**
 > - **Splash native Android 12+.** Dependency `androidx.core:core-splashscreen:1.0.1` ditambahkan, `Theme.VEN.Splash` (`windowSplashScreenBackground` `#1F1F1F`, ikon persegi `ic_splash_logo.xml` 288dp, `postSplashScreenTheme`), `MainActivity` memanggil `installSplashScreen()` sebelum `super.onCreate()`, dan `SplashScreen.kt` kini menampilkan logo + tagline "Virtual Exhibition Navigator" + indikator memuat sebelum berpindah layar. Ikon splash persegi mencegah logo terpotong masker lingkaran sistem.

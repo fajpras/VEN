@@ -11,55 +11,52 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.ven.app.ui.theme.ChatBodyStyle
+import androidx.compose.ui.unit.sp
+import com.ven.app.ui.theme.ElmsSans
 import com.ven.app.ui.theme.ThemeMode
-import com.ven.app.ui.theme.VexRadius
-import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Balon pesan dari pengguna (User Message Bubble) pada halaman AI Assistant (DESIGN.md §8.12.3).
- * Sesuai wireframe `Wireframe - AI Chat-1.png`:
- * - Perataan: Rata kanan (Alignment.End).
- * - Bentuk: Speech tail bubble, radius 16dp kecuali sudut kanan-atas ~4dp.
- * - Latar Belakang: surfaceInput (#363636 / putih 10% di dark mode).
- * - Lebar Maksimal: ~87% dari lebar layar.
- * - Tipografi: ChatBodyStyle (18sp, Regular 400, line-height 1.4).
- */
 @Composable
 fun ChatBubbleUser(
     text: String,
     modifier: Modifier = Modifier,
 ) {
     val colors = VexTheme.colors
-    // Sudut kanan-atas 4dp untuk memberikan efek ekor balon bicara arah keluar
     val bubbleShape = RoundedCornerShape(
-        topStart = VexRadius.lg,
-        bottomStart = VexRadius.lg,
-        bottomEnd = VexRadius.lg,
-        topEnd = VexRadius.xs,
+        topStart = 20.dp,
+        bottomStart = 20.dp,
+        bottomEnd = 20.dp,
+        topEnd = 6.dp,
     )
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 48.dp, end = VexSpace.s5),
+            .padding(start = 56.dp, end = 18.dp),
         contentAlignment = Alignment.CenterEnd,
     ) {
         Box(
             modifier = Modifier
-                .widthIn(max = 340.dp)
+                .widthIn(max = 310.dp)
                 .clip(bubbleShape)
-                .background(colors.surfaceInput)
-                .padding(horizontal = 20.dp, vertical = 14.dp),
+                .background(colors.primary)
+                .padding(horizontal = 16.dp, vertical = 11.dp),
         ) {
             Text(
                 text = text,
-                style = ChatBodyStyle,
-                color = colors.text,
+                style = TextStyle(
+                    fontFamily = ElmsSans,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 15.sp,
+                    lineHeight = 22.sp,
+                ),
+                color = Color.White,
                 textAlign = TextAlign.Start,
             )
         }
@@ -71,7 +68,7 @@ fun ChatBubbleUser(
 private fun ChatBubbleUserDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         ChatBubbleUser(
-            text = "carikan saya 10 karya terkeren yang sesuai dengan kategori yang saya pilih",
+            text = "Rekomendasikan pameran virtual 3D yang menarik minggu ini",
         )
     }
 }
@@ -81,7 +78,7 @@ private fun ChatBubbleUserDarkPreview() {
 private fun ChatBubbleUserLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
         ChatBubbleUser(
-            text = "carikan saya 10 karya terkeren yang sesuai dengan kategori yang saya pilih",
+            text = "Rekomendasikan pameran virtual 3D yang menarik minggu ini",
         )
     }
 }

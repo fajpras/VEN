@@ -1,27 +1,30 @@
 package com.ven.app.ui.screens.ai.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -34,19 +37,8 @@ import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.theme.ElmsSans
 import com.ven.app.ui.theme.ThemeMode
-import com.ven.app.ui.theme.VexRadius
-import com.ven.app.ui.theme.VexSize
-import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Kolom input berbentuk Pill untuk halaman AI Assistant (DESIGN.md §8.12.4).
- * - Bentuk: Pill sempurna (VexRadius.full / 100dp).
- * - Tinggi: 58dp (ergonomis & lega untuk input percakapan).
- * - Warna Latar: surfaceInput (#363636 / putih 10% di dark mode).
- * - Placeholder: "Type Something" (textMuted).
- * - Tombol Kirim: Ikon panah muncul dinamis saat ada teks.
- */
 @Composable
 fun AiChatInput(
     value: String,
@@ -57,36 +49,54 @@ fun AiChatInput(
     enabled: Boolean = true,
 ) {
     val colors = VexTheme.colors
-    val shape = RoundedCornerShape(VexRadius.full)
+    val hasText = value.isNotBlank() && enabled
+    val shape = RoundedCornerShape(26.dp)
+
+    val borderColor by animateColorAsState(
+        targetValue = if (hasText) colors.primary.copy(alpha = 0.55f) else colors.border.copy(alpha = 0.7f),
+        animationSpec = tween(180),
+        label = "inputBorderColor",
+    )
+
+    val sendBgColor by animateColorAsState(
+        targetValue = if (hasText) colors.primary else colors.border.copy(alpha = 0.45f),
+        animationSpec = tween(180),
+        label = "sendBgColor",
+    )
+
+    val sendTintColor by animateColorAsState(
+        targetValue = if (hasText) Color.White else colors.textMuted,
+        animationSpec = tween(180),
+        label = "sendTintColor",
+    )
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(58.dp)
+            .defaultMinSize(minHeight = 52.dp)
             .clip(shape)
-            .background(colors.surfaceInput)
-            .padding(start = VexSpace.s6, end = VexSpace.s2),
+            .background(colors.surfaceInput.copy(alpha = 0.65f))
+            .border(width = 1.dp, color = borderColor, shape = shape)
+            .padding(start = 18.dp, end = 8.dp, top = 7.dp, bottom = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Area Ketikan Teks
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.weight(1f),
             enabled = enabled,
-            singleLine = true,
+            maxLines = 4,
             textStyle = TextStyle(
                 fontFamily = ElmsSans,
-                fontSize = 17.sp,
+                fontSize = 15.sp,
+                lineHeight = 21.sp,
                 color = colors.text,
             ),
-            cursorBrush = SolidColor(colors.primaryText),
+            cursorBrush = SolidColor(colors.primary),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
             keyboardActions = KeyboardActions(
                 onSend = {
-                    if (value.isNotBlank() && enabled) {
-                        onSend()
-                    }
+                    if (hasText) onSend()
                 },
             ),
             decorationBox = { innerTextField ->
@@ -99,7 +109,7 @@ fun AiChatInput(
                             text = placeholder,
                             style = TextStyle(
                                 fontFamily = ElmsSans,
-                                fontSize = 17.sp,
+                                fontSize = 15.sp,
                                 color = colors.textMuted,
                             ),
                         )
@@ -109,32 +119,30 @@ fun AiChatInput(
             },
         )
 
-        // Tombol Kirim Dinamis
-        AnimatedVisibility(
-            visible = value.isNotBlank(),
-            enter = fadeIn() + scaleIn(initialScale = 0.8f),
-            exit = fadeOut() + scaleOut(targetScale = 0.8f),
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(sendBgColor)
+                .clickable(enabled = hasText, onClick = onSend),
+            contentAlignment = Alignment.Center,
         ) {
-            IconButton(
-                onClick = onSend,
-                enabled = enabled && value.isNotBlank(),
-                modifier = Modifier.size(VexSize.minTouch),
-            ) {
-                VexIcon(
-                    id = VexIcons.Send,
-                    contentDescription = stringResource(R.string.ai_chat_send_desc),
-                    tint = colors.text,
-                    size = 20.dp,
-                )
-            }
+            VexIcon(
+                id = VexIcons.Send,
+                contentDescription = stringResource(R.string.ai_chat_send_desc),
+                tint = sendTintColor,
+                size = 16.dp,
+            )
         }
     }
 }
 
-@Preview(name = "AiChatInput - Empty - Dark")
+@Preview(name = "AiChatInput - Empty - Light")
 @Composable
-private fun AiChatInputEmptyDarkPreview() {
-    VexTheme(mode = ThemeMode.Dark) {
+private fun AiChatInputEmptyLightPreview() {
+    VexTheme(mode = ThemeMode.Light) {
         AiChatInput(
             value = "",
             onValueChange = {},
@@ -149,7 +157,7 @@ private fun AiChatInputEmptyDarkPreview() {
 private fun AiChatInputFilledDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         AiChatInput(
-            value = "Rekomendasikan karya...",
+            value = "Rekomendasikan karya 3D...",
             onValueChange = {},
             onSend = {},
             modifier = Modifier.padding(16.dp),
