@@ -202,7 +202,7 @@ ven-mobile/app/src/main/
 │   │   │       └── ChatBubble.kt
 │   │   ├── screens/                       # Screen-level composables (Screen, ViewModel, UiState)
 │   │   │   ├── auth/                      # LoginScreen, RegisterScreen, ForgotPasswordScreen
-│   │   │   ├── onboarding/                # InterestScreen (pemilihan kategori minat)
+│   │   │   ├── onboarding/                # InterestScreen (pilihan minat pasca-login) + Intro* (pengenalan pra-login)
 │   │   │   ├── home/                      # HomeScreen (Coming soon carousel + feed)
 │   │   │   ├── schedule/                  # ScheduleScreen, ScheduleUiState, ScheduleDummyData (Approved, Waiting, Request tabs + Detail Sheet)
 │   │   │   ├── ai/                        # AiChatScreen (Chat view + History drawer)
@@ -677,6 +677,38 @@ fun VexIcon(
 ---
 
 ## 8. Spesifikasi per Halaman
+
+### 8.0 Splash & Intro Pra-Login (Dark & Light Mode) `[DIPUTUSKAN]`
+
+**Splash native (Android 12+)**
+- `Theme.VEN.Splash` (parent `Theme.SplashScreen`, `androidx.core:core-splashscreen`) memakai `windowSplashScreenBackground` `#1F1F1F` pada kedua mode tema agar tidak ada kilatan putih, `windowSplashScreenAnimatedIcon` `@drawable/ic_splash_logo` (vektor persegi 288dp; logo 160×63 di tengah agar aman dari masker lingkaran sistem), serta `postSplashScreenTheme` `@style/Theme.VEN`.
+- `MainActivity` memanggil `installSplashScreen()` sebelum `super.onCreate()`.
+
+**Splash Compose (`ui/screens/splash/SplashScreen.kt`)**
+- Latar `colors.bg`; logo `logo_ven` 160×64dp dianimasikan scale `0.85→1` dan fade `0→1` (500–600 ms, `FastOutSlowInEasing`).
+- Tagline "Virtual Exhibition Navigator" (`bodySmall`, `textSecondary`, letterSpacing 1sp) di bawah logo.
+- Indikator memuat `CircularProgressIndicator` 28dp di bawah (bottom 64dp) ikut fade; total tampil ±850 ms sebelum navigasi.
+
+**Intro pra-login (`ui/screens/onboarding/Intro*`)** — 3 slide, tampil sekali per perangkat:
+1. *3D Exhibit* — ilustrasi `intro_3d_exhibit.png` (1024×1024 transparan), judul `displayMedium`, deskripsi `bodyMedium` `textSecondary`.
+2. *Meet & Connect* — ilustrasi `intro_meet_connect.png` (1024×1024 transparan).
+3. *Let's Start* — logo VEN 160×64dp + judul + deskripsi, tanpa ilustrasi; tombol utama "Let's Start".
+
+**Kontrol & perilaku**
+- `HorizontalPager` (Compose Foundation) dengan dot indicator: titik aktif melebar 20dp, non-aktif 8dp, warna `primary`/`border`.
+- Tombol kanan-atas **Skip** (touch target ≥48dp) pada slide 1–2; tombol bawah **Next** berubah menjadi **Let's Start** pada slide terakhir.
+- Skip/Let's Start menandai `ven_onboarding_pref.key_intro_done = true` lalu menuju Login (atau Home bila sudah login).
+- Padding konten atas 56dp dan bawah 160dp agar tidak bertabrakan dengan kontrol.
+- Semua teks tersedia EN (`values/strings.xml`) dan ID (`values-in/strings.xml`).
+
+**Aturan tujuan setelah splash (`StartDestinationResolver`)**
+
+| Kondisi | Tujuan |
+|---|---|
+| debug `showExplore` | `Home` |
+| sudah login | `Home` (intro dilewati, flag di-set) |
+| belum login & intro belum selesai | `Intro` → `Login` |
+| belum login & intro selesai | `Login` |
 
 ### 8.1 Onboarding: Interest (Dark Mode) `[OBSERVED: Wireframe - onboard.png]`
 - **Kerangka Halaman:** `AuthLayout` (viewport 412 × 943 dp, background kanvas `#1F1F1F`).
@@ -1972,6 +2004,11 @@ Untuk mengoptimalkan ergonomi dan estetika desktop admin panel, ditetapkan atura
 ---
 
 ## Changelog
+- **0.7.0**: **Splash native + Intro pra-login (3 slide)**:
+  - **Splash native Android 12+** via `androidx.core:core-splashscreen:1.0.1`: `Theme.VEN.Splash` (background `#1F1F1F`, ikon `ic_splash_logo.xml` 288dp, `postSplashScreenTheme`), `installSplashScreen()` di `MainActivity`, dan penyelarasan `ndkVersion` modul app ke 27.2 agar tahap strip native tidak gagal.
+  - **Splash Compose** menampilkan logo + tagline "Virtual Exhibition Navigator" + indikator memuat dengan animasi scale/fade.
+  - **Intro pra-login** `IntroScreen`/`IntroRoute`/`IntroViewModel`/`IntroUiState`/`IntroSlide`: `HorizontalPager` 3 slide (3D Exhibit, Meet & Connect, Let's Start), dot indicator adaptif, Skip (slide 1–2) dan Next/Let's Start, aset `intro_3d_exhibit.png` & `intro_meet_connect.png` transparan 1024px, string EN+ID.
+  - **Gating per perangkat** lewat `OnboardingPreferences` (`ven_onboarding_pref`) dan `StartDestinationResolver`; memperbaiki `isLoggedIn` yang sebelumnya tidak dipakai sehingga pengguna bertoken selalu diarahkan ke Login.
 - **0.6.9**: Penyelarasan Total Tampilan & Alur **Create Exhibition Editor 3D** sesuai Wireframe Resmi Figma:
   - **Layar Utama Editor (Main Screen)**:
     - Kanvas 3D isometrik dengan tombol Back di kiri-atas dan 4 tombol melayang di kanan-atas (`Aa`, Panel, Sofa, Warna).

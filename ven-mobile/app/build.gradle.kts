@@ -20,6 +20,9 @@ val envGoogleClientId: String =
 android {
     namespace = "com.ven.app"
     compileSdk = 37
+    // Disamakan dengan unityLibrary (NDK 27.2 lengkap) agar tahap
+    // stripDebugDebugSymbols tidak memakai NDK 28.2 yang tidak terpasang utuh.
+    ndkVersion = "27.2.12479018"
 
     defaultConfig {
         applicationId = "com.ven.app"
@@ -117,6 +120,7 @@ dependencies {
 
     // Unity dependencies
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.splashscreen)
     implementation("androidx.games:games-activity:4.4.0")
 
     // Voice chat (LiveKit) — hanya ruangan privat

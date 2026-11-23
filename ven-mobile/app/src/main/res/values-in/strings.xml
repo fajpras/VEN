@@ -393,4 +393,21 @@
 <string name="create_exhibit_tab_chair">Kursi</string>
 <string name="create_exhibit_tab_plant">Tanaman</string>
 <string name="create_exhibit_tab_other">Lainnya</string>
+
+    <!-- Splash & Intro Strings -->
+    <string name="splash_tagline">Virtual Exhibition Navigator</string>
+    <string name="splash_loading">Menyiapkan pengalaman Anda</string>
+    <string name="splash_logo_content_desc">Logo VEN</string>
+
+    <string name="intro_skip">Lewati</string>
+    <string name="intro_next">Lanjut</string>
+    <string name="intro_start">Mulai</string>
+    <string name="intro_3d_title">Pameran 3D</string>
+    <string name="intro_3d_description">Masuki ruang pameran virtual dan nikmati karya dalam pengalaman 3D yang imersif.</string>
+    <string name="intro_3d_content_desc">Ilustrasi pameran 3D interaktif</string>
+    <string name="intro_meet_title">Bertemu &amp; Terhubung</string>
+    <string name="intro_meet_description">Temukan kreator, kirim undangan, dan jadwalkan pertemuan langsung di dalam pameran.</string>
+    <string name="intro_meet_content_desc">Ilustrasi orang bertemu di pameran virtual</string>
+    <string name="intro_start_title">Mari Mulai</string>
+    <string name="intro_start_description">Perjalanan pameran virtualmu dimulai di sini.</string>
 </resources>
