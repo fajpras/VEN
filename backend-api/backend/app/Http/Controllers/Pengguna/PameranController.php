@@ -357,12 +357,14 @@ class PameranController extends Controller
             return $pameran;
         });
 
-        // 3. Catat aktivitas ke LogKeamanan SETELAH commit selesai
-        LogSistem::keamanan(
-            event: 'pameran_dipublikasi',
+        // 3. Catat aktivitas SETELAH commit selesai
+        LogSistem::aktivitas(
+            entitas: $pameran->judul,
+            jenis: 'pameran',
             pesan: 'Pameran berhasil dipublikasi',
-            statusKode: 200,
-            idPengguna: $request->user()->id_pengguna
+            status: 'berhasil',
+            idPengguna: $request->user()->id_pengguna,
+            aksi: 'publikasi'
         );
 
         return $this->ok([
