@@ -4,7 +4,12 @@
 >
 > **Branch aktif:** `main`
 >
-> **Commit terakhir:** commit ini (perbaikan SEO/Lighthouse & performa halaman login admin); baseline sebelum perubahan adalah `6704fd9`. Verifikasi dilakukan pada working tree sebelum commit.
+> **Commit terakhir:** commit ini (sinkronisasi aset Unity `export_output` + `VivoxNative.aar` & rebuild IL2CPP); baseline sebelum perubahan adalah `b499fda`. Verifikasi dilakukan pada working tree sebelum commit.
+>
+> **Perubahan 24 November 2026 (sinkronisasi aset Unity `export_output` + VivoxNative):**
+> - **Sinkronisasi `ven-mobile/unityLibrary`:** menyinkronkan penuh hasil ekspor `D:\UNITY\export_output\unityLibrary` (`libs/VivoxNative.aar`, `src/main/assets`, `src/main/cpp`, `src/main/Il2CppOutputProject`, `src/main/java`, `src/main/jniLibs`, `src/main/jniStaticLibs`, `src/main/res`, `src/main/resources`, dan `proguard-unity.txt`).
+> - **Konfigurasi portabel dipertahankan:** `ven-mobile/unityLibrary/build.gradle` tetap memakai auto-discovery NDK dari Android SDK + proteksi anti-overwrite `libil2cpp.so` (`outPath.length() < 1000`) dengan tambahan dependensi `implementation(name: 'VivoxNative', ext:'aar')`; `ven-mobile/unityLibrary/src/main/AndroidManifest.xml` menambahkan izin `android.permission.ACCESS_NETWORK_STATE`.
+> - **Verifikasi:** `:unityLibrary:buildIl2Cpp` selesai bersih (ExitCode 0, `libil2cpp.so` 92.438.136 byte) dan `:app:assembleDebug` **BUILD SUCCESSFUL** (`app-debug.apk` 145.076.188 byte / ~145,1 MB).
 >
 > **Perubahan 24 November 2026 (SEO & Lighthouse 100/100/100/100 — desktop & mobile):**
 > - **Halaman publik satu-satunya** (`GET /admin/login`, root sengaja 404) kini lolos audit Lighthouse 12 penuh: **Performance 100, Accessibility 100, Best Practices 100, SEO 100** pada profil *mobile* (FCP/LCP 0,77–0,87 s, TBT 0–61 ms, CLS 0) dan *desktop* (FCP/LCP 0,23–0,27 s, TBT 17 ms, CLS 0). Audit dijalankan dua kali tiap profil via `npx lighthouse` pada `https://VEN.test/ven/backend-api/backend/public/admin/login`.
