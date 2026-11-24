@@ -4,23 +4,11 @@
 @section('page_title', 'Activity log')
 
 @section('content')
-<div class="space-y-6">
-    {{-- Tab Switcher: Log Aktivitas vs Log Keamanan --}}
-    <div class="flex items-center gap-2 p-1 rounded-full bg-[#EBEBEB] dark:bg-[#27272A] w-fit">
-        <a href="{{ route('admin.logs', array_merge(request()->except(['page']), ['tab' => 'aktivitas'])) }}"
-           class="px-5 py-2 rounded-full text-sm font-semibold transition-all {{ $tab === 'aktivitas' ? 'bg-[#BA18F5] text-white shadow-md shadow-purple-500/25' : 'text-[#64748B] dark:text-[#A1A1AA] hover:text-[#0F172A] dark:hover:text-white' }}">
-            Log Aktivitas
-        </a>
-        <a href="{{ route('admin.logs', array_merge(request()->except(['page']), ['tab' => 'keamanan'])) }}"
-           class="px-5 py-2 rounded-full text-sm font-semibold transition-all {{ $tab === 'keamanan' ? 'bg-[#BA18F5] text-white shadow-md shadow-purple-500/25' : 'text-[#64748B] dark:text-[#A1A1AA] hover:text-[#0F172A] dark:hover:text-white' }}">
-            Log Keamanan
-        </a>
-    </div>
-
-    {{-- Search Bar --}}
-    <form method="GET" action="{{ route('admin.logs') }}" class="w-full">
+<div class="space-y-8">
+    {{-- Search Bar & Tab Switcher Header --}}
+    <form method="GET" action="{{ route('admin.logs') }}" class="flex flex-col sm:flex-row items-center gap-4 w-full">
         <input type="hidden" name="tab" value="{{ $tab }}">
-        <div class="relative flex items-center max-w-4xl">
+        <div class="relative flex items-center flex-1 w-full">
             <svg class="w-5 h-5 absolute left-5 text-[#94A3B8] dark:text-[#71717A] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
@@ -29,6 +17,18 @@
                    value="{{ request('cari') }}"
                    placeholder="{{ $tab === 'keamanan' ? 'Search event, endpoint, method, IP, message...' : 'Search activity, entity, action, message...' }}"
                    class="w-full h-12 pl-13 pr-6 rounded-full bg-[#EBEBEB] dark:bg-[#27272A] text-[#0F172A] dark:text-white placeholder-[#94A3B8] dark:placeholder-[#71717A] text-base font-normal outline-none focus:ring-2 focus:ring-[#BA18F5] transition-all">
+        </div>
+
+        {{-- Tab Switcher: Log Aktivitas vs Log Keamanan --}}
+        <div class="flex items-center gap-1.5 p-1 rounded-full bg-[#EBEBEB] dark:bg-[#27272A] flex-shrink-0 h-12 select-none">
+            <a href="{{ route('admin.logs', array_merge(request()->except(['page']), ['tab' => 'aktivitas'])) }}"
+               class="h-10 px-5 rounded-full text-sm font-semibold flex items-center justify-center transition-all {{ $tab === 'aktivitas' ? 'bg-[#BA18F5] text-white shadow-md shadow-purple-500/25' : 'text-[#64748B] dark:text-[#A1A1AA] hover:text-[#0F172A] dark:hover:text-white' }}">
+                Log Aktivitas
+            </a>
+            <a href="{{ route('admin.logs', array_merge(request()->except(['page']), ['tab' => 'keamanan'])) }}"
+               class="h-10 px-5 rounded-full text-sm font-semibold flex items-center justify-center transition-all {{ $tab === 'keamanan' ? 'bg-[#BA18F5] text-white shadow-md shadow-purple-500/25' : 'text-[#64748B] dark:text-[#A1A1AA] hover:text-[#0F172A] dark:hover:text-white' }}">
+                Log Keamanan
+            </a>
         </div>
     </form>
 
