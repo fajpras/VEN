@@ -6,10 +6,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin Panel') - VEN</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('assets/admin/logo_ven_web.svg') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
     <script>
         // Inline theme script to prevent flash of wrong theme
         (function() {
@@ -22,12 +18,7 @@
         })();
     </script>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-        }
-    </style>
+    @vite(['resources/css/app.css'])
 </head>
 <body class="bg-[#FFFFFF] dark:bg-[#121212] text-[#0F172A] dark:text-[#FFFFFF] antialiased min-h-screen transition-colors duration-200">
     <div class="min-h-screen flex">
