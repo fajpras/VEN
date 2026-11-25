@@ -42,6 +42,8 @@
                             <div class="flex items-center gap-4 min-w-0">
                                 <img src="{{ $user->foto_profil ? asset('storage/' . $user->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode($user->nama) . '&background=BA18F5&color=fff' }}"
                                      alt="{{ $user->nama }}"
+                                     loading="lazy"
+                                     decoding="async"
                                      class="w-11 h-11 rounded-full object-cover border border-gray-100 dark:border-zinc-800 shadow-xs flex-shrink-0">
                                 <span class="text-sm font-semibold text-[#0F172A] dark:text-white truncate">{{ $user->nama_panggilan }}</span>
                             </div>
@@ -82,6 +84,8 @@
                 <div class="flex flex-col items-center text-center rounded-2xl p-4 gap-3 bg-white dark:bg-[#1E1E20] border border-[#E5E7EB] dark:border-[#2D2D30] hover:border-[#BA18F5]/50 transition-colors">
                     <img src="{{ $user->foto_profil ? asset('storage/' . $user->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode($user->nama) . '&background=BA18F5&color=fff' }}"
                          alt="{{ $user->nama }}"
+                         loading="lazy"
+                         decoding="async"
                          class="w-14 h-14 rounded-full object-cover border border-gray-100 dark:border-zinc-800 shadow-xs flex-shrink-0">
                     <div class="w-full min-w-0">
                         <h3 class="text-sm font-semibold text-[#0F172A] dark:text-white leading-snug truncate">{{ $user->nama }}</h3>

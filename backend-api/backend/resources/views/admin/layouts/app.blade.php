@@ -18,7 +18,8 @@
         })();
     </script>
 
-    @vite(['resources/css/app.css'])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{ Vite::fonts() }}
 </head>
 <body class="bg-[#FFFFFF] dark:bg-[#121212] text-[#0F172A] dark:text-[#FFFFFF] antialiased min-h-screen transition-colors duration-200">
     <div class="min-h-screen flex">

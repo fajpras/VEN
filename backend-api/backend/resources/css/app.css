@@ -11,6 +11,54 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+@view-transition {
+    navigation: auto;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    ::view-transition-old(root) {
+        animation: venPageOut 120ms ease-in both;
+    }
+
+    ::view-transition-new(root) {
+        animation: venPageIn 180ms ease-out both;
+    }
+}
+
+@keyframes venPageOut {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes venPageIn {
+    from {
+        opacity: 0;
+    }
+}
+
+.ven-nav-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    transform: scaleX(0);
+    transform-origin: left center;
+    background: linear-gradient(90deg, #BA18F5, #D257FF);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
+}
+
 @keyframes floatSlow {
     0%, 100% {
         transform: translateY(0px) rotate(0deg);

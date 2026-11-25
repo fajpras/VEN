@@ -9,6 +9,7 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('assets/admin/logo-ven.svg') }}">
     <link rel="preload" as="image" href="{{ asset('assets/admin/ven-glow.webp') }}">
     @vite(['resources/css/app.css'])
+    {{ Vite::fonts() }}
 </head>
 <body class="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-white select-none">
     {{-- Pre-rendered concentric gradient background (17 KB WebP; avoids costly CSS blur painting) --}}

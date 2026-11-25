@@ -94,6 +94,8 @@
                             <div class="w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800">
                                 <img src="{{ $post->file_url ?? $post->thumbnail_url ?? 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%203%204%22%3E%3Crect%20width=%223%22%20height=%224%22%20fill=%22%23E5E7EB%22/%3E%3C/svg%3E' }}"
                                      alt="{{ $post->judul }}"
+                                     loading="lazy"
+                                     decoding="async"
                                      class="w-full h-full object-cover">
                             </div>
 
@@ -134,6 +136,8 @@
                     <div class="h-24 w-full overflow-hidden bg-gray-100 dark:bg-zinc-800">
                         <img src="{{ $post->file_url ?? $post->thumbnail_url ?? 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%203%204%22%3E%3Crect%20width=%223%22%20height=%224%22%20fill=%22%23E5E7EB%22/%3E%3C/svg%3E' }}"
                              alt="{{ $post->judul }}"
+                             loading="lazy"
+                             decoding="async"
                              class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
                     </div>
                     <div class="flex flex-col flex-1 p-4 gap-2">
