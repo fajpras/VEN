@@ -316,11 +316,9 @@ Koleksi lengkap pengujian endpoint API dan verifikasi 7 pilar kepatuhan database
 
 #### Tangkapan Layar Menghadap Pengguna Lain (`rakapratama`)
 
-````carousel
-![Sudut Pandang Orang Pertama (1st-Person) — Menghadap Avatar rakapratama](docs/images/multiplayer_clean_1st.png)
-<!-- slide -->
-![Sudut Pandang Orang Ketiga (3rd-Person) — Dua Karakter Berhadapan di Ruang Pameran](docs/images/multiplayer_clean_3rd.png)
-````
+| **Sudut Pandang Orang Pertama (1st-Person)** — menghadap avatar `rakapratama` | **Sudut Pandang Orang Ketiga (3rd-Person)** — dua karakter berhadapan |
+|:---:|:---:|
+| ![Sudut Pandang Orang Pertama (1st-Person) — Menghadap Avatar rakapratama](docs/images/multiplayer_clean_1st.png) | ![Sudut Pandang Orang Ketiga (3rd-Person) — Dua Karakter Berhadapan di Ruang Pameran](docs/images/multiplayer_clean_3rd.png) |
 
 #### Ringkasan Teknis Pengujian
 
