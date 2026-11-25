@@ -37,6 +37,7 @@ Dokumen ini memuat panduan utama bagi AI Coding Agent dalam mengembangkan dan me
    - Status modul harus diubah sesuai kondisi nyata: `✅ Selesai`, `⚠️ Sebagian`, atau `❌ Belum/Mock`.
    - Modul yang sebelumnya mock dan kini sudah tersambung API harus dipindahkan dari bagian "Masih Mock" ke "Sudah Selesai".
    - Angka hasil test (backend/Android), tanggal verifikasi, branch, dan commit wajib diperbarui.
+   - Blok ringkasan `**Perubahan ...**` di bagian atas `docs/STATUS-PROYEK-VEN.md` **hanya menyimpan maksimal 3 perubahan terakhir** (hapus entri ke-4 dan lebih lama saat menambah entri baru).
    - Dilarang menandai fitur "selesai" tanpa bukti test/build/smoke test.
    - Patuhi detail aturan di `.agents/rules/status-proyek.md`.
 

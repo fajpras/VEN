@@ -37,7 +37,7 @@ Saat menambahkan atau mengubah fitur, AI Agent **wajib**:
 2. **Memindahkan modul** dari bagian "Masih Mock / Belum Tersambung" ke bagian "Sudah Selesai" jika fitur sudah benar-benar terhubung ke backend.
 3. **Memperbarui angka hasil verifikasi**: jumlah test backend, jumlah test Android, jumlah route, dan status build.
 4. **Memperbarui metadata dokumen**: tanggal verifikasi, branch aktif, dan commit terakhir.
-5. **Menambah kendala baru** yang ditemukan, atau **menghapus kendala** yang sudah diperbaiki beserta buktinya.
+5. **Menambah kendala baru** yang ditemukan, atau **menghapus kendala** yang sudah diperbaiki (tidak perlu menyimpan arsip tabel "Kendala yang Sudah Diperbaiki" karena riwayat perbaikan sudah tercatat di Git).
 6. **Menyertakan `docs/STATUS-PROYEK-VEN.md`** dalam perubahan/commit yang sama dengan perubahan kode fitur.
 
 ---
@@ -57,6 +57,7 @@ Saat menambahkan atau mengubah fitur, AI Agent **wajib**:
 ## 5. Format Pembaruan
 
 - Tambahkan/ubah baris pada tabel modul yang relevan (Backend, Android, atau Artefak Pendukung).
+- **Batas riwayat perubahan (maksimal 3 entri):** pada blok ringkasan `**Perubahan ...**` di bagian atas `docs/STATUS-PROYEK-VEN.md`, **hanya simpan maksimal 3 perubahan terakhir** (*rolling window*). Setiap kali menambahkan entri perubahan baru di paling atas, hapus entri yang ke-4 dan lebih lama agar dokumen tetap ringkas dan tidak menumpuk harian.
 - Gunakan path file + nomor baris saat mencatat lokasi mock, misalnya:
   `ven-mobile/.../ScheduleScreen.kt:47`.
 - Untuk kendala baru, gunakan tabel pada bagian "Kendala dan Rekomendasi Perbaikan" dengan kolom: **Kendala, Bukti, Dampak, Rekomendasi**.
