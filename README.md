@@ -309,6 +309,30 @@ cd ven-mobile
 ### 4. Postman API Suite
 Koleksi lengkap pengujian endpoint API dan verifikasi 7 pilar kepatuhan database tersedia di folder [`postman/`](postman/) siap diimpor ke Postman.
 
+### 5. Validasi Live Multiplayer 2 Akun (Laravel + Edgegap + Unity Netcode)
+
+> [!TIP]
+> Kedua akun (`fajrinur123` di emulator Android & `rakapratama` pada sesi kedua) otomatis mendapatkan instance dedicated server Edgegap yang sama (`request_id: c4c83afc72ef` — `34.0.79.203:31552` UDP) dari endpoint `POST /api/room-server/13` dan tersinkronisasi real-time di dalam ruang pameran `#13`.
+
+#### Tangkapan Layar Menghadap Pengguna Lain (`rakapratama`)
+
+````carousel
+![Sudut Pandang Orang Pertama (1st-Person) — Menghadap Avatar rakapratama](docs/images/multiplayer_clean_1st.png)
+<!-- slide -->
+![Sudut Pandang Orang Ketiga (3rd-Person) — Dua Karakter Berhadapan di Ruang Pameran](docs/images/multiplayer_clean_3rd.png)
+````
+
+#### Ringkasan Teknis Pengujian
+
+| Komponen | Hasil Aktual |
+| --- | --- |
+| **Akun 1 (Android `emulator-5554`)** | `fajrinur123` — masuk Pameran `#13` (*Cyber Security Expo*) |
+| **Akun 2 (Client Kedua)** | `rakapratama` — masuk Pameran `#13` yang sama |
+| **Provisioning Backend** | [RoomServerController.php](backend-api/backend/app/Http/Controllers/Pengguna/RoomServerController.php) & [LayananEdgegapServer.php](backend-api/backend/app/Services/Edgegap/LayananEdgegapServer.php) memakai ulang `request_id: c4c83afc72ef` |
+| **Dedicated Server Edgegap** | Versi `26.11.25-00.35.24-UTC` (`34.0.79.203:31552` UDP, `Status.READY`) |
+| **Sinkronisasi Avatar & NameTag** | `RoomMultiplayerSync.cs` me-render karakter 3D `Body` + label username `rakapratama` |
+| **Unit & Feature Test Backend** | `EdgegapServerTest` & `DiskusiRuanganRoomDtoTest` — **8/8 lulus (32 assertion)** |
+
 ---
 
 ## 📊 Status Proyek & Dokumentasi
