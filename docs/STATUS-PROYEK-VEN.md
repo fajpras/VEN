@@ -4,7 +4,13 @@
 >
 > **Branch aktif:** `main`
 >
-> **Commit terakhir:** commit ini (rombak Dashboard Admin Web, sinkronisasi bahasa API ID/EN + filter Markdown AI Chat, dan validasi form + outline merah Android); baseline sebelum perubahan adalah `59eeee1`.
+> **Commit terakhir:** commit ini (Seeder dummy + aset PNG/MP4, Audit Trail Keamanan & Aktivitas, komponen Blade admin terkategori, video autoplay 16:9 + optimasi bulk data Android, serta dialog suspend bergaya Instagram); baseline sebelumnya `c740a2f`.
+>
+> **Perubahan 25 November 2026 (Seeder Dummy + Aset, Audit Trail & Komponen Admin, Video Autoplay & Dialog Suspend Android):**
+> - **Fresh DB & Seeder Dummy:** `ven:initialize-db --fresh` pada DB lokal `ven`; `DummyKaryaPameranSeeder` + `GeneratesSeedAssets` + 2 klip MP4 ter-track (`database/seeders/assets/video/`) mengisi **8 kreator**, **10 pameran** (9 aktif, 1 arsip), **72 karya** lintas 14 kategori (**49 poster**, **23 video**, **4 arsip**) secara idempoten (`missing=0`, MIME `image/png` & `video/mp4` valid).
+> - **Audit Trail & Admin Web:** `LogSistem` menstandarkan format `[SEVERITY | KONTROL]` berbasis prinsip Keamanan Basis Data untuk **Security Log** dan **Activity Log** lengkap dengan modal **Audit Trail** di kolom paling kanan; tab **Accounts** pada Archive kini khusus akun tersuspend (`ditangguhkan`/`nonaktifkan`, bukan terhapus); seluruh komponen UI berulang dipisah terkategori di `resources/views/admin/components/{toolbar,navigation,modals}/`; titik (`•`) aturan sandi di Pengaturan Admin dihilangkan.
+> - **Android (`ven-mobile`):** `AutoPlayVideoPlayer` (`TextureView` + `MediaPlayer`, rasio `16:9`, mute/unmute, single-codec debounce `150ms`, `clipToBounds` + `clipToOutline`), optimasi `ImageCacheManager` (`RGB_565`, `MediaMetadataRetriever` thumbnail + semaphore 2, deduplikasi file, LRU disk cache 80 MB, OOM guard) & `HomeViewModel` (`distinctBy`, `takeLast(100)`), serta `AccountSuspendedDialog` bergaya Instagram (EN/ID) dari payload terstruktur `sanksi`.
+> - **Verifikasi:** `vite build` sukses (492 ms); PHPUnit (`AdminListViewTest`, `AdminPanelAksesTest`, `PenanganKesalahanApiTest`) **lulus seluruhnya**; stress test API bulk data (200 OK, 7–49 ms, peak 30 MB); Android `:app:testDebugUnitTest --offline` **89/89 lulus** (termasuk `BulkFeedStabilityTest`).
 >
 > **Perubahan 25 November 2026 (Dashboard Admin Web, i18n API/AI Chat, dan validasi form Android):**
 > - **Backend API & AI Chat:** `SinkronBahasaApi` (`Accept-Language`/`X-App-Language`) + `lang/{id,en}/api.php` menyinkronkan seluruh respons & fallback error (`PenanganKesalahanApi`, `KesalahanOtp`, `KesalahanVoice`, `AuthController`, `ProfilController`) ke ID/EN; `AIChatController` memfilter seluruh simbol Markdown mentah sembari mempertahankan `@username_bergaris_bawah`.
@@ -17,14 +23,6 @@
 > - **Komponen bersama:** `app.css` menambahkan `.ven-card`, `.ven-field` (+ `.is-invalid`), `.ven-icon-tile`, `.ven-rule` (+ `.is-met`), dan `.ven-primary-btn` agar gaya input, kartu, checklist kekuatan sandi, dan tombol konsisten serta tidak duplikat di Blade.
 > - **Halaman pengaturan:** `resources/views/admin/settings/index.blade.php` dirapikan (kartu profil dengan avatar + indikator aktif, dua kartu form email/kata sandi, ikon tile, toggle mata, checklist aturan sandi yang berubah jadi centang). Seluruh `name`, `id`, rute, error bag, dan validasi live dipertahankan.
 > - **Verifikasi:** `npm run build` sukses (Vite 8.3.1); `AdminListViewTest` + `AuditKeamananDanViewTest` **10/10 lulus (112 assertion)**, termasuk alur ganti bahasa, email, dan kata sandi. Smoke test visual di browser belum dijalankan pada sesi ini.
->
-> **Perubahan 25 November 2026 (optimasi loading panel admin web):**
-> - **Ikon sidebar tanpa flash:** logo + 4 ikon navigasi di `resources/views/admin/layouts/sidebar.blade.php` kini dirender sebagai inline SVG dari aset yang sama (`public/assets/admin/*.svg`) dengan `currentColor`, sehingga tidak ada request gambar terpisah setiap navigasi dan ikon langsung tampil bersama HTML. File aset tetap dipertahankan (dipakai favicon, halaman login, dan 404).
-> - **Transisi halaman halus:** `resources/css/app.css` menambahkan cross-document View Transitions (`@view-transition { navigation: auto; }` + fade 120–180 ms) dan menghormati `prefers-reduced-motion`.
-> - **Indikator navigasi:** `resources/js/app.js` menambahkan progress bar tipis 2 px (`#BA18F5 → #D257FF`) yang muncul saat klik link internal atau submit form, lalu reset pada `pageshow` (back/forward cache). `app.js` dimasukkan kembali ke input Vite tetapi hanya dimuat di layout admin; halaman login tetap tanpa JS.
-> - **Font self-hosted:** Plus Jakarta Sans 400–700 diunduh lewat `bunny()` di `vite.config.js` dan dirender dengan `Vite::fonts()` di layout admin maupun login; link Google Fonts dihapus sehingga tidak ada request render-blocking eksternal. `--font-sans` Tailwind diset ke Plus Jakarta Sans.
-> - **Gambar daftar:** avatar akun, thumbnail post, dan banner exhibition diberi `loading="lazy"` + `decoding="async"` agar tidak berebut bandwidth dengan render halaman.
-> - **Verifikasi:** `npm run build` sukses (Vite 8.3.1; `app-DHGNlqQs.css` 85,29 kB, `app-C-ZIkHAa.js` 1,45 kB, 4 WOFF2 Plus Jakarta Sans self-hosted); full backend suite **113/113 test lulus** (531 assertion), termasuk `AdminListViewTest` dan `AdminPanelAksesTest`. Smoke test visual di browser belum dijalankan pada sesi ini.
 >
 > **Lingkungan:** Windows + Laragon, PHP 8.3.33, Laravel 13.34.0, MySQL, Android Gradle 9.6
 

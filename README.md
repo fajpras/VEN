@@ -241,9 +241,11 @@ ven/
    ```
 
 5. **Jalankan Migrasi Skema & Seeder**:
-   ```bash
+   ```powershell
    php artisan migrate --database=mysql_dba
    php artisan db:seed
+   # Atau jalankan khusus seeder dummy karya & pameran (idempoten, otomatis menghasilkan aset PNG & menyalin MP4 valid):
+   & C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe artisan db:seed --class=DummyKaryaPameranSeeder
    ```
 
 6. **Jalankan Development Server**:
