@@ -1,7 +1,7 @@
 @if ($paginator->total() > 0)
-    <nav role="navigation" aria-label="Pagination Navigation" class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-[#E5E7EB] dark:border-[#27272A] mt-6">
+    <nav role="navigation" aria-label="Pagination Navigation" class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6 border-t border-[#E5E7EB] dark:border-[#27272A] mt-6">
         {{-- Results Counter Summary --}}
-        <div class="text-sm text-[#64748B] dark:text-[#A1A1AA]">
+        {{-- <div class="text-sm text-[#64748B] dark:text-[#A1A1AA]">
             <span>Showing</span>
             <span class="font-semibold text-[#0F172A] dark:text-white">{{ $paginator->firstItem() ?? 1 }}</span>
             <span>to</span>
@@ -9,10 +9,10 @@
             <span>of</span>
             <span class="font-semibold text-[#0F172A] dark:text-white">{{ $paginator->total() }}</span>
             <span>results</span>
-        </div>
+        </div> --}}
 
         {{-- Page Navigation Controls --}}
-        <div class="flex items-center gap-1.5">
+        <div class="flex gap-1.5">
             {{-- Previous Page Button --}}
             @if ($paginator->onFirstPage())
                 <span class="w-9 h-9 rounded-full flex items-center justify-center text-[#94A3B8] dark:text-[#52525B] bg-gray-100/60 dark:bg-zinc-800/40 cursor-not-allowed select-none" aria-disabled="true">

@@ -16,10 +16,12 @@ class AdminPostController extends Controller
     {
         $cari = $request->query('cari');
         $kategori = $request->query('kategori');
+        $jenis = $request->query('jenis');
+        $sort = $request->query('sort', 'newest');
         $perPage = AdminListOptions::perPage($request);
         $viewMode = AdminListOptions::viewMode($request);
 
-        $karya = Karya::query()
+        $query = Karya::query()
             ->with(['pengguna', 'kategori'])
             ->when($cari, function ($q) use ($cari) {
                 $pattern = '%'.addcslashes($cari, '%_').'%';
@@ -33,8 +35,17 @@ class AdminPostController extends Controller
                     $sub->where('kategori', $kategori);
                 });
             })
-            ->latest('created_at')
-            ->paginate($perPage);
+            ->when(in_array($jenis, ['poster', 'video'], true), function ($q) use ($jenis) {
+                $q->where('jenis', $jenis);
+            });
+
+        match ($sort) {
+            'oldest' => $query->oldest('created_at'),
+            'title' => $query->orderBy('judul'),
+            default => $query->latest('created_at'),
+        };
+
+        $karya = $query->paginate($perPage);
 
         $kategoriList = Kategori::pluck('kategori')->filter()->values()->toArray();
         if (empty($kategoriList)) {
@@ -43,7 +54,7 @@ class AdminPostController extends Controller
 
         $perPageOptions = AdminListOptions::PER_PAGE_OPTIONS;
 
-        return view('admin.posts.index', compact('karya', 'kategoriList', 'viewMode', 'perPage', 'perPageOptions'));
+        return view('admin.posts.index', compact('karya', 'kategoriList', 'viewMode', 'perPage', 'perPageOptions', 'jenis', 'sort'));
     }
 
     public function destroy(string $id): RedirectResponse

@@ -9,6 +9,44 @@
 @theme {
     --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Soft neutrals: off-white canvas instead of pure #FFFFFF. */
+    --color-canvas: #F6F6F8;
+    --color-surface: #FBFBFC;
+    --color-field: #F1F1F4;
+    --color-line: #E8E8ED;
+    --color-ink: #1B1B20;
+    --color-muted: #71717C;
+}
+
+@layer components {
+    .ven-card {
+        @apply rounded-[20px] border border-line bg-surface shadow-[0_1px_2px_rgba(20,20,28,0.02),0_18px_40px_-28px_rgba(20,20,28,0.22)] dark:border-[#2A2A2E] dark:bg-[#19191C];
+    }
+
+    .ven-field {
+        @apply h-12 w-full rounded-xl border border-transparent bg-field px-4 text-sm text-ink outline-none transition-all duration-200 placeholder:text-[#9A9AA6] focus:border-[#BA18F5] focus:bg-surface focus:ring-4 focus:ring-[#BA18F5]/12 dark:bg-[#26262B] dark:text-zinc-100 dark:focus:bg-[#26262B];
+    }
+
+    .ven-field.is-invalid {
+        @apply border-rose-400 focus:border-rose-400 focus:ring-rose-400/15 dark:border-rose-500/70;
+    }
+
+    .ven-icon-tile {
+        @apply grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-[#BA18F5]/15 bg-[#BA18F5]/8 text-[#A315D4] dark:text-[#D574FF];
+    }
+
+    .ven-rule {
+        @apply flex items-center gap-2.5 text-xs text-muted transition-colors dark:text-zinc-400;
+    }
+
+    .ven-rule.is-met {
+        @apply text-emerald-600 dark:text-emerald-400;
+    }
+
+    .ven-primary-btn {
+        @apply inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#C455F0] to-[#A316D3] px-5 text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(163,22,211,0.55)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-8px_rgba(163,22,211,0.65)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:hover:shadow-none;
+    }
 }
 
 @view-transition {

@@ -1,333 +1,307 @@
 @extends('admin.layouts.app')
 
-@section('title', $tab === 'keamanan' ? 'Security log' : 'Activity log')
-@section('page_title', 'Activity log')
+@section('title', $tab === 'keamanan' ? __('admin.nav.security_logs') : __('admin.nav.logs'))
+@section('page_title', $tab === 'keamanan' ? __('admin.nav.security_logs') : __('admin.nav.logs'))
 
 @section('content')
 <div class="space-y-8">
-    {{-- Search Bar & Tab Switcher Header --}}
-    <form method="GET" action="{{ route('admin.logs') }}" class="flex flex-col sm:flex-row items-center gap-4 w-full">
-        <input type="hidden" name="tab" value="{{ $tab }}">
-        <div class="relative flex items-center flex-1 w-full">
-            <svg class="w-5 h-5 absolute left-5 text-[#94A3B8] dark:text-[#71717A] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input type="text"
-                   name="cari"
-                   value="{{ request('cari') }}"
-                   placeholder="{{ $tab === 'keamanan' ? 'Search event, endpoint, method, IP, message...' : 'Search activity, entity, action, message...' }}"
-                   class="w-full h-12 pl-13 pr-6 rounded-full bg-[#EBEBEB] dark:bg-[#27272A] text-[#0F172A] dark:text-white placeholder-[#94A3B8] dark:placeholder-[#71717A] text-base font-normal outline-none focus:ring-2 focus:ring-[#BA18F5] transition-all">
+    {{-- Search Bar & Dashboard Filters (sejajar, konsisten dengan halaman lain) --}}
+    <div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 w-full">
+        <form method="GET" action="{{ route('admin.logs') }}" data-live-search class="flex-1 min-w-0">
+            <input type="hidden" name="tab" value="{{ $tab }}">
+            @if ($aksi) <input type="hidden" name="aksi" value="{{ $aksi }}"> @endif
+            @if ($status) <input type="hidden" name="status" value="{{ $status }}"> @endif
+            @if ($method) <input type="hidden" name="method" value="{{ $method }}"> @endif
+            @if ($statusGroup) <input type="hidden" name="status_group" value="{{ $statusGroup }}"> @endif
+            <div class="relative flex items-center w-full">
+                <svg class="w-5 h-5 absolute left-5 text-[#94A3B8] dark:text-[#71717A] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text"
+                       name="cari"
+                       value="{{ request('cari') }}"
+                       placeholder="{{ $tab === 'keamanan' ? __('admin.logs.search_security') : __('admin.logs.search_activity') }}"
+                       class="w-full h-12 pl-13 pr-6 rounded-full bg-[#EBEBEB] dark:bg-[#27272A] text-[#0F172A] dark:text-white placeholder-[#94A3B8] dark:placeholder-[#71717A] text-base font-normal outline-none focus:ring-2 focus:ring-[#BA18F5] transition-all">
+            </div>
+        </form>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+            @if ($tab === 'keamanan')
+                @include('admin.layouts.filter-dropdown', [
+                    'param' => 'status_group',
+                    'value' => $statusGroup,
+                    'placeholder' => __('admin.logs.all_status'),
+                    'options' => [
+                        '2xx' => __('admin.logs.status_2xx'),
+                        '4xx' => __('admin.logs.status_4xx'),
+                        '5xx' => __('admin.logs.status_5xx'),
+                    ],
+                ])
+                @include('admin.layouts.filter-dropdown', [
+                    'param' => 'method',
+                    'value' => $method,
+                    'placeholder' => __('admin.logs.all_methods'),
+                    'options' => [
+                        'GET' => 'GET',
+                        'POST' => 'POST',
+                        'PUT' => 'PUT',
+                        'PATCH' => 'PATCH',
+                        'DELETE' => 'DELETE',
+                    ],
+                    'minWidth' => 'min-w-[140px]',
+                ])
+            @else
+                @include('admin.layouts.filter-dropdown', [
+                    'param' => 'aksi',
+                    'value' => $aksi,
+                    'placeholder' => __('admin.logs.all_actions'),
+                    'options' => [
+                        'tambah' => 'Tambah',
+                        'ubah' => 'Ubah',
+                        'hapus' => 'Hapus',
+                        'registrasi' => 'Registrasi',
+                        'pulih' => 'Pulih',
+                        'lihat' => 'Lihat',
+                    ],
+                ])
+                @include('admin.layouts.filter-dropdown', [
+                    'param' => 'status',
+                    'value' => $status,
+                    'placeholder' => __('admin.logs.all_status'),
+                    'options' => [
+                        'berhasil' => 'Berhasil',
+                        'gagal' => 'Gagal',
+                    ],
+                    'minWidth' => 'min-w-[140px]',
+                ])
+            @endif
         </div>
+    </div>
 
-        {{-- Tab Switcher: Log Aktivitas vs Log Keamanan --}}
-        <div class="flex items-center gap-1.5 p-1 rounded-full bg-[#EBEBEB] dark:bg-[#27272A] flex-shrink-0 h-12 select-none">
-            <a href="{{ route('admin.logs', array_merge(request()->except(['page']), ['tab' => 'aktivitas'])) }}"
-               class="h-10 px-5 rounded-full text-sm font-semibold flex items-center justify-center transition-all {{ $tab === 'aktivitas' ? 'bg-[#BA18F5] text-white shadow-md shadow-purple-500/25' : 'text-[#64748B] dark:text-[#A1A1AA] hover:text-[#0F172A] dark:hover:text-white' }}">
-                Log Aktivitas
-            </a>
-            <a href="{{ route('admin.logs', array_merge(request()->except(['page']), ['tab' => 'keamanan'])) }}"
-               class="h-10 px-5 rounded-full text-sm font-semibold flex items-center justify-center transition-all {{ $tab === 'keamanan' ? 'bg-[#BA18F5] text-white shadow-md shadow-purple-500/25' : 'text-[#64748B] dark:text-[#A1A1AA] hover:text-[#0F172A] dark:hover:text-white' }}">
-                Log Keamanan
-            </a>
-        </div>
-    </form>
+    @include('admin.layouts.list-controls', ['showViewToggle' => false])
 
-    @include('admin.layouts.list-controls')
-
+    <div data-live-region class="space-y-8">
     @if ($tab === 'keamanan')
-        {{-- ==================== TAB LOG KEAMANAN ==================== --}}
-        @if ($viewMode === 'list')
-            <div class="overflow-x-auto">
-                <div class="min-w-[760px]">
-                    <div class="grid grid-cols-[160px_1fr_90px_130px_100px_70px] items-center gap-4 px-2 pb-2 text-xs text-[#94A3B8] dark:text-[#71717A] font-medium">
-                        <span>event</span>
-                        <span>endpoint</span>
-                        <span>status</span>
-                        <span>ip address</span>
-                        <span>date</span>
-                        <span></span>
-                    </div>
+        {{-- ==================== TAB LOG KEAMANAN (PESAN SEBAGAI ICON TOOLTIP COMPACT) ==================== --}}
+        <div class="overflow-x-auto rounded-2xl border border-[#E5E7EB] dark:border-[#2D2D30] bg-white dark:bg-[#1E1E20]">
+            <div class="min-w-[960px]">
+                <div class="grid grid-cols-[160px_80px_minmax(180px,1.2fr)_72px_76px_145px_175px_104px] items-center gap-3.5 px-6 py-3.5 text-[11px] uppercase tracking-wider text-[#94A3B8] dark:text-[#71717A] font-semibold bg-[#F8FAFC] dark:bg-[#18181B] border-b border-[#E5E7EB] dark:border-[#2D2D30]">
+                    <span>{{ __('admin.logs.col_event') }}</span>
+                    <span class="text-center">{{ __('admin.logs.col_method') }}</span>
+                    <span>{{ __('admin.logs.col_endpoint') }}</span>
+                    <span class="text-center">{{ __('admin.logs.col_message') }}</span>
+                    <span class="text-center">{{ __('admin.logs.col_status') }}</span>
+                    <span>{{ __('admin.logs.col_actor') }}</span>
+                    <span>{{ __('admin.logs.col_client') }}</span>
+                    <span class="text-right">{{ __('admin.logs.col_time') }}</span>
+                </div>
 
-                    <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
-                        @forelse ($logs as $log)
-                            @php
-                                $statusClass = match (true) {
-                                    $log->status_kode >= 200 && $log->status_kode < 300 => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40',
-                                    $log->status_kode >= 400 && $log->status_kode < 500 => 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200 dark:border-amber-800/40',
-                                    default => 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border-rose-200 dark:border-rose-800/40',
-                                };
-                            @endphp
-                            <div class="py-3 grid grid-cols-[160px_1fr_90px_130px_100px_70px] items-center gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
-                                <span class="font-mono text-xs font-semibold text-[#BA18F5] truncate">
+                <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A]">
+                    @forelse ($logs as $log)
+                        @php
+                            $statusClass = match (true) {
+                                $log->status_kode >= 200 && $log->status_kode < 300 => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50',
+                                $log->status_kode >= 400 && $log->status_kode < 500 => 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800/50',
+                                default => 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-800/50',
+                            };
+                            $methodClass = match (strtoupper((string) $log->method)) {
+                                'GET' => 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200 dark:border-sky-800/40',
+                                'POST' => 'bg-purple-50 text-[#BA18F5] dark:bg-purple-950/40 dark:text-purple-300 border-purple-200 dark:border-purple-800/40',
+                                'PUT', 'PATCH' => 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800/40',
+                                'DELETE' => 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-800/40',
+                                default => 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-300 border-gray-200 dark:border-zinc-700',
+                            };
+                            $clientLabel = \App\Support\AdminMedia::parseUserAgent($log->user_agent);
+                            $actorName = $log->pengguna->nama ?? 'Guest / Anonim';
+                            $actorHandle = $log->pengguna->nama_panggilan ?? null;
+                            $hasMessage = filled($log->pesan);
+                        @endphp
+                        <div class="px-6 py-4 grid grid-cols-[160px_80px_minmax(180px,1.2fr)_72px_76px_145px_175px_104px] items-center gap-3.5 hover:bg-[#FAF5FF]/50 dark:hover:bg-zinc-800/40 transition-colors">
+                            {{-- Event --}}
+                            <div class="min-w-0">
+                                <span class="inline-flex max-w-full items-center px-2.5 py-1 rounded-full bg-[#BA18F5]/10 text-[#BA18F5] dark:text-[#D55BFF] font-mono text-[11px] font-semibold truncate" title="{{ $log->event }}">
                                     {{ $log->event }}
                                 </span>
+                            </div>
 
-                                <div class="min-w-0">
-                                    <p class="font-mono text-xs text-[#0F172A] dark:text-white truncate">
-                                        <span class="font-semibold text-gray-500 dark:text-zinc-400">{{ $log->method }}</span>
-                                        {{ $log->endpoint }}
-                                    </p>
-                                    @if ($log->pesan)
-                                        <p class="text-[11px] text-[#94A3B8] dark:text-[#71717A] truncate">{{ $log->pesan }}</p>
-                                    @endif
-                                </div>
-
-                                <div>
-                                    <span class="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full border {{ $statusClass }}">
-                                        {{ $log->status_kode }}
-                                    </span>
-                                </div>
-
-                                <span class="font-mono text-xs text-[#64748B] dark:text-[#A1A1AA] truncate">
-                                    {{ $log->ip_address }}
+                            {{-- Method --}}
+                            <div class="flex justify-center">
+                                <span class="inline-flex px-2.5 py-0.5 rounded-md font-mono text-[10px] font-bold border {{ $methodClass }}">
+                                    {{ strtoupper((string) ($log->method ?: 'REQ')) }}
                                 </span>
+                            </div>
 
-                                <span class="text-xs font-medium text-[#94A3B8] dark:text-[#71717A] whitespace-nowrap">
-                                    {{ $log->waktu ? $log->waktu->format('d/m/y H:i') : ($log->created_at ? $log->created_at->format('d/m/y H:i') : '—') }}
+                            {{-- Endpoint --}}
+                            <div class="min-w-0">
+                                <span class="block font-mono text-xs font-medium text-[#0F172A] dark:text-white truncate" title="{{ $log->endpoint }}">
+                                    {{ $log->endpoint ?: '—' }}
                                 </span>
+                            </div>
 
-                                <div class="flex items-center justify-end">
-                                    <button type="button"
-                                            onclick="openDetailModal({{ json_encode($log) }}, 'keamanan')"
-                                            class="text-sm font-medium text-[#BA18F5] hover:text-[#9333EA] transition-colors cursor-pointer">
-                                        Detail
-                                    </button>
-                                </div>
+                            {{-- Pesan (Compact Icon + Hover Tooltip) --}}
+                            <div class="flex justify-center">
+                                @if ($hasMessage)
+                                    <div class="group relative inline-flex">
+                                        <button type="button"
+                                                aria-label="{{ $log->pesan }}"
+                                                class="w-8 h-8 rounded-full bg-[#F1F5F9] dark:bg-zinc-800 text-[#64748B] dark:text-[#A1A1AA] hover:bg-[#BA18F5]/15 hover:text-[#BA18F5] dark:hover:text-[#D55BFF] flex items-center justify-center transition-colors cursor-pointer">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                            </svg>
+                                        </button>
+                                        <div role="tooltip"
+                                             class="pointer-events-none opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 translate-y-1 group-hover:translate-y-0 group-focus-within:translate-y-0 transition-all duration-150 absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 rounded-xl bg-[#0F172A] dark:bg-zinc-800 text-white text-xs leading-relaxed shadow-xl border border-white/10 z-40">
+                                            {{ $log->pesan }}
+                                        </div>
+                                    </div>
+                                @else
+                                    <span class="text-xs text-[#94A3B8] dark:text-[#71717A]">—</span>
+                                @endif
                             </div>
-                        @empty
-                            <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
-                                No security logs recorded.
-                            </div>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
-        @else
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                @forelse ($logs as $log)
-                    @php
-                        $statusClass = match (true) {
-                            $log->status_kode >= 200 && $log->status_kode < 300 => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40',
-                            $log->status_kode >= 400 && $log->status_kode < 500 => 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200 dark:border-amber-800/40',
-                            default => 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border-rose-200 dark:border-rose-800/40',
-                        };
-                    @endphp
-                    <div class="flex flex-col rounded-2xl p-4 gap-2 bg-white dark:bg-[#1E1E20] border border-[#E5E7EB] dark:border-[#2D2D30] hover:border-[#BA18F5]/50 transition-colors">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="font-mono text-xs font-semibold text-[#BA18F5] truncate">{{ $log->event }}</span>
-                            <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full border {{ $statusClass }}">{{ $log->status_kode }}</span>
-                        </div>
-                        <div class="p-2 bg-gray-50 dark:bg-zinc-800/40 rounded-xl font-mono text-xs text-[#0F172A] dark:text-white truncate">
-                            <span class="font-semibold text-gray-500 dark:text-zinc-400">{{ $log->method }}</span>
-                            {{ $log->endpoint }}
-                        </div>
-                        <div class="grid grid-cols-2 gap-1.5 text-xs mt-1">
-                            <div>
-                                <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">ip</span>
-                                <span class="font-mono font-medium text-[#0F172A] dark:text-white truncate block">{{ $log->ip_address }}</span>
-                            </div>
-                            <div>
-                                <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">time</span>
-                                <span class="font-medium text-[#0F172A] dark:text-white whitespace-nowrap">{{ $log->waktu ? $log->waktu->format('d/m/y H:i') : '—' }}</span>
-                            </div>
-                        </div>
-                        <div class="pt-2 mt-auto">
-                            <button type="button"
-                                    onclick="openDetailModal({{ json_encode($log) }}, 'keamanan')"
-                                    class="h-8 w-full rounded-full bg-[#BA18F5] text-white font-semibold text-[11px] hover:opacity-90 transition-opacity cursor-pointer">
-                                Detail
-                            </button>
-                        </div>
-                    </div>
-                @empty
-                    <div class="col-span-full py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
-                        No security logs recorded.
-                    </div>
-                @endforelse
-            </div>
-        @endif
-    @else
-        {{-- ==================== TAB LOG AKTIVITAS ==================== --}}
-        @if ($viewMode === 'list')
-            <div class="overflow-x-auto">
-                <div class="min-w-[600px]">
-                    <div class="grid grid-cols-[1fr_100px_80px] items-center gap-4 px-2 pb-2 text-xs text-[#94A3B8] dark:text-[#71717A] font-medium">
-                        <span>activity</span>
-                        <span>date</span>
-                        <span></span>
-                    </div>
 
-                    <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A] border-t border-b border-[#E5E7EB] dark:border-[#27272A]">
-                        @forelse ($logs as $log)
-                            <div class="py-3 grid grid-cols-[1fr_100px_80px] items-center gap-4 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors px-2 rounded-xl">
-                                <p class="min-w-0 text-sm font-normal text-[#0F172A] dark:text-white leading-relaxed">
-                                    {{ $log->pesan ?? $log->deskripsi ?? 'Admin action performed on system' }}
+                            {{-- HTTP Status --}}
+                            <div class="flex justify-center">
+                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full border tabular-nums {{ $statusClass }}">
+                                    {{ $log->status_kode }}
+                                </span>
+                            </div>
+
+                            {{-- Actor --}}
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold text-[#0F172A] dark:text-white truncate">
+                                    {{ $actorName }}
                                 </p>
+                                @if ($actorHandle)
+                                    <p class="text-[11px] text-[#94A3B8] dark:text-[#71717A] truncate">
+                                        {{ '@' . $actorHandle }}
+                                    </p>
+                                @endif
+                            </div>
 
-                                <span class="text-xs font-medium text-[#94A3B8] dark:text-[#71717A] whitespace-nowrap">
+                            {{-- Client / User Agent --}}
+                            <div class="min-w-0 space-y-0.5">
+                                <p class="text-xs font-medium text-[#0F172A] dark:text-white truncate" title="{{ $log->user_agent ?: 'Tidak tercatat' }}">
+                                    {{ $clientLabel }}
+                                </p>
+                                <p class="font-mono text-[11px] text-[#94A3B8] dark:text-[#71717A] truncate">
+                                    {{ $log->ip_address ?: '—' }}
+                                </p>
+                            </div>
+
+                            {{-- Timestamp --}}
+                            <div class="text-right">
+                                <span class="block text-xs font-medium text-[#0F172A] dark:text-white tabular-nums whitespace-nowrap">
                                     {{ $log->waktu ? $log->waktu->format('d/m/y') : ($log->created_at ? $log->created_at->format('d/m/y') : '—') }}
                                 </span>
-
-                                <div class="flex items-center justify-end">
-                                    <button type="button"
-                                            onclick="openDetailModal({{ json_encode($log) }}, 'aktivitas')"
-                                            class="text-sm font-medium text-[#BA18F5] hover:text-[#9333EA] transition-colors cursor-pointer">
-                                        Detail
-                                    </button>
-                                </div>
+                                <span class="block text-[11px] text-[#94A3B8] dark:text-[#71717A] tabular-nums whitespace-nowrap">
+                                    {{ $log->waktu ? $log->waktu->format('H:i:s') : ($log->created_at ? $log->created_at->format('H:i:s') : '') }}
+                                </span>
                             </div>
-                        @empty
-                            <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
-                                No activity logs recorded.
-                            </div>
-                        @endforelse
-                    </div>
+                        </div>
+                    @empty
+                        <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A] text-sm">
+                            {{ __('admin.logs.empty_security') }}
+                        </div>
+                    @endforelse
                 </div>
             </div>
-        @else
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                @forelse ($logs as $log)
-                    <div class="flex flex-col rounded-2xl p-4 gap-2 bg-white dark:bg-[#1E1E20] border border-[#E5E7EB] dark:border-[#2D2D30] hover:border-[#BA18F5]/50 transition-colors">
-                        <div class="p-2.5 bg-purple-50 dark:bg-purple-950/20 rounded-xl border border-purple-100 dark:border-purple-900/40">
-                            <p class="text-xs font-medium text-[#0F172A] dark:text-white leading-relaxed line-clamp-3">
-                                {{ $log->pesan ?? $log->deskripsi ?? 'Admin action performed on system' }}
-                            </p>
+        </div>
+    @else
+        {{-- ==================== TAB LOG AKTIVITAS (LIST ONLY) ==================== --}}
+        <div class="overflow-x-auto rounded-2xl border border-[#E5E7EB] dark:border-[#2D2D30] bg-white dark:bg-[#1E1E20]">
+            <div class="min-w-[880px]">
+                <div class="grid grid-cols-[minmax(280px,1.8fr)_120px_minmax(150px,0.9fr)_110px_150px] items-center gap-4 px-6 py-3.5 text-[11px] uppercase tracking-wider text-[#94A3B8] dark:text-[#71717A] font-semibold bg-[#F8FAFC] dark:bg-[#18181B] border-b border-[#E5E7EB] dark:border-[#2D2D30]">
+                    <span>{{ __('admin.logs.col_activity') }}</span>
+                    <span class="text-center">{{ __('admin.logs.col_action') }}</span>
+                    <span>{{ __('admin.logs.col_actor') }}</span>
+                    <span class="text-center">{{ __('admin.logs.col_status') }}</span>
+                    <span class="text-right">{{ __('admin.logs.col_ip_time') }}</span>
+                </div>
+
+                <div class="divide-y divide-[#E5E7EB] dark:divide-[#27272A]">
+                    @forelse ($logs as $log)
+                        @php
+                            $aksiVal = strtolower((string) ($log->aksi ?? 'aktivitas'));
+                            $aksiClass = match ($aksiVal) {
+                                'tambah' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50',
+                                'ubah' => 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200 dark:border-sky-800/50',
+                                'hapus' => 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-800/50',
+                                'registrasi' => 'bg-[#BA18F5]/10 text-[#BA18F5] dark:text-[#D55BFF] border-[#BA18F5]/25',
+                                'pulih' => 'bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300 border-teal-200 dark:border-teal-800/50',
+                                default => 'bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-zinc-300 border-gray-200 dark:border-zinc-700',
+                            };
+                            $isSuccess = strtolower((string) ($log->status ?? 'berhasil')) === 'berhasil';
+                            $actorName = $log->pengguna->nama ?? ($log->entitas ?: 'Sistem');
+                            $actorHandle = $log->pengguna->nama_panggilan ?? null;
+                        @endphp
+                        <div class="px-6 py-4 grid grid-cols-[minmax(280px,1.8fr)_120px_minmax(150px,0.9fr)_110px_150px] items-start gap-4 hover:bg-[#FAF5FF]/50 dark:hover:bg-zinc-800/40 transition-colors">
+                            {{-- Activity Message & Category --}}
+                            <div class="min-w-0 space-y-1">
+                                <p class="text-sm font-medium text-[#0F172A] dark:text-white leading-snug">
+                                    {{ $log->pesan ?? $log->deskripsi ?? 'Aktivitas sistem tercatat' }}
+                                </p>
+                                <div class="flex flex-wrap items-center gap-2 text-[11px] text-[#94A3B8] dark:text-[#71717A]">
+                                    @if ($log->jenis)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-[#F1F5F9] dark:bg-zinc-800 text-[#64748B] dark:text-[#A1A1AA] font-medium capitalize">
+                                            {{ $log->jenis }}
+                                        </span>
+                                    @endif
+                                    @if ($log->entitas && $log->entitas !== $actorName)
+                                        <span class="truncate">{{ $log->entitas }}</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Action Pill --}}
+                            <div class="pt-0.5 flex justify-center">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold capitalize border {{ $aksiClass }}">
+                                    {{ $log->aksi ?? 'sistem' }}
+                                </span>
+                            </div>
+
+                            {{-- Actor --}}
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold text-[#0F172A] dark:text-white truncate">
+                                    {{ $actorName }}
+                                </p>
+                                @if ($actorHandle)
+                                    <p class="text-[11px] text-[#94A3B8] dark:text-[#71717A] truncate">
+                                        {{ '@' . $actorHandle }}
+                                    </p>
+                                @endif
+                            </div>
+
+                            {{-- Status --}}
+                            <div class="pt-0.5 flex justify-center">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold capitalize {{ $isSuccess ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' }}">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $isSuccess ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
+                                    {{ $log->status ?? 'berhasil' }}
+                                </span>
+                            </div>
+
+                            {{-- IP & Timestamp --}}
+                            <div class="text-right min-w-0 space-y-0.5">
+                                <p class="text-xs font-medium text-[#0F172A] dark:text-white tabular-nums whitespace-nowrap">
+                                    {{ $log->waktu ? $log->waktu->format('d/m/y H:i') : ($log->created_at ? $log->created_at->format('d/m/y H:i') : '—') }}
+                                </p>
+                                <p class="font-mono text-[11px] text-[#94A3B8] dark:text-[#71717A] truncate">
+                                    {{ $log->ip_address ?: '—' }}
+                                </p>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-1.5 text-xs">
-                            <div>
-                                <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">administrator</span>
-                                <span class="font-medium text-[#0F172A] dark:text-white truncate block">{{ $log->pengguna->nama ?? '—' }}</span>
-                            </div>
-                            <div>
-                                <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">timestamp</span>
-                                <span class="font-medium text-[#0F172A] dark:text-white whitespace-nowrap">{{ $log->waktu ? $log->waktu->format('d/m/y') : ($log->created_at ? $log->created_at->format('d/m/y') : '—') }}</span>
-                            </div>
-                            <div>
-                                <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">entity</span>
-                                <span class="font-medium text-[#0F172A] dark:text-white truncate block">{{ $log->entitas ?? $log->tipe_entitas ?? '—' }}</span>
-                            </div>
-                            <div>
-                                <span class="block text-[10px] leading-tight text-[#94A3B8] dark:text-[#71717A]">action</span>
-                                <span class="font-medium text-[#0F172A] dark:text-white truncate block">{{ $log->aksi ?? '—' }}</span>
-                            </div>
+                    @empty
+                        <div class="py-16 text-center text-[#94A3B8] dark:text-[#71717A] text-sm">
+                            {{ __('admin.logs.empty_activity') }}
                         </div>
-                        <div class="pt-1 mt-auto">
-                            <button type="button"
-                                    onclick="openDetailModal({{ json_encode($log) }}, 'aktivitas')"
-                                    class="h-8 w-full rounded-full bg-[#BA18F5] text-white font-semibold text-[11px] hover:opacity-90 transition-opacity cursor-pointer">
-                                Detail
-                            </button>
-                        </div>
-                    </div>
-                @empty
-                    <div class="col-span-full py-16 text-center text-[#94A3B8] dark:text-[#71717A]">
-                        No activity logs recorded.
-                    </div>
-                @endforelse
+                    @endforelse
+                </div>
             </div>
-        @endif
+        </div>
     @endif
 
     @if ($logs instanceof \Illuminate\Pagination\LengthAwarePaginator)
         {{ $logs->withQueryString()->links('admin.layouts.pagination') }}
     @endif
-</div>
-
-{{-- Detail Audit Trail Modal --}}
-<div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-    <div class="fixed inset-0 bg-black/60 backdrop-blur-xs" onclick="closeDetailModal()"></div>
-    <div class="relative w-full max-w-lg bg-white dark:bg-[#1E1E20] rounded-2xl p-6 sm:p-8 shadow-xl border border-[#E5E7EB] dark:border-[#2D2D30] z-10">
-        <div class="flex items-center justify-between pb-4 border-b border-[#E5E7EB] dark:border-[#2D2D30] mb-6">
-            <h2 id="modalTitle" class="text-lg font-semibold text-[#0F172A] dark:text-white">Activity Log Details</h2>
-            <button type="button" onclick="closeDetailModal()" class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 hover:text-black dark:text-zinc-400 dark:hover:text-white transition-colors cursor-pointer">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-
-        <div class="space-y-4">
-            <div id="modalPrimaryBox" class="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-2xl border border-purple-100 dark:border-purple-900/40">
-                <p id="modalPrimaryLabel" class="text-xs font-semibold uppercase text-[#BA18F5] mb-1">Action Description</p>
-                <p id="modalDesc" class="text-sm font-semibold text-[#0F172A] dark:text-white"></p>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 text-sm">
-                <div class="p-3 bg-gray-50 dark:bg-zinc-800/40 rounded-xl">
-                    <span id="modalActorLabel" class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium">Administrator</span>
-                    <span id="modalAdmin" class="font-medium text-[#0F172A] dark:text-white">—</span>
-                </div>
-
-                <div class="p-3 bg-gray-50 dark:bg-zinc-800/40 rounded-xl">
-                    <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium">Timestamp</span>
-                    <span id="modalTime" class="font-medium text-[#0F172A] dark:text-white"></span>
-                </div>
-
-                <div class="p-3 bg-gray-50 dark:bg-zinc-800/40 rounded-xl">
-                    <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium">IP Address</span>
-                    <span id="modalIp" class="font-mono text-xs text-[#0F172A] dark:text-white"></span>
-                </div>
-
-                <div class="p-3 bg-gray-50 dark:bg-zinc-800/40 rounded-xl">
-                    <span id="modalSecondLabel" class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium">Entity Target</span>
-                    <span id="modalEntity" class="font-medium text-[#0F172A] dark:text-white"></span>
-                </div>
-            </div>
-
-            <div class="p-3 bg-gray-50 dark:bg-zinc-800/40 rounded-xl">
-                <span class="block text-xs text-[#94A3B8] dark:text-[#71717A] font-medium">Client User Agent</span>
-                <p id="modalAgent" class="font-mono text-xs text-gray-600 dark:text-zinc-400 break-all mt-1"></p>
-            </div>
-
-            <div class="flex justify-end pt-4 border-t border-[#E5E7EB] dark:border-[#2D2D30]">
-                <button type="button" onclick="closeDetailModal()" class="h-10 px-6 rounded-full bg-[#BA18F5] text-white font-medium text-sm hover:opacity-90 transition-opacity cursor-pointer">
-                    Close
-                </button>
-            </div>
-        </div>
     </div>
 </div>
-
-@push('scripts')
-<script>
-    function openDetailModal(log, type) {
-        const modal = document.getElementById('detailModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const primaryLabel = document.getElementById('modalPrimaryLabel');
-        const actorLabel = document.getElementById('modalActorLabel');
-        const secondLabel = document.getElementById('modalSecondLabel');
-
-        if (type === 'keamanan') {
-            modalTitle.textContent = 'Security Log Details';
-            primaryLabel.textContent = 'Event & HTTP Status (' + (log.status_kode || '—') + ')';
-            document.getElementById('modalDesc').textContent = (log.event || 'Security Event') + ' — ' + (log.method || '') + ' ' + (log.endpoint || '');
-            actorLabel.textContent = 'Account / Actor';
-            document.getElementById('modalAdmin').textContent = log.pengguna ? (log.pengguna.nama + ' (' + (log.pengguna.email || '') + ')') : (log.id_pengguna || 'Anonymous / Guest');
-            secondLabel.textContent = 'Event Detail';
-            document.getElementById('modalEntity').textContent = log.pesan || '—';
-        } else {
-            modalTitle.textContent = 'Activity Log Details';
-            primaryLabel.textContent = 'Action Description';
-            document.getElementById('modalDesc').textContent = log.pesan || log.deskripsi || 'Administrative action';
-            actorLabel.textContent = 'Administrator';
-            document.getElementById('modalAdmin').textContent = log.pengguna ? log.pengguna.nama : '—';
-            secondLabel.textContent = 'Entity Target';
-            document.getElementById('modalEntity').textContent = (log.entitas || log.tipe_entitas || 'General') + (log.id_entitas ? ' #' + log.id_entitas : (log.aksi ? ' (' + log.aksi + ')' : ''));
-        }
-
-        document.getElementById('modalTime').textContent = log.waktu ? new Date(log.waktu).toLocaleString() : (log.created_at ? new Date(log.created_at).toLocaleString() : '—');
-        document.getElementById('modalIp').textContent = log.ip_address || '—';
-        document.getElementById('modalAgent').textContent = log.user_agent || '—';
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeDetailModal() {
-        const modal = document.getElementById('detailModal');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-</script>
-@endpush
 @endsection

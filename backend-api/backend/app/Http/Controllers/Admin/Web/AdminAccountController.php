@@ -15,10 +15,12 @@ class AdminAccountController extends Controller
     public function index(Request $request): View
     {
         $cari = $request->query('cari');
+        $status = $request->query('status');
+        $sort = $request->query('sort', 'newest');
         $perPage = AdminListOptions::perPage($request);
         $viewMode = AdminListOptions::viewMode($request);
 
-        $pengguna = Pengguna::query()
+        $query = Pengguna::query()
             ->withCount(['karya', 'pameran'])
             ->when($cari, function ($q) use ($cari) {
                 $pattern = '%'.addcslashes($cari, '%_').'%';
@@ -28,12 +30,21 @@ class AdminAccountController extends Controller
                         ->orWhere('email', 'like', $pattern);
                 });
             })
-            ->latest('created_at')
-            ->paginate($perPage);
+            ->when(in_array($status, ['aktif', 'ditangguhkan', 'nonaktifkan'], true), function ($q) use ($status) {
+                $q->where('status', $status);
+            });
 
+        match ($sort) {
+            'oldest' => $query->oldest('created_at'),
+            'posts' => $query->orderByDesc('karya_count')->latest('created_at'),
+            'exhibitions' => $query->orderByDesc('pameran_count')->latest('created_at'),
+            default => $query->latest('created_at'),
+        };
+
+        $pengguna = $query->paginate($perPage);
         $perPageOptions = AdminListOptions::PER_PAGE_OPTIONS;
 
-        return view('admin.accounts.index', compact('pengguna', 'viewMode', 'perPage', 'perPageOptions'));
+        return view('admin.accounts.index', compact('pengguna', 'viewMode', 'perPage', 'perPageOptions', 'status', 'sort'));
     }
 
     public function suspend(Request $request, string $id): RedirectResponse

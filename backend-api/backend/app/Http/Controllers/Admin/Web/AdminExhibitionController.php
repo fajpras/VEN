@@ -14,10 +14,12 @@ class AdminExhibitionController extends Controller
     public function index(Request $request): View
     {
         $cari = $request->query('cari');
+        $tipe = $request->query('tipe');
+        $sort = $request->query('sort', 'newest');
         $perPage = AdminListOptions::perPage($request);
         $viewMode = AdminListOptions::viewMode($request);
 
-        $pameran = Pameran::query()
+        $query = Pameran::query()
             ->with(['pengguna'])
             ->withCount(['ruangan', 'karya'])
             ->when($cari, function ($q) use ($cari) {
@@ -26,12 +28,19 @@ class AdminExhibitionController extends Controller
                     $sub->where('judul', 'like', $pattern);
                 });
             })
-            ->latest('id_pameran')
-            ->paginate($perPage);
+            ->when(in_array($tipe, ['kecil', 'sedang', 'besar'], true), function ($q) use ($tipe) {
+                $q->where('tipe', $tipe);
+            });
 
+        match ($sort) {
+            'oldest' => $query->oldest('id_pameran'),
+            default => $query->latest('id_pameran'),
+        };
+
+        $pameran = $query->paginate($perPage);
         $perPageOptions = AdminListOptions::PER_PAGE_OPTIONS;
 
-        return view('admin.exhibitions.index', compact('pameran', 'viewMode', 'perPage', 'perPageOptions'));
+        return view('admin.exhibitions.index', compact('pameran', 'viewMode', 'perPage', 'perPageOptions', 'tipe', 'sort'));
     }
 
     public function destroy(string $id): RedirectResponse

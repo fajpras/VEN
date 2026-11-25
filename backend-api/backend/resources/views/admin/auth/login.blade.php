@@ -64,8 +64,10 @@
         <form method="POST" action="{{ route('admin.login.submit') }}" class="space-y-5">
             @csrf
 
-            @if (isset($errors) && $errors->any())
-                <div class="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl">
+            @php $hasLoginError = isset($errors) && $errors->any(); @endphp
+
+            @if ($hasLoginError)
+                <div class="p-3 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl">
                     {{ $errors->first() }}
                 </div>
             @endif
@@ -80,7 +82,7 @@
                        placeholder="Email"
                        autocomplete="email"
                        required
-                       class="w-full h-12 px-4 rounded-xl bg-[#EAEAEA] text-[#0F172A] placeholder-[#8E8E93] text-sm font-medium border border-transparent focus:border-[#BA18F5] focus:bg-white outline-none transition-all">
+                       class="w-full h-12 px-4 rounded-xl bg-[#EAEAEA] text-[#0F172A] placeholder-[#8E8E93] text-sm font-medium border {{ $hasLoginError ? 'border-rose-500 ring-2 ring-rose-500/20 bg-white' : 'border-transparent focus:border-[#BA18F5] focus:bg-white' }} outline-none transition-all">
             </div>
 
             {{-- Password Input with Visibility Toggle --}}
@@ -92,7 +94,7 @@
                        placeholder="Password"
                        autocomplete="current-password"
                        required
-                       class="w-full h-12 pl-4 pr-12 rounded-xl bg-[#EAEAEA] text-[#0F172A] placeholder-[#8E8E93] text-sm font-medium border border-transparent focus:border-[#BA18F5] focus:bg-white outline-none transition-all">
+                       class="w-full h-12 pl-4 pr-12 rounded-xl bg-[#EAEAEA] text-[#0F172A] placeholder-[#8E8E93] text-sm font-medium border {{ $hasLoginError ? 'border-rose-500 ring-2 ring-rose-500/20 bg-white' : 'border-transparent focus:border-[#BA18F5] focus:bg-white' }} outline-none transition-all">
                 <button type="button"
                         id="togglePasswordButton"
                         onclick="togglePasswordVisibility()"

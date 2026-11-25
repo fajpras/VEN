@@ -19,6 +19,10 @@ class AdminLogController extends Controller
         }
 
         $cari = $request->query('cari');
+        $aksi = $request->query('aksi');
+        $status = $request->query('status');
+        $method = $request->query('method');
+        $statusGroup = $request->query('status_group');
         $perPage = AdminListOptions::perPage($request);
         $viewMode = AdminListOptions::viewMode($request);
 
@@ -32,8 +36,19 @@ class AdminLogController extends Controller
                             ->orWhere('endpoint', 'like', $pattern)
                             ->orWhere('method', 'like', $pattern)
                             ->orWhere('ip_address', 'like', $pattern)
+                            ->orWhere('user_agent', 'like', $pattern)
                             ->orWhere('pesan', 'like', $pattern);
                     });
+                })
+                ->when(in_array(strtoupper((string) $method), ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], true), function ($q) use ($method) {
+                    $q->where('method', strtoupper((string) $method));
+                })
+                ->when(in_array($statusGroup, ['2xx', '4xx', '5xx'], true), function ($q) use ($statusGroup) {
+                    match ($statusGroup) {
+                        '2xx' => $q->whereBetween('status_kode', [200, 299]),
+                        '4xx' => $q->whereBetween('status_kode', [400, 499]),
+                        '5xx' => $q->where('status_kode', '>=', 500),
+                    };
                 })
                 ->latest('id_log')
                 ->paginate($perPage);
@@ -48,12 +63,21 @@ class AdminLogController extends Controller
                             ->orWhere('aksi', 'like', $pattern);
                     });
                 })
+                ->when(in_array($aksi, LogAktivitas::AKSI, true), function ($q) use ($aksi) {
+                    $q->where('aksi', $aksi);
+                })
+                ->when(in_array($status, ['berhasil', 'gagal'], true), function ($q) use ($status) {
+                    $q->where('status', $status);
+                })
                 ->latest('id_log')
                 ->paginate($perPage);
         }
 
         $perPageOptions = AdminListOptions::PER_PAGE_OPTIONS;
 
-        return view('admin.logs.index', compact('logs', 'tab', 'viewMode', 'perPage', 'perPageOptions'));
+        return view('admin.logs.index', compact(
+            'logs', 'tab', 'viewMode', 'perPage', 'perPageOptions',
+            'aksi', 'status', 'method', 'statusGroup'
+        ));
     }
 }
