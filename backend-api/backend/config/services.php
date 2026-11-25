@@ -48,6 +48,20 @@ return [
         'secret' => env('LIVEKIT_API_SECRET'),
     ],
 
+    'vivox' => [
+        'server' => env('VIVOX_SERVER'),
+        'domain' => env('VIVOX_DOMAIN'),
+        'issuer' => env('VIVOX_ISSUER'),
+        'secret_key' => env('VIVOX_SECRET_KEY'),
+    ],
+
+    'edgegap' => [
+        'url' => rtrim((string) env('EDGEGAP_API_URL', 'https://api.edgegap.com'), '/'),
+        'token' => env('EDGEGAP_API_TOKEN'),
+        'app_name' => env('EDGEGAP_APP_NAME'),
+        'app_version' => env('EDGEGAP_APP_VERSION'),
+    ],
+
     'ai' => [
         'key' => env('GEMINI_API_KEY', env('AI_KEY', env('AI_API_KEY'))),
         'url' => env('AI_URL'),

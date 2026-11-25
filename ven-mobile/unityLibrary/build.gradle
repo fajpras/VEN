@@ -1,10 +1,13 @@
+import org.gradle.api.GradleException
+
 apply plugin: 'com.android.library'
+apply plugin: 'idea'
 
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation(name: 'VivoxNative', ext:'aar')
-    implementation(name: 'NativeGallery', ext:'aar')
+    implementation(':VivoxNative@aar')
+    implementation(':NativeGallery@aar')
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.core:core:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
@@ -12,8 +15,8 @@ dependencies {
 }
 
 android {
-    namespace "com.unity3d.player"
-    ndkVersion "27.2.12479018"
+    namespace = "com.unity3d.player"
+    ndkVersion = "27.2.12479018"
     compileSdk 36
     buildToolsVersion "36.0.0"
 
@@ -29,7 +32,7 @@ android {
 
         ndk {
             abiFilters "arm64-v8a"
-            debugSymbolLevel "none"
+            debugSymbolLevel = "none"
         }
 
         externalNativeBuild {
@@ -40,7 +43,7 @@ android {
     }
 
     lint {
-        abortOnError false
+        abortOnError = false
     }
 
     androidResources {
@@ -51,7 +54,7 @@ android {
 
     packaging {
         jniLibs {
-            useLegacyPackaging true
+            useLegacyPackaging = true
         }
     }
 }
@@ -59,13 +62,13 @@ android {
 
 android.externalNativeBuild {
     cmake {
-        version "3.22.1"
+        version = "3.22.1"
         path "src/main/cpp/CMakeLists.txt"
     }
 }
 
 android.buildFeatures {
-    prefab true
+    prefab = true
 }
 
 
@@ -120,12 +123,15 @@ tasks.register('buildIl2Cpp') {
     }
 }
 
-android {
-   sourceSets {
-       main {
-           jni.srcDirs = ["src/main/Il2CppOutputProject"]
-       }
-   }
+// Exclude generated IL2CPP C++ (~1 GB, 2600+ files) & symbols from Android Studio indexing.
+// buildIl2Cpp still compiles them directly via il2cpp.exe without needing jni.srcDirs.
+idea {
+    module {
+        excludeDirs += [
+            file('src/main/Il2CppOutputProject'),
+            file('symbols')
+        ]
+    }
 }
 
 androidComponents {
@@ -257,7 +263,7 @@ def execCommand(String workDir, List<String> command, Map<String, String> env = 
         workingDir workDir
         commandLine command
         environment env
-        ignoreExitValue true
+        ignoreExitValue = true
     }
 
     def exitValue = execOutput.result.get().getExitValue()

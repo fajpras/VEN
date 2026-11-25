@@ -79,6 +79,12 @@ Route::middleware(CatatKeamanan::class)->group(function () {
             Route::get('ruangan/{ruangan}/room-dto', 'roomDto')->whereNumber('ruangan');
         });
 
+        Route::controller(Pengguna\RoomServerController::class)->middleware('throttle:30,1')->group(function () {
+            Route::post('room-server/{roomKey}', 'byRoomKey')->where('roomKey', '[A-Za-z0-9_-]+');
+            Route::post('pameran/{pameran}/server', 'pameran')->whereNumber('pameran');
+            Route::post('ruangan/{ruangan}/server', 'ruangan')->whereNumber('ruangan');
+        });
+
         Route::post('ai/tanya', [Pengguna\AIChatController::class, 'ask'])->middleware('throttle:10,1');
         Route::get('pencarian', [Pengguna\PencarianController::class, 'search']);
         Route::get('pengguna/{pengguna}', [Pengguna\ProfilController::class, 'detailPengguna'])->whereUuid('pengguna');

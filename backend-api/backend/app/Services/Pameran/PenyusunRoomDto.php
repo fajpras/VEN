@@ -61,6 +61,7 @@ final class PenyusunRoomDto
             'isPublic' => $isPublic,
             'ownerId' => (string) $pameran->id_pengguna,
             'viewerId' => (string) ($pengunjung?->id_pengguna ?? ''),
+            'viewerName' => (string) ($pengunjung?->nama_panggilan ?: $pengunjung?->nama ?: ''),
             'items' => $items,
         ];
     }
