@@ -25,10 +25,14 @@ class AdminArchiveController extends Controller
         $perPage = AdminListOptions::perPage($request);
         $perPageOptions = AdminListOptions::PER_PAGE_OPTIONS;
 
+        $suspendedAccountsBase = fn () => Pengguna::query()
+            ->where('role', '!=', 'admin')
+            ->whereIn('status', ['ditangguhkan', 'nonaktifkan']);
+
         $counts = [
             'exhibitions' => Pameran::onlyTrashed()->count(),
             'posts' => Karya::onlyTrashed()->count(),
-            'accounts' => Pengguna::onlyTrashed()->count(),
+            'accounts' => $suspendedAccountsBase()->count(),
         ];
 
         $items = match ($tab) {
@@ -40,7 +44,8 @@ class AdminArchiveController extends Controller
                 })
                 ->latest('deleted_at')
                 ->paginate($perPage),
-            'accounts' => Pengguna::onlyTrashed()
+            'accounts' => $suspendedAccountsBase()
+                ->with(['sanksi' => fn ($q) => $q->latest('id_sanksi')])
                 ->when($cari, function ($q) use ($cari) {
                     $pattern = '%'.addcslashes($cari, '%_').'%';
                     $q->where(function ($sub) use ($pattern) {
@@ -49,7 +54,7 @@ class AdminArchiveController extends Controller
                             ->orWhere('email', 'like', $pattern);
                     });
                 })
-                ->latest('deleted_at')
+                ->latest('updated_at')
                 ->paginate($perPage),
             default => Pameran::onlyTrashed()
                 ->with(['pengguna'])
@@ -73,7 +78,10 @@ class AdminArchiveController extends Controller
         $model = match ($type) {
             'exhibitions' => Pameran::onlyTrashed()->find($id),
             'posts' => Karya::onlyTrashed()->find($id),
-            'accounts' => Pengguna::onlyTrashed()->find($id),
+            'accounts' => Pengguna::query()
+                ->where('role', '!=', 'admin')
+                ->whereIn('status', ['ditangguhkan', 'nonaktifkan'])
+                ->find($id),
         };
 
         if (! $model) {
@@ -82,12 +90,19 @@ class AdminArchiveController extends Controller
                 ->with('error', __('admin.archive.not_found'));
         }
 
-        $model->restore();
+        if ($type === 'accounts') {
+            $model->sanksi()
+                ->where(fn ($q) => $q->whereNull('berakhir')->orWhere('berakhir', '>', now()))
+                ->update(['berakhir' => now()]);
+            $model->forceFill(['status' => 'aktif'])->save();
+        } else {
+            $model->restore();
+        }
 
         [$jenis, $label, $successKey] = match ($type) {
             'exhibitions' => ['pameran', "pameran #{$model->id_pameran} \"{$model->judul}\"", 'admin.archive.restored_exhibition'],
             'posts' => ['karya', "karya #{$model->id_karya} \"{$model->judul}\"", 'admin.archive.restored_post'],
-            'accounts' => ['pengguna', "pengguna \"{$model->nama_panggilan}\"", 'admin.archive.restored_account'],
+            'accounts' => ['pengguna', "akun tersanksi \"{$model->nama_panggilan}\"", 'admin.archive.restored_account'],
         };
 
         LogSistem::aktivitas(

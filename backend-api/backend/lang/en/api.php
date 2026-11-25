@@ -37,6 +37,8 @@ return [
         'logout_success' => 'Logged out successfully.',
         'google_invalid_token' => 'Invalid Google token.',
         'password_reset_success' => 'Password updated successfully. Please sign in again.',
+        'account_suspended_until' => 'Your account is suspended until :until. Reason: :reason',
+        'account_suspended_permanent' => 'Your account has been permanently disabled. Reason: :reason',
     ],
     'profile' => [
         'otp_sent_new_email' => 'Verification code has been sent to your new email.',

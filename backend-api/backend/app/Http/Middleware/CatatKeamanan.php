@@ -29,9 +29,9 @@ class CatatKeamanan
         };
 
         $pesan = match ($status) {
-            401 => 'Percobaan akses endpoint tanpa token otentikasi valid',
-            403 => 'Akses ditolak: pengguna tidak memiliki izin ke endpoint ini',
-            default => 'Permintaan dibatasi: melebihi batas laju (rate limit)',
+            401 => 'Akses ke sumber daya terproteksi ditolak: token otentikasi tidak valid, hilang, atau kedaluwarsa.',
+            403 => 'Pelanggaran otorisasi (RBAC / Least Privilege): aktor tidak memiliki izin ke endpoint ini.',
+            default => 'Pembatasan laju (rate limit) diaktifkan untuk melindungi ketersediaan layanan dan basis data.',
         };
 
         LogSistem::keamanan($event, $pesan, $status);

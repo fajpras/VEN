@@ -155,11 +155,18 @@ class Pengguna extends Authenticatable
         if ($sanksi = $this->sanksiAktif()) {
             $this->sinkronStatusSanksi();
 
-            $durasi = $sanksi->berakhir
-                ? 'sampai '.Carbon::parse($sanksi->berakhir)->translatedFormat('d M Y H:i')
-                : 'secara permanen';
+            if ($sanksi->berakhir) {
+                $until = Carbon::parse($sanksi->berakhir)->translatedFormat('d M Y H:i');
 
-            return "Akun Anda dikenai sanksi {$durasi}. Alasan: {$sanksi->alasan}";
+                return __('api.auth.account_suspended_until', [
+                    'until' => $until,
+                    'reason' => $sanksi->alasan,
+                ]);
+            }
+
+            return __('api.auth.account_suspended_permanent', [
+                'reason' => $sanksi->alasan,
+            ]);
         }
 
         if ($this->status !== 'aktif') {
@@ -167,5 +174,29 @@ class Pengguna extends Authenticatable
         }
 
         return null;
+    }
+
+    /**
+     * Detail terstruktur sanksi aktif untuk ditampilkan pada dialog suspensi klien mobile.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function detailSanksiAktif(): ?array
+    {
+        $sanksi = $this->sanksiAktif();
+        if (! $sanksi) {
+            return null;
+        }
+
+        $berakhir = $sanksi->berakhir ? Carbon::parse($sanksi->berakhir) : null;
+
+        return [
+            'jenis_sanksi' => $sanksi->jenis_sanksi,
+            'alasan' => $sanksi->alasan,
+            'mulai' => $sanksi->mulai ? Carbon::parse($sanksi->mulai)->toIso8601String() : null,
+            'berakhir' => $berakhir?->toIso8601String(),
+            'berakhir_teks' => $berakhir?->translatedFormat('d M Y H:i'),
+            'permanen' => $berakhir === null || $sanksi->jenis_sanksi === 'diblokir',
+        ];
     }
 }

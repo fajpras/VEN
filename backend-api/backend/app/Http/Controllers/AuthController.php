@@ -195,9 +195,22 @@ class AuthController extends Controller
         $statusAwal = $pengguna->status;
 
         if ($alasan = $pengguna->cekAksesLogin()) {
-            LogSistem::keamanan('login_ditolak', 'akun tersanksi', 403, $pengguna->id_pengguna);
+            $detailSanksi = $pengguna->detailSanksiAktif();
+            $jenisSanksi = $detailSanksi['jenis_sanksi'] ?? 'sanksi';
+            $alasanSanksi = $detailSanksi['alasan'] ?? 'pelanggaran kebijakan';
+            $pesanAudit = sprintf(
+                'Otentikasi ditolak oleh kontrol akses akun: @%s memiliki sanksi aktif (%s; alasan: %s).',
+                $pengguna->nama_panggilan ?: $pengguna->email,
+                $jenisSanksi,
+                $alasanSanksi,
+            );
 
-            return $this->forbidden($alasan);
+            LogSistem::keamanan('login_ditolak', $pesanAudit, 403, $pengguna->id_pengguna);
+
+            return response()->json([
+                'message' => $alasan,
+                'sanksi' => $detailSanksi,
+            ], 403);
         }
 
         if ($statusAwal === 'nonaktifkan' && $pengguna->status === 'aktif') {

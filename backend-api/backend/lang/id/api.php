@@ -37,6 +37,8 @@ return [
         'logout_success' => 'Logout berhasil.',
         'google_invalid_token' => 'Token Google tidak valid.',
         'password_reset_success' => 'Kata sandi berhasil diubah. Silakan login kembali.',
+        'account_suspended_until' => 'Akun Anda dikenai sanksi sampai :until. Alasan: :reason',
+        'account_suspended_permanent' => 'Akun Anda dikenai sanksi secara permanen. Alasan: :reason',
     ],
     'profile' => [
         'otp_sent_new_email' => 'Kode verifikasi telah dikirim ke email baru.',
