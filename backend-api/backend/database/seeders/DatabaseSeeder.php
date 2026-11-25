@@ -23,8 +23,9 @@ class DatabaseSeeder extends Seeder
                 KategoriSeeder::class,
                 PenggunaSeeder::class,
                 ModelSeeder::class,
-                PameranSeeder::class,
-                KaryaDanPameranSeeder::class,
+                // Menggunakan DummyKaryaPameranSeeder (termasuk generator aset PNG & salinan MP4 valid).
+                // KaryaDanPameranSeeder & PameranSeeder lama dipertahankan tetapi tidak dipanggil bersamaan.
+                DummyKaryaPameranSeeder::class,
             ]);
         } finally {
             DB::setDefaultConnection($original);
