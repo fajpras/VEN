@@ -203,23 +203,23 @@
 
                         <ul id="passRulesList" class="mt-3 space-y-2">
                             <li data-rule="min" class="ven-rule">
-                                <span data-rule-icon class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border border-current text-[10px] font-bold leading-none">•</span>
+                                <span data-rule-icon class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border border-current text-[10px] font-bold leading-none"></span>
                                 <span>{{ __('admin.settings.rule_min') }}</span>
                             </li>
                             <li data-rule="upper" class="ven-rule">
-                                <span data-rule-icon class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border border-current text-[10px] font-bold leading-none">•</span>
+                                <span data-rule-icon class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border border-current text-[10px] font-bold leading-none"></span>
                                 <span>{{ __('admin.settings.rule_upper') }}</span>
                             </li>
                             <li data-rule="lower" class="ven-rule">
-                                <span data-rule-icon class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border border-current text-[10px] font-bold leading-none">•</span>
+                                <span data-rule-icon class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border border-current text-[10px] font-bold leading-none"></span>
                                 <span>{{ __('admin.settings.rule_lower') }}</span>
                             </li>
                             <li data-rule="digit" class="ven-rule">
-                                <span data-rule-icon class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border border-current text-[10px] font-bold leading-none">•</span>
+                                <span data-rule-icon class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border border-current text-[10px] font-bold leading-none"></span>
                                 <span>{{ __('admin.settings.rule_digit') }}</span>
                             </li>
                             <li data-rule="symbol" class="ven-rule">
-                                <span data-rule-icon class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border border-current text-[10px] font-bold leading-none">•</span>
+                                <span data-rule-icon class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border border-current text-[10px] font-bold leading-none"></span>
                                 <span>{{ __('admin.settings.rule_symbol') }}</span>
                             </li>
                         </ul>
@@ -337,7 +337,7 @@
             const item = document.querySelector(`#passRulesList [data-rule="${rule}"]`);
             item?.classList.toggle('is-met', met);
             const icon = item?.querySelector('[data-rule-icon]');
-            if (icon) icon.textContent = met ? '✓' : '•';
+            if (icon) icon.textContent = met ? '✓' : '';
         });
 
         const sameAsCurrent = current.length > 0 && next.length > 0 && next === current;

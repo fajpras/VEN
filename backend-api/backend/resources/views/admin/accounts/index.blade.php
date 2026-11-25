@@ -7,23 +7,16 @@
 <div class="space-y-8">
     {{-- Search Bar & Dashboard Filters --}}
     <div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 w-full">
-        <form method="GET" action="{{ route('admin.accounts') }}" data-live-search class="flex-1 min-w-0">
-            @if ($status) <input type="hidden" name="status" value="{{ $status }}"> @endif
-            @if ($sort && $sort !== 'newest') <input type="hidden" name="sort" value="{{ $sort }}"> @endif
-            <div class="relative flex items-center w-full">
-                <svg class="w-5 h-5 absolute left-5 text-[#94A3B8] dark:text-[#71717A] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-                <input type="text"
-                       name="cari"
-                       value="{{ request('cari') }}"
-                       placeholder="{{ __('admin.common.search') }}"
-                       class="w-full h-12 pl-13 pr-6 rounded-full bg-[#EBEBEB] dark:bg-[#27272A] text-[#0F172A] dark:text-white placeholder-[#94A3B8] dark:placeholder-[#71717A] text-base font-normal outline-none focus:ring-2 focus:ring-[#BA18F5] transition-all">
-            </div>
-        </form>
+        @include('admin.components.toolbar.search-bar', [
+            'action' => route('admin.accounts'),
+            'hidden' => [
+                'status' => $status,
+                'sort' => $sort !== 'newest' ? $sort : null,
+            ],
+        ])
 
         <div class="flex flex-wrap items-center gap-2.5">
-            @include('admin.layouts.filter-dropdown', [
+            @include('admin.components.toolbar.filter-dropdown', [
                 'param' => 'status',
                 'value' => $status,
                 'placeholder' => __('admin.accounts.filter_status'),
@@ -33,7 +26,7 @@
                     'nonaktifkan' => __('admin.accounts.status_blocked'),
                 ],
             ])
-            @include('admin.layouts.filter-dropdown', [
+            @include('admin.components.toolbar.filter-dropdown', [
                 'param' => 'sort',
                 'value' => $sort === 'newest' ? '' : $sort,
                 'placeholder' => __('admin.common.sort_newest'),
@@ -46,7 +39,7 @@
         </div>
     </div>
 
-    @include('admin.layouts.list-controls')
+    @include('admin.components.toolbar.list-controls')
 
     <div data-live-region class="space-y-8">
     @if ($viewMode === 'list')
@@ -169,7 +162,7 @@
     @endif
 
     @if ($pengguna instanceof \Illuminate\Pagination\LengthAwarePaginator)
-        {{ $pengguna->withQueryString()->links('admin.layouts.pagination') }}
+        {{ $pengguna->withQueryString()->links('admin.components.navigation.pagination') }}
     @endif
     </div>
 </div>

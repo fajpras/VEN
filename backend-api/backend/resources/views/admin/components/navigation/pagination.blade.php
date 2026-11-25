@@ -1,17 +1,5 @@
 @if ($paginator->total() > 0)
     <nav role="navigation" aria-label="Pagination Navigation" class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6 border-t border-[#E5E7EB] dark:border-[#27272A] mt-6">
-        {{-- Results Counter Summary --}}
-        {{-- <div class="text-sm text-[#64748B] dark:text-[#A1A1AA]">
-            <span>Showing</span>
-            <span class="font-semibold text-[#0F172A] dark:text-white">{{ $paginator->firstItem() ?? 1 }}</span>
-            <span>to</span>
-            <span class="font-semibold text-[#0F172A] dark:text-white">{{ $paginator->lastItem() ?? $paginator->total() }}</span>
-            <span>of</span>
-            <span class="font-semibold text-[#0F172A] dark:text-white">{{ $paginator->total() }}</span>
-            <span>results</span>
-        </div> --}}
-
-        {{-- Page Navigation Controls --}}
         <div class="flex gap-1.5">
             {{-- Previous Page Button --}}
             @if ($paginator->onFirstPage())
@@ -30,7 +18,6 @@
 
             {{-- Numeric Page Buttons --}}
             @foreach ($elements as $element)
-                {{-- Array of links --}}
                 @if (is_array($element))
                     @foreach ($element as $page => $url)
                         @if ($page == $paginator->currentPage())
@@ -45,7 +32,6 @@
                     @endforeach
                 @endif
 
-                {{-- Ellipsis Separator --}}
                 @if (is_string($element))
                     <span class="w-9 h-9 rounded-full flex items-center justify-center text-sm text-[#94A3B8] dark:text-[#71717A] select-none">
                         {{ $element }}

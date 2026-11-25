@@ -1,11 +1,11 @@
 {{--
-    Modern reusable filter dropdown using [data-dropdown] controller in resources/js/app.js.
+    Komponen Filter Dropdown reusable berbasis [data-dropdown] di resources/js/app.js.
     Props:
-      - $param: query string key (e.g. 'status', 'sort', 'aksi')
-      - $value: current active value (string|null)
-      - $placeholder: label when empty (e.g. 'All Status')
+      - $param: nama query string (mis. 'status', 'sort', 'aksi')
+      - $value: nilai aktif saat ini (string|null)
+      - $placeholder: label default saat kosong (mis. 'All Status')
       - $options: associative array ['val' => 'Label', ...]
-      - $minWidth: optional width class (default 'min-w-[160px]')
+      - $minWidth: kelas lebar minimum opsional (default 'min-w-[155px]')
 --}}
 @php
     $query = request()->query();

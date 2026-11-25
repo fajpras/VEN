@@ -12,45 +12,39 @@
         </p>
 
         <div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 w-full">
-            <form method="GET" action="{{ route('admin.archive') }}" data-live-search class="flex-1 min-w-0">
-                <input type="hidden" name="tab" value="{{ $tab }}">
-                <div class="relative flex items-center w-full">
-                    <svg class="w-5 h-5 absolute left-5 text-[#94A3B8] dark:text-[#71717A] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    <input type="text"
-                           name="cari"
-                           value="{{ request('cari') }}"
-                           placeholder="{{ __('admin.archive.search') }}"
-                           class="w-full h-12 pl-13 pr-6 rounded-full bg-[#EBEBEB] dark:bg-[#27272A] text-[#0F172A] dark:text-white placeholder-[#94A3B8] dark:placeholder-[#71717A] text-base font-normal outline-none focus:ring-2 focus:ring-[#BA18F5] transition-all">
-                </div>
-            </form>
+            @include('admin.components.toolbar.search-bar', [
+                'action' => route('admin.archive'),
+                'placeholder' => __('admin.archive.search'),
+                'hidden' => ['tab' => $tab],
+            ])
 
-            {{-- Tab Switcher: Exhibitions | Posts | Accounts --}}
-            <div class="flex items-center gap-1 p-1 rounded-full bg-[#EBEBEB] dark:bg-[#27272A] flex-shrink-0 h-12 select-none w-fit">
-                @foreach (['exhibitions' => __('admin.archive.tab_exhibitions'), 'posts' => __('admin.archive.tab_posts'), 'accounts' => __('admin.archive.tab_accounts')] as $key => $label)
-                    <a href="{{ route('admin.archive', ['tab' => $key, 'per_page' => $perPage]) }}"
-                       class="h-10 px-4 rounded-full text-sm font-semibold flex items-center gap-2 transition-all {{ $tab === $key ? 'bg-[#BA18F5] text-white shadow-md shadow-purple-500/25' : 'text-[#64748B] dark:text-[#A1A1AA] hover:text-[#0F172A] dark:hover:text-white' }}">
-                        <span>{{ $label }}</span>
-                        <span class="px-1.5 py-0.5 rounded-full text-[11px] tabular-nums {{ $tab === $key ? 'bg-white/20 text-white' : 'bg-black/5 dark:bg-white/10' }}">
-                            {{ $counts[$key] ?? 0 }}
-                        </span>
-                    </a>
-                @endforeach
+            <div class="flex flex-wrap items-center gap-2.5 flex-shrink-0">
+                {{-- Tab Switcher: Exhibitions | Posts | Accounts --}}
+                <div class="flex items-center gap-1 p-1 rounded-full bg-[#EBEBEB] dark:bg-[#27272A] flex-shrink-0 h-12 select-none w-fit">
+                    @foreach (['exhibitions' => __('admin.archive.tab_exhibitions'), 'posts' => __('admin.archive.tab_posts'), 'accounts' => __('admin.archive.tab_accounts')] as $key => $label)
+                        <a href="{{ route('admin.archive', ['tab' => $key, 'per_page' => $perPage]) }}"
+                           class="h-10 px-4 rounded-full text-sm font-semibold flex items-center gap-2 transition-all {{ $tab === $key ? 'bg-[#BA18F5] text-white shadow-md shadow-purple-500/25' : 'text-[#64748B] dark:text-[#A1A1AA] hover:text-[#0F172A] dark:hover:text-white' }}">
+                            <span>{{ $label }}</span>
+                            <span class="px-1.5 py-0.5 rounded-full text-[11px] tabular-nums {{ $tab === $key ? 'bg-white/20 text-white' : 'bg-black/5 dark:bg-white/10' }}">
+                                {{ $counts[$key] ?? 0 }}
+                            </span>
+                        </a>
+                    @endforeach
+                </div>
+
+                @include('admin.components.toolbar.per-page-dropdown')
             </div>
         </div>
     </div>
-
-    @include('admin.layouts.list-controls', ['showViewToggle' => false])
 
     {{-- Archived Items Table --}}
     <div data-live-region class="space-y-8">
     <div class="overflow-x-auto rounded-2xl border border-[#E5E7EB] dark:border-[#2D2D30] bg-white dark:bg-[#1E1E20]">
         <div class="min-w-[820px]">
-            <div class="grid grid-cols-[minmax(260px,1.8fr)_160px_140px_136px] items-center gap-4 px-6 py-3.5 text-[11px] uppercase tracking-wider text-[#94A3B8] dark:text-[#71717A] font-semibold bg-[#F8FAFC] dark:bg-[#18181B] border-b border-[#E5E7EB] dark:border-[#2D2D30]">
+            <div class="grid grid-cols-[minmax(260px,1.8fr)_160px_170px_136px] items-center gap-4 px-6 py-3.5 text-[11px] uppercase tracking-wider text-[#94A3B8] dark:text-[#71717A] font-semibold bg-[#F8FAFC] dark:bg-[#18181B] border-b border-[#E5E7EB] dark:border-[#2D2D30]">
                 <span>{{ $tab === 'accounts' ? __('admin.accounts.col_username') : __('admin.exhibitions.col_title') }}</span>
                 <span>{{ $tab === 'accounts' ? __('admin.accounts.col_name') : __('admin.exhibitions.col_owner') }}</span>
-                <span class="text-center">{{ __('admin.common.col_deleted_at') }}</span>
+                <span class="text-center">{{ $tab === 'accounts' ? __('admin.logs.col_status') : __('admin.common.col_deleted_at') }}</span>
                 <span class="text-center">{{ __('admin.common.col_action') }}</span>
             </div>
 
@@ -75,22 +69,41 @@
                             'posts' => $item->file_url ?? $thumbFallback,
                             'accounts' => \App\Support\AdminMedia::imageUrl($item->foto_profil) ?? $thumbFallback,
                         };
+                        $latestSanction = $tab === 'accounts' ? $item->sanksi->first() : null;
                     @endphp
-                    <div class="px-6 py-4 grid grid-cols-[minmax(260px,1.8fr)_160px_140px_136px] items-center gap-4 hover:bg-[#FAF5FF]/50 dark:hover:bg-zinc-800/40 transition-colors">
+                    <div class="px-6 py-4 grid grid-cols-[minmax(260px,1.8fr)_160px_170px_136px] items-center gap-4 hover:bg-[#FAF5FF]/50 dark:hover:bg-zinc-800/40 transition-colors">
                         <div class="flex items-center gap-3.5 min-w-0">
                             <img src="{{ $thumbUrl }}"
                                  alt="{{ $primaryTitle }}"
                                  referrerpolicy="no-referrer"
                                  onerror="this.onerror=null;this.src='{{ $thumbFallback }}';"
                                  class="{{ $tab === 'accounts' ? 'w-10 h-10 rounded-full' : 'w-16 h-10 rounded-lg' }} object-cover border border-[#E5E7EB] dark:border-[#2D2D30] flex-shrink-0">
-                            <span class="text-sm font-semibold text-[#0F172A] dark:text-white truncate">{{ $primaryTitle }}</span>
+                            <div class="min-w-0">
+                                <span class="block text-sm font-semibold text-[#0F172A] dark:text-white truncate">{{ $primaryTitle }}</span>
+                                @if ($tab === 'accounts' && $latestSanction?->alasan)
+                                    <span class="block text-[11px] text-[#94A3B8] dark:text-[#71717A] truncate">{{ $latestSanction->alasan }}</span>
+                                @endif
+                            </div>
                         </div>
 
                         <span class="text-sm font-medium text-[#64748B] dark:text-[#A1A1AA] truncate">{{ $secondaryText }}</span>
 
-                        <span class="text-xs font-medium text-[#94A3B8] dark:text-[#71717A] text-center tabular-nums whitespace-nowrap">
-                            {{ $item->deleted_at ? $item->deleted_at->format('d/m/y H:i') : '—' }}
-                        </span>
+                        @if ($tab === 'accounts')
+                            <div class="text-center space-y-0.5">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold capitalize {{ $item->status === 'nonaktifkan' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' }}">
+                                    {{ $item->status }}
+                                </span>
+                                @if ($latestSanction?->berakhir)
+                                    <span class="block text-[11px] text-[#94A3B8] dark:text-[#71717A] tabular-nums whitespace-nowrap">
+                                        {{ \Illuminate\Support\Carbon::parse($latestSanction->berakhir)->format('d/m/y H:i') }}
+                                    </span>
+                                @endif
+                            </div>
+                        @else
+                            <span class="text-xs font-medium text-[#94A3B8] dark:text-[#71717A] text-center tabular-nums whitespace-nowrap">
+                                {{ $item->deleted_at ? $item->deleted_at->format('d/m/y H:i') : '—' }}
+                            </span>
+                        @endif
 
                         <div class="flex items-center justify-center">
                             <button type="button"
@@ -113,7 +126,7 @@
     </div>
 
     @if ($items instanceof \Illuminate\Pagination\LengthAwarePaginator)
-        {{ $items->withQueryString()->links('admin.layouts.pagination') }}
+        {{ $items->withQueryString()->links('admin.components.navigation.pagination') }}
     @endif
     </div>
 </div>
