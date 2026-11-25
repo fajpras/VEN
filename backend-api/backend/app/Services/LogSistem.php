@@ -55,16 +55,18 @@ class LogSistem
         $jenisLower = strtolower(trim((string) $jenis));
         $isFailed = strtolower(trim($status)) !== 'berhasil';
 
-        [$severity, $control] = match ($aksiLower) {
-            'hapus'      => ['HIGH', 'DATA_MODERATION'],
-            'pulih'      => ['MEDIUM', 'DATA_RECOVERY'],
-            'sanksi', 'blokir', 'tangguh' => ['HIGH', 'ACCESS_CONTROL'],
-            'registrasi' => ['INFO', 'IDENTITY_PROVISIONING'],
-            'tambah'     => ['INFO', 'DATA_INTEGRITY'],
-            'ubah'       => [$jenisLower === 'profil' || $jenisLower === 'pengguna' ? 'MEDIUM' : 'INFO', 'CHANGE_AUDIT'],
-            'lihat'      => ['INFO', 'READ_AUDIT'],
-            default      => ['INFO', 'ACTIVITY_AUDIT'],
-        };
+        [$severity, $control] = $jenisLower === 'sanksi'
+            ? ['HIGH', 'ACCESS_CONTROL']
+            : match ($aksiLower) {
+                'hapus'      => ['HIGH', 'DATA_MODERATION'],
+                'pulih'      => ['MEDIUM', 'DATA_RECOVERY'],
+                'sanksi', 'blokir', 'tangguh' => ['HIGH', 'ACCESS_CONTROL'],
+                'registrasi' => ['INFO', 'IDENTITY_PROVISIONING'],
+                'tambah'     => ['INFO', 'DATA_INTEGRITY'],
+                'ubah'       => [$jenisLower === 'profil' || $jenisLower === 'pengguna' ? 'MEDIUM' : 'INFO', 'CHANGE_AUDIT'],
+                'lihat'      => ['INFO', 'READ_AUDIT'],
+                default      => ['INFO', 'ACTIVITY_AUDIT'],
+            };
 
         if ($isFailed && $severity === 'INFO') {
             $severity = 'WARN';

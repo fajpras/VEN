@@ -3,9 +3,11 @@
 namespace App\Observers;
 
 use App\Models\Pengguna;
+use App\Models\SanksiAkun;
 use App\Services\LogSistem;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class AktivitasObserver implements ShouldHandleEventsAfterCommit
 {
@@ -75,15 +77,36 @@ class AktivitasObserver implements ShouldHandleEventsAfterCommit
         } else {
             $namaPelaku = ($m instanceof Pengguna && $aksi === 'tambah')
                 ? (string) $m->nama
-                : (request()?->user('sanctum')?->nama ?? 'Sistem');
+                : (request()?->user('sanctum')?->nama
+                    ?? auth('web')->user()?->nama
+                    ?? auth()->user()?->nama
+                    ?? 'Sistem');
 
-            $pesan = match ($aksi) {
-                'tambah' => "Menambah {$jenis} {$labelObjek}",
-                'ubah'   => "Mengubah {$jenis} {$labelObjek}".($detail ? " ({$detail})" : ''),
-                'hapus'  => "Menghapus {$jenis} {$labelObjek}",
-                'pulih'  => "Memulihkan {$jenis} {$labelObjek} (Restore)",
-                default  => "{$aksi} {$jenis} {$labelObjek}",
-            };
+            if ($m instanceof SanksiAkun) {
+                $target = $m->pengguna()->withTrashed()->first();
+                $targetLabel = $target
+                    ? ($target->nama_panggilan ? "@{$target->nama_panggilan}" : $target->nama)
+                    : "pengguna #{$m->id_pengguna}";
+                $durasi = $m->berakhir
+                    ? 'sampai '.Carbon::parse($m->berakhir)->format('d/m/Y H:i')
+                    : 'permanen';
+                $alasan = trim((string) ($m->alasan ?: 'tidak disebutkan'));
+
+                $pesan = match ($aksi) {
+                    'tambah' => "Menerapkan sanksi {$m->jenis_sanksi} pada akun {$targetLabel} ({$durasi}; alasan: {$alasan})",
+                    'ubah'   => "Memperbarui sanksi #{$label} pada akun {$targetLabel}".($detail ? " ({$detail})" : ''),
+                    'hapus'  => "Menghapus sanksi #{$label} pada akun {$targetLabel}",
+                    default  => "{$aksi} sanksi #{$label} pada akun {$targetLabel}",
+                };
+            } else {
+                $pesan = match ($aksi) {
+                    'tambah' => "Menambah {$jenis} {$labelObjek}",
+                    'ubah'   => "Mengubah {$jenis} {$labelObjek}".($detail ? " ({$detail})" : ''),
+                    'hapus'  => "Menghapus {$jenis} {$labelObjek}",
+                    'pulih'  => "Memulihkan {$jenis} {$labelObjek} (Restore)",
+                    default  => "{$aksi} {$jenis} {$labelObjek}",
+                };
+            }
         }
 
         LogSistem::aktivitas(
