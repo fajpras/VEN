@@ -63,6 +63,24 @@ fun HomeScreen(
         }
     }
 
+    val activeVideoPostId by remember(listState, uiState.posts) {
+        derivedStateOf {
+            val videoIds = uiState.posts.asSequence().filter { it.isVideo }.map { it.id }.toSet()
+            if (videoIds.isEmpty()) return@derivedStateOf null
+
+            val layoutInfo = listState.layoutInfo
+            val viewportCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+            layoutInfo.visibleItemsInfo
+                .asSequence()
+                .filter { it.key is String && (it.key as String) in videoIds }
+                .minByOrNull { item ->
+                    val itemCenter = item.offset + item.size / 2
+                    kotlin.math.abs(itemCenter - viewportCenter)
+                }
+                ?.key as? String
+        }
+    }
+
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore && uiState.canLoadMore && !uiState.isLoadingMore && !uiState.isLoading) {
             onLoadMore()
@@ -124,6 +142,8 @@ fun HomeScreen(
                         timestampText = post.timestampText,
                         description = post.description,
                         imageUrl = post.imageUrl,
+                        isVideo = post.isVideo,
+                        isVideoPlaying = post.isVideo && post.id == activeVideoPostId,
                         aspectRatio = post.aspectRatio,
                         onRequestMeetingClick = { onRequestMeetingClick(post.id) },
                         onView3dClick = { onView3dClick(post.pameranId) },

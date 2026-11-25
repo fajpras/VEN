@@ -45,6 +45,7 @@ fun UserPostsFeedRoute(
                             val author = detail.pengguna?.namaPanggilan
                                 ?: detail.pengguna?.nama
                                 ?: AppStrings.get(R.string.common_creator)
+                            val videoPost = artwork.jenis.equals("video", ignoreCase = true)
                             PostsFeedItem(
                                 id = artwork.idKarya,
                                 username = "@$author",
@@ -54,9 +55,11 @@ fun UserPostsFeedRoute(
                                 timestampText = DateFormatter.formatRelativeTime(artwork.createdAt),
                                 description = artwork.deskripsi.orEmpty(),
                                 imageUrl = artwork.fileUrl ?: artwork.file,
+                                isVideo = videoPost,
                                 userId = detail.pengguna?.idPengguna,
                                 userAvatarUrl = detail.pengguna?.fotoProfil,
                                 pameranId = artwork.idPameran?.toString(),
+                                aspectRatio = if (videoPost) 16f / 9f else 4f / 5f,
                             )
                         }.orEmpty()
                     }

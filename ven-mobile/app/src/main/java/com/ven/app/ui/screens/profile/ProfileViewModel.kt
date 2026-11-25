@@ -76,6 +76,7 @@ class ProfileViewModel : ViewModel() {
             }
             val authorName = pengguna.namaPanggilan.orEmpty().ifBlank { pengguna.nama.orEmpty() }
             val feedPosts = rawKarya.map { k ->
+                val videoPost = k.jenis.equals("video", ignoreCase = true)
                 PostsFeedItem(
                     id = k.idKarya,
                     username = if (authorName.startsWith("@")) authorName else "@$authorName",
@@ -86,7 +87,9 @@ class ProfileViewModel : ViewModel() {
                     timestampText = DateFormatter.formatRelativeTime(k.createdAt),
                     description = k.deskripsi ?: "",
                     imageUrl = k.fileUrl ?: k.file,
+                    isVideo = videoPost,
                     pameranId = k.idPameran?.toString(),
+                    aspectRatio = if (videoPost) 16f / 9f else 4f / 5f,
                 )
             }
 

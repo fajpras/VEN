@@ -32,5 +32,6 @@ fun LoginRoute(
         onForgotPasswordClick = onForgotPassword,
         onGoogleClick = { viewModel.loginWithGoogle(context, onAuthenticated) },
         onRegisterClick = onNavigateToRegister,
+        onDismissSuspension = viewModel::dismissSuspension,
     )
 }

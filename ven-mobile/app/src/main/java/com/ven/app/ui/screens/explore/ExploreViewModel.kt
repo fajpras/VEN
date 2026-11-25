@@ -478,6 +478,7 @@ class ExploreViewModel(
     private fun KaryaItemModel.toFeedItem(): PostsFeedItem {
         val author = pengguna?.namaPanggilan ?: pengguna?.nama ?: AppStrings.get(R.string.common_creator)
         val relativeTime = DateFormatter.formatRelativeTime(createdAt)
+        val videoPost = jenis.equals("video", ignoreCase = true)
         return PostsFeedItem(
             id = idKarya,
             username = if (author.startsWith("@")) author else "@$author",
@@ -488,7 +489,9 @@ class ExploreViewModel(
             timestampText = relativeTime,
             description = deskripsi ?: "",
             imageUrl = fileUrl ?: file,
+            isVideo = videoPost,
             pameranId = idPameran?.toString(),
+            aspectRatio = if (videoPost) 16f / 9f else 4f / 5f,
         )
     }
 }

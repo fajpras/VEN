@@ -429,4 +429,17 @@
     <string name="intro_meet_content_desc">People meeting in a virtual exhibition illustration</string>
     <string name="intro_start_title">Let\'s Start</string>
     <string name="intro_start_description">Your virtual exhibition journey starts here.</string>
+    <!-- Account Suspended Dialog (Instagram-style) -->
+    <string name="suspended_title_temp">We suspended your account</string>
+    <string name="suspended_title_permanent">We disabled your account</string>
+    <string name="suspended_subtitle">Your account doesn\'t follow our Community Guidelines.</string>
+    <string name="suspended_label_reason">Reason</string>
+    <string name="suspended_label_duration">Suspended until</string>
+    <string name="suspended_label_status">Account status</string>
+    <string name="suspended_permanent_badge">Permanent</string>
+    <string name="suspended_what_means_title">What this means</string>
+    <string name="suspended_bullet_hidden">Your profile, artworks, and exhibitions are hidden while this restriction is active.</string>
+    <string name="suspended_bullet_restore_temp">Access will be restored automatically once the suspension period ends.</string>
+    <string name="suspended_bullet_restore_permanent">You can no longer sign in to this account. Contact VEN Support if you believe this is a mistake.</string>
+    <string name="suspended_understood_button">Understood</string>
 </resources>

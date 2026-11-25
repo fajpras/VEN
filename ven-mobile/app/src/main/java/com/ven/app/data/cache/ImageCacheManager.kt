@@ -3,6 +3,8 @@ package com.ven.app.data.cache
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
+import android.os.Build
 import android.util.LruCache
 import com.ven.app.core.config.AppConfig
 import kotlinx.coroutines.CompletableDeferred
@@ -23,9 +25,12 @@ object ImageCacheManager {
 
     private const val BUFFER_SIZE = 8192
     private const val DISK_CACHE_SUBDIR = "ven_image_cache"
+    private const val MAX_DISK_CACHE_BYTES = 80L * 1024L * 1024L
 
     private val mutex = Mutex()
+    private val fileMutex = Mutex()
     private val downloadSemaphore = Semaphore(permits = 3)
+    private val videoDecodeSemaphore = Semaphore(permits = 2)
     private var isInitialized = false
     private lateinit var diskCacheDir: File
 
@@ -41,6 +46,7 @@ object ImageCacheManager {
     }
 
     private val inFlightRequests = ConcurrentHashMap<String, CompletableDeferred<Bitmap?>>()
+    private val inFlightFileRequests = ConcurrentHashMap<String, CompletableDeferred<File?>>()
 
     fun init(context: Context) {
         if (!isInitialized) {
@@ -59,6 +65,64 @@ object ImageCacheManager {
         if (url.isNullOrBlank()) return null
         val memKey = buildMemoryKey(url, maxWidth, maxHeight)
         return memoryCache.get(memKey)
+    }
+
+    /**
+     * Mengunduh (jika belum ada di disk cache) dan mengembalikan file lokal untuk
+     * pemutaran media (mis. video MP4) secara aman & terdeduplikasi.
+     */
+    suspend fun loadCachedFile(url: String?): File? {
+        if (url.isNullOrBlank() || !isInitialized) return null
+        val diskKey = normalizeCacheKey(url)
+        val cached = File(diskCacheDir, diskKey)
+        if (cached.exists() && cached.length() > 0L) {
+            cached.setLastModified(System.currentTimeMillis())
+            return cached
+        }
+
+        var isInitiator = false
+        val deferred = fileMutex.withLock {
+            val existing = inFlightFileRequests[diskKey]
+            if (existing != null) {
+                existing
+            } else {
+                val created = CompletableDeferred<File?>()
+                inFlightFileRequests[diskKey] = created
+                isInitiator = true
+                created
+            }
+        }
+
+        if (!isInitiator) {
+            return deferred.await()
+        }
+
+        return try {
+            val result = withContext(Dispatchers.IO) {
+                val resolvedUrl = resolveNetworkUrl(url)
+                val downloaded = downloadSemaphore.withPermit {
+                    if (hasValidDiskCache(diskKey)) {
+                        true
+                    } else {
+                        downloadToDiskChunked(resolvedUrl, diskKey)
+                    }
+                }
+                if (downloaded && cached.exists() && cached.length() > 0L) {
+                    cached.setLastModified(System.currentTimeMillis())
+                    trimDiskCacheIfNeeded()
+                    cached
+                } else {
+                    null
+                }
+            }
+            deferred.complete(result)
+            result
+        } catch (_: Throwable) {
+            deferred.complete(null)
+            null
+        } finally {
+            inFlightFileRequests.remove(diskKey)
+        }
     }
 
     suspend fun loadBitmap(
@@ -107,6 +171,7 @@ object ImageCacheManager {
                 }
 
                 if (downloaded) {
+                    trimDiskCacheIfNeeded()
                     bmp = loadFromDisk(diskKey, maxWidth, maxHeight)
                     if (bmp != null) {
                         memoryCache.put(memKey, bmp)
@@ -116,7 +181,11 @@ object ImageCacheManager {
             }
             deferred.complete(result)
             result
-        } catch (e: Exception) {
+        } catch (_: OutOfMemoryError) {
+            memoryCache.evictAll()
+            deferred.complete(null)
+            null
+        } catch (_: Throwable) {
             deferred.complete(null)
             null
         } finally {
@@ -130,7 +199,7 @@ object ImageCacheManager {
         return file.exists() && file.length() > 0L
     }
 
-    private fun loadFromDisk(key: String, maxWidth: Int, maxHeight: Int): Bitmap? {
+    private suspend fun loadFromDisk(key: String, maxWidth: Int, maxHeight: Int): Bitmap? {
         if (!isInitialized) return null
         val file = File(diskCacheDir, key)
         if (!file.exists() || file.length() == 0L) return null
@@ -141,13 +210,85 @@ object ImageCacheManager {
             }
             BitmapFactory.decodeFile(file.absolutePath, options)
 
-            options.inSampleSize = calculateInSampleSize(options, maxWidth, maxHeight)
-            options.inJustDecodeBounds = false
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888
+            if (options.outWidth > 0 && options.outHeight > 0) {
+                options.inSampleSize = calculateInSampleSize(options, maxWidth, maxHeight)
+                options.inJustDecodeBounds = false
+                options.inPreferredConfig = Bitmap.Config.RGB_565
 
-            BitmapFactory.decodeFile(file.absolutePath, options)
+                return BitmapFactory.decodeFile(file.absolutePath, options)
+            }
+
+            if (isMp4File(file)) {
+                return videoDecodeSemaphore.withPermit {
+                    extractVideoFrame(file, maxWidth, maxHeight)
+                }
+            }
+
+            null
+        } catch (_: OutOfMemoryError) {
+            memoryCache.evictAll()
+            null
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private fun trimDiskCacheIfNeeded() {
+        if (!isInitialized) return
+        try {
+            val files = diskCacheDir.listFiles()?.filter { it.isFile && !it.name.endsWith(".tmp") } ?: return
+            var totalBytes = files.sumOf { it.length() }
+            if (totalBytes <= MAX_DISK_CACHE_BYTES) return
+
+            val targetBytes = (MAX_DISK_CACHE_BYTES * 0.75).toLong()
+            for (file in files.sortedBy { it.lastModified() }) {
+                if (totalBytes <= targetBytes) break
+                val size = file.length()
+                if (file.delete()) {
+                    totalBytes -= size
+                }
+            }
+        } catch (_: Throwable) {
+        }
+    }
+
+    private fun isMp4File(file: File): Boolean {
+        if (file.length() < 12L) return false
+        return try {
+            val header = ByteArray(12)
+            file.inputStream().use { input ->
+                if (input.read(header) < 12) return false
+            }
+            header[4] == 'f'.code.toByte() &&
+                header[5] == 't'.code.toByte() &&
+                header[6] == 'y'.code.toByte() &&
+                header[7] == 'p'.code.toByte()
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun extractVideoFrame(file: File, maxWidth: Int, maxHeight: Int): Bitmap? {
+        val retriever = MediaMetadataRetriever()
+        return try {
+            retriever.setDataSource(file.absolutePath)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                retriever.getScaledFrameAtTime(
+                    0L,
+                    MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                    maxWidth,
+                    maxHeight,
+                )
+            } else {
+                retriever.getFrameAtTime(0L, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+            }
         } catch (_: Exception) {
             null
+        } finally {
+            try {
+                retriever.release()
+            } catch (_: Exception) {
+            }
         }
     }
 

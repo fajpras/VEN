@@ -1,4 +1,4 @@
-﻿package com.ven.app.ui.components.feature
+package com.ven.app.ui.components.feature
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
@@ -47,6 +48,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ven.app.R
+import com.ven.app.ui.components.ui.AutoPlayVideoPlayer
 import com.ven.app.ui.components.ui.Avatar
 import com.ven.app.ui.components.ui.AvatarSize
 import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
@@ -306,7 +308,9 @@ fun PostCard(
     timestampText: String? = null,
     description: String = "",
     imageUrl: String? = null,
-    aspectRatio: Float = 4f / 5f,
+    isVideo: Boolean = false,
+    isVideoPlaying: Boolean = false,
+    aspectRatio: Float = if (isVideo) 16f / 9f else 4f / 5f,
     placeholderColor: Color = VexTheme.colors.surfaceInput,
     collapsedMaxLines: Int = 3,
     seeMoreText: String = stringResource(R.string.post_see_more),
@@ -373,47 +377,57 @@ fun PostCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(aspectRatio)
+                .clipToBounds()
                 .background(placeholderColor),
             contentAlignment = Alignment.Center,
         ) {
-            Crossfade(
-                targetState = bitmap,
-                animationSpec = tween(durationMillis = 300),
-                label = "PostMediaCrossfade",
-            ) { targetBitmap ->
-                if (targetBitmap != null) {
-                    Image(
-                        bitmap = targetBitmap,
-                        contentDescription = description.ifBlank {
-                            stringResource(R.string.post_media_desc, username)
-                        },
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                    )
-                } else {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                    ) {
-                        VexIcon(
-                            id = VexIcons.Play,
-                            contentDescription = null,
-                            size = 32.dp,
-                            tint = colors.textMuted.copy(alpha = 0.5f),
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = if (!imageUrl.isNullOrBlank()) {
-                                stringResource(R.string.post_media_loading)
-                            } else {
-                                stringResource(R.string.post_media_fallback)
+            if (isVideo && !imageUrl.isNullOrBlank()) {
+                AutoPlayVideoPlayer(
+                    videoUrl = imageUrl,
+                    isPlaying = isVideoPlaying,
+                    thumbnailBitmap = bitmap,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                Crossfade(
+                    targetState = bitmap,
+                    animationSpec = tween(durationMillis = 300),
+                    label = "PostMediaCrossfade",
+                ) { targetBitmap ->
+                    if (targetBitmap != null) {
+                        Image(
+                            bitmap = targetBitmap,
+                            contentDescription = description.ifBlank {
+                                stringResource(R.string.post_media_desc, username)
                             },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.textMuted,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
                         )
+                    } else {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                        ) {
+                            VexIcon(
+                                id = VexIcons.Play,
+                                contentDescription = null,
+                                size = 32.dp,
+                                tint = colors.textMuted.copy(alpha = 0.5f),
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = if (!imageUrl.isNullOrBlank()) {
+                                    stringResource(R.string.post_media_loading)
+                                } else {
+                                    stringResource(R.string.post_media_fallback)
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.textMuted,
+                            )
+                        }
                     }
                 }
             }

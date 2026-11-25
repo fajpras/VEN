@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
+import com.ven.app.ui.components.feature.AccountSuspendedDialog
 import com.ven.app.ui.components.layout.AuthLayout
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonShape
@@ -47,8 +48,16 @@ fun LoginScreen(
     onGoogleClick: () -> Unit,
     onRegisterClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onDismissSuspension: () -> Unit = {},
 ) {
     val colors = VexTheme.colors
+
+    state.suspensionInfo?.let { info ->
+        AccountSuspendedDialog(
+            info = info,
+            onDismiss = onDismissSuspension,
+        )
+    }
 
     AuthLayout(
         title = stringResource(R.string.login_title),

@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ven.app.data.api.AccountSuspendedException
+import com.ven.app.data.api.AccountSuspensionInfo
 import com.ven.app.data.api.ApiLogin
 import com.ven.app.data.api.ApiRegister
 import com.ven.app.data.api.SessionManager
@@ -17,6 +19,7 @@ data class LoginUiState(
     val password: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val suspensionInfo: AccountSuspensionInfo? = null,
 )
 
 class LoginViewModel : ViewModel() {
@@ -29,6 +32,10 @@ class LoginViewModel : ViewModel() {
 
     fun onPasswordChange(value: String) {
         state = state.copy(password = value, errorMessage = null)
+    }
+
+    fun dismissSuspension() {
+        state = state.copy(suspensionInfo = null)
     }
 
     fun login(context: Context, onSuccess: (needsOnboarding: Boolean) -> Unit) {
@@ -53,10 +60,18 @@ class LoginViewModel : ViewModel() {
                 state = state.copy(isLoading = false)
                 onSuccess(authData.pengguna?.needsOnboarding == true)
             }.onFailure { exception ->
-                state = state.copy(
-                    isLoading = false,
-                    errorMessage = exception.message ?: "Login gagal, silakan periksa data Anda"
-                )
+                if (exception is AccountSuspendedException) {
+                    state = state.copy(
+                        isLoading = false,
+                        errorMessage = null,
+                        suspensionInfo = exception.info,
+                    )
+                } else {
+                    state = state.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Login gagal, silakan periksa data Anda",
+                    )
+                }
             }
         }
     }
@@ -77,7 +92,15 @@ class LoginViewModel : ViewModel() {
 
                     state = state.copy(isLoading = false)
                     onSuccess(authData.pengguna?.needsOnboarding == true)
-                }.onFailure {
+                }.onFailure { loginException ->
+                    if (loginException is AccountSuspendedException) {
+                        state = state.copy(
+                            isLoading = false,
+                            errorMessage = null,
+                            suspensionInfo = loginException.info,
+                        )
+                        return@onFailure
+                    }
                     // Jika belum terdaftar, coba daftar otomatis via Google
                     val registerResult = ApiRegister.registerGoogle(idToken = idToken)
                     registerResult.onSuccess { authData ->

@@ -11,6 +11,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,6 +37,7 @@ data class PostsFeedItem(
     val timestampText: String? = null,
     val description: String = "",
     val imageUrl: String? = null,
+    val isVideo: Boolean = false,
     val pameranId: String? = null,
     val aspectRatio: Float = 4f / 5f,
 )
@@ -60,6 +64,24 @@ fun PostsFeedScreen(
     onUserClick: ((userId: String) -> Unit)? = null,
 ) {
     val listState = rememberLazyListState()
+
+    val activeVideoPostId by remember(listState, posts) {
+        derivedStateOf {
+            val videoIds = posts.asSequence().filter { it.isVideo }.map { it.id }.toSet()
+            if (videoIds.isEmpty()) return@derivedStateOf null
+
+            val layoutInfo = listState.layoutInfo
+            val viewportCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+            layoutInfo.visibleItemsInfo
+                .asSequence()
+                .filter { it.key is String && (it.key as String) in videoIds }
+                .minByOrNull { item ->
+                    val itemCenter = item.offset + item.size / 2
+                    kotlin.math.abs(itemCenter - viewportCenter)
+                }
+                ?.key as? String
+        }
+    }
 
     // Auto-scroll ke post yang diketuk dari grid
     LaunchedEffect(initialPostId, posts) {
@@ -104,6 +126,8 @@ fun PostsFeedScreen(
                         timestampText = post.timestampText,
                         description = post.description,
                         imageUrl = post.imageUrl,
+                        isVideo = post.isVideo,
+                        isVideoPlaying = post.isVideo && post.id == activeVideoPostId,
                         aspectRatio = post.aspectRatio,
                         onRequestMeetingClick = { onRequestMeetingClick(post.id) },
                         onView3dClick = { onView3dClick(post.pameranId ?: post.id) },

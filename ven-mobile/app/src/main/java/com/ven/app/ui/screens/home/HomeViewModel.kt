@@ -126,8 +126,10 @@ class HomeViewModel(
                 }
 
                 // Pertahankan postingan dan event sebelumnya jika respons server baru kosong/gagal
-                val safePosts = if (finalPosts.isNotEmpty()) finalPosts else _uiState.value.posts
-                val safeEvents = if (events.isNotEmpty()) events else _uiState.value.comingSoonEvents
+                val safePosts = (if (finalPosts.isNotEmpty()) finalPosts else _uiState.value.posts)
+                    .distinctBy { it.id }
+                val safeEvents = (if (events.isNotEmpty()) events else _uiState.value.comingSoonEvents)
+                    .distinctBy { it.id }
 
                 // Jika kita merotasi ulang karena semua sudah dilihat, reset cache seen ke batch baru ini
                 val updatedSeen = if (filteredPosts.isNotEmpty()) {
@@ -174,7 +176,7 @@ class HomeViewModel(
             _uiState.update { it.copy(isLoadingMore = true) }
             val nextPage = currentState.currentPage + 1
             val currentSeen = currentState.seenPostIds + currentState.posts.map { it.id }.toSet()
-            val excludeParam = if (currentSeen.isNotEmpty()) currentSeen.take(50).joinToString(",") else null
+            val excludeParam = if (currentSeen.isNotEmpty()) currentSeen.toList().takeLast(100).joinToString(",") else null
 
             try {
                 val res = apiHome.getRekomendasiKarya(page = nextPage, exclude = excludeParam)
@@ -210,16 +212,17 @@ class HomeViewModel(
                     _uiState.update {
                         val merged = (it.posts + toAppend).distinctBy { item -> item.id }
                         val updatedSeen = it.seenPostIds + toAppend.map { post -> post.id }.toSet()
+                        val hasNewUniqueItems = merged.size > it.posts.size
                         it.copy(
                             isLoadingMore = false,
-                            canLoadMore = true,
+                            canLoadMore = hasNewUniqueItems,
                             currentPage = nextPage,
                             posts = merged,
                             seenPostIds = updatedSeen,
                         )
                     }
                 } else {
-                    _uiState.update { it.copy(isLoadingMore = false, canLoadMore = true) }
+                    _uiState.update { it.copy(isLoadingMore = false, canLoadMore = false) }
                 }
             } catch (_: Exception) {
                 _uiState.update { it.copy(isLoadingMore = false) }

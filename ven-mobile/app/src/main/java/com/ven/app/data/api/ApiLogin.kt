@@ -1,5 +1,6 @@
 package com.ven.app.data.api
 
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.ven.app.data.api.models.ApiResponse
 import com.ven.app.data.api.models.AuthData
@@ -7,6 +8,17 @@ import com.ven.app.data.api.models.GoogleAuthRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
+
+data class AccountSuspensionInfo(
+    val reason: String,
+    val untilText: String? = null,
+    val isPermanent: Boolean = false,
+)
+
+class AccountSuspendedException(
+    val info: AccountSuspensionInfo,
+    override val message: String,
+) : Exception(message)
 
 // KirimOtpRequest dipakai bersama dengan ApiRegister
 
@@ -72,7 +84,13 @@ object ApiLogin {
             if (response.isSuccessful && data != null) {
                 Result.success(data)
             } else {
-                val errorMsg = ApiClient.parseError(response.errorBody()?.string())
+                val rawBody = response.errorBody()?.string()
+                val errorMsg = ApiClient.parseError(rawBody)
+                if (response.code() == 403) {
+                    parseSuspension(rawBody, errorMsg)?.let { info ->
+                        return Result.failure(AccountSuspendedException(info, errorMsg))
+                    }
+                }
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
@@ -91,12 +109,54 @@ object ApiLogin {
             if (response.isSuccessful && data != null) {
                 Result.success(data)
             } else {
-                val errorMsg = ApiClient.parseError(response.errorBody()?.string())
+                val rawBody = response.errorBody()?.string()
+                val errorMsg = ApiClient.parseError(rawBody)
+                if (response.code() == 403) {
+                    parseSuspension(rawBody, errorMsg)?.let { info ->
+                        return Result.failure(AccountSuspendedException(info, errorMsg))
+                    }
+                }
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(Exception(e.localizedMessage ?: "Gagal terhubung ke server"))
         }
+    }
+
+    private fun parseSuspension(rawBody: String?, fallbackMessage: String): AccountSuspensionInfo? {
+        if (!rawBody.isNullOrBlank()) {
+            try {
+                val root = JsonParser.parseString(rawBody).asJsonObject
+                val sanksi = root.getAsJsonObject("sanksi")
+                if (sanksi != null) {
+                    val reason = sanksi.get("alasan")?.takeIf { !it.isJsonNull }?.asString?.trim().orEmpty()
+                    val until = sanksi.get("berakhir_teks")?.takeIf { !it.isJsonNull }?.asString?.trim()
+                    val permanent = sanksi.get("permanen")?.takeIf { !it.isJsonNull }?.asBoolean ?: (until == null)
+                    if (reason.isNotEmpty() || until != null || permanent) {
+                        return AccountSuspensionInfo(
+                            reason = reason.ifBlank { fallbackMessage },
+                            untilText = if (permanent) null else until,
+                            isPermanent = permanent,
+                        )
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+
+        // Fallback parsing dari teks pesan bila backend lama tidak mengirim objek sanksi
+        val reasonMatch = Regex("""(?i)(?:Alasan|Reason)\s*:\s*(.+)$""").find(fallbackMessage)
+        val untilMatch = Regex("""(?i)(?:sampai|until)\s+([^.]+)\.""").find(fallbackMessage)
+        val isPerm = fallbackMessage.contains("permanen", ignoreCase = true) ||
+            fallbackMessage.contains("permanent", ignoreCase = true)
+        if (reasonMatch != null || untilMatch != null || isPerm) {
+            return AccountSuspensionInfo(
+                reason = reasonMatch?.groupValues?.getOrNull(1)?.trim()?.ifBlank { fallbackMessage } ?: fallbackMessage,
+                untilText = if (isPerm) null else untilMatch?.groupValues?.getOrNull(1)?.trim(),
+                isPermanent = isPerm,
+            )
+        }
+        return null
     }
 
     suspend fun logout(): Result<String> {

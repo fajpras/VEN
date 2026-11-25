@@ -26,6 +26,7 @@ data class PostItem(
     val category: String? = null,
     val timestampText: String? = null,
     val imageUrl: String? = null,
+    val isVideo: Boolean = false,
     val pameranId: String? = null,
     val aspectRatio: Float = 4f / 5f,
     val description: String = "",
@@ -57,6 +58,7 @@ fun PameranItemModel.toComingSoonEvent(): ComingSoonEvent {
 fun KaryaItemModel.toPostItem(): PostItem {
     val author = pengguna?.namaPanggilan ?: pengguna?.nama ?: AppStrings.get(R.string.common_anonymous)
     val relativeTime = DateFormatter.formatRelativeTime(createdAt)
+    val videoPost = jenis.equals("video", ignoreCase = true)
     return PostItem(
         id = idKarya,
         username = "@$author",
@@ -66,7 +68,9 @@ fun KaryaItemModel.toPostItem(): PostItem {
         category = kategori?.nama,
         timestampText = relativeTime,
         imageUrl = fileUrl ?: file,
+        isVideo = videoPost,
         pameranId = idPameran?.toString(),
+        aspectRatio = if (videoPost) 16f / 9f else 4f / 5f,
         description = deskripsi ?: "",
     )
 }
@@ -82,6 +86,7 @@ fun PostItem.toFeedItem(): PostsFeedItem {
         timestampText = timestampText,
         description = description,
         imageUrl = imageUrl,
+        isVideo = isVideo,
         pameranId = pameranId,
         aspectRatio = aspectRatio,
     )

@@ -419,4 +419,17 @@
     <string name="intro_meet_content_desc">Ilustrasi orang bertemu di pameran virtual</string>
     <string name="intro_start_title">Mari Mulai</string>
     <string name="intro_start_description">Perjalanan pameran virtualmu dimulai di sini.</string>
+    <!-- Dialog Akun Ditangguhkan (Gaya Instagram) -->
+    <string name="suspended_title_temp">Kami menangguhkan akun Anda</string>
+    <string name="suspended_title_permanent">Akun Anda dinonaktifkan</string>
+    <string name="suspended_subtitle">Akun Anda tidak mengikuti Pedoman Komunitas VEN.</string>
+    <string name="suspended_label_reason">Alasan pelanggaran</string>
+    <string name="suspended_label_duration">Ditangguhkan hingga</string>
+    <string name="suspended_label_status">Status akun</string>
+    <string name="suspended_permanent_badge">Permanen</string>
+    <string name="suspended_what_means_title">Apa artinya ini</string>
+    <string name="suspended_bullet_hidden">Profil, karya, dan pameran Anda disembunyikan sementara selama pembatasan berlaku.</string>
+    <string name="suspended_bullet_restore_temp">Akses akun akan pulih otomatis setelah masa penangguhan berakhir.</string>
+    <string name="suspended_bullet_restore_permanent">Anda tidak lagi dapat masuk ke akun ini. Hubungi Dukungan VEN jika Anda merasa ini kekeliruan.</string>
+    <string name="suspended_understood_button">Mengerti</string>
 </resources>
