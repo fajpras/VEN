@@ -73,13 +73,15 @@ fun ForgotPasswordScreen(
                     modifier = Modifier.padding(bottom = VexSpace.s2),
                 )
 
+                val emailInvalid = state.email.isNotEmpty() && !state.isEmailValid
                 VexTextField(
                     value = state.email,
                     onValueChange = onEmailChange,
                     placeholder = stringResource(R.string.forgot_password_email_hint),
                     variant = VexTextFieldVariant.Boxed,
-                    isError = state.errorMessage != null,
-                    errorMessage = state.errorMessage ?: "",
+                    isError = emailInvalid || state.errorMessage != null,
+                    errorMessage = state.errorMessage
+                        ?: if (emailInvalid) stringResource(R.string.register_error_email) else "",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Done,

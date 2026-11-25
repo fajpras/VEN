@@ -122,8 +122,17 @@
     <string name="settings_new_password_label">Kata sandi baru</string>
     <string name="settings_change_email_helper">Anda perlu memverifikasi email baru Anda agar perubahan diterapkan</string>
     <string name="settings_change_password_helper">Gunakan minimal 8 karakter dengan huruf dan angka</string>
+    <string name="settings_change_password_same_as_current">Kata sandi baru harus berbeda dari kata sandi saat ini</string>
     <string name="settings_send_otp">Kirim OTP</string>
     <string name="settings_verify_email_title">Verifikasi email</string>
+    <string name="settings_verify_email_subtitle">Masukkan kode verifikasi 6 digit yang dikirim ke %1$s</string>
+    <string name="settings_otp_error_length">Kode verifikasi harus 6 digit</string>
+    <string name="settings_email_error_send_otp">Gagal mengirim kode verifikasi</string>
+    <string name="settings_email_error_resend_otp">Gagal mengirim ulang kode verifikasi</string>
+    <string name="settings_email_error_update">Gagal mengganti email</string>
+    <string name="api_error_server">Terjadi kesalahan pada server. Silakan coba lagi nanti.</string>
+    <string name="api_error_request">Permintaan tidak dapat diproses. Silakan coba lagi.</string>
+    <string name="api_error_response">Gagal membaca respons server. Silakan coba lagi.</string>
     <string name="settings_didnt_get_mail">tidak menerima email?</string>
     <string name="settings_resend">Kirim ulang</string>
 
@@ -314,7 +323,7 @@
     <string name="auth_google_error_credentials">Kredensial Google tidak dikenali</string>
     <string name="settings_deactivate_confirm_yes">Ya</string>
     <string name="common_select_option">Pilih opsi</string>
-    <string name="auth_password_rule_symbol">Ada simbol (contoh: ! @ # $ %)</string>
+    <string name="auth_password_rule_symbol">Ada simbol (contoh: ! @ # $ %%)</string>
     <string name="common_anonymous">Anonim</string>
     <string name="auth_google_cancelled">Autentikasi Google dibatalkan</string>
     <string name="settings_error_deactivate_failed">Gagal menonaktifkan akun</string>

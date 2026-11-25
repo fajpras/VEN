@@ -3,6 +3,8 @@ package com.ven.app.ui.screens.settings
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ven.app.R
+import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiProfil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -58,7 +60,12 @@ class ChangeEmailViewModel : ViewModel() {
     fun kirimOtp() {
         val state = _uiState.value
         if (state.kataSandi != state.konfirmasiKataSandi) {
-            _uiState.update { it.copy(errorMessage = "Konfirmasi kata sandi tidak sesuai") }
+            _uiState.update {
+                it.copy(
+                    errorMessage = AppStrings.get(R.string.register_error_confirm),
+                    infoMessage = null,
+                )
+            }
             return
         }
 
@@ -72,13 +79,14 @@ class ChangeEmailViewModel : ViewModel() {
 
             result.onSuccess { message ->
                 _uiState.update {
-                    it.copy(isLoading = false, isOtpSent = true, infoMessage = message)
+                    it.copy(isLoading = false, isOtpSent = true, infoMessage = message, errorMessage = null)
                 }
             }.onFailure { exception ->
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = exception.message ?: "Gagal mengirim kode verifikasi",
+                        infoMessage = null,
+                        errorMessage = exception.message ?: AppStrings.get(R.string.settings_email_error_send_otp),
                     )
                 }
             }
@@ -88,16 +96,20 @@ class ChangeEmailViewModel : ViewModel() {
     fun kirimUlangOtp() {
         if (_uiState.value.isLoading) return
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, infoMessage = null) }
             val result = ApiProfil.kirimOtpGantiEmail(
                 emailBaru = _uiState.value.emailBaru,
                 kataSandi = _uiState.value.kataSandi,
             )
             result.onSuccess { message ->
-                _uiState.update { it.copy(isLoading = false, infoMessage = message) }
+                _uiState.update { it.copy(isLoading = false, infoMessage = message, errorMessage = null) }
             }.onFailure { exception ->
                 _uiState.update {
-                    it.copy(isLoading = false, errorMessage = exception.message ?: "Gagal mengirim ulang kode")
+                    it.copy(
+                        isLoading = false,
+                        infoMessage = null,
+                        errorMessage = exception.message ?: AppStrings.get(R.string.settings_email_error_resend_otp),
+                    )
                 }
             }
         }
@@ -107,12 +119,17 @@ class ChangeEmailViewModel : ViewModel() {
     fun gantiEmail() {
         val state = _uiState.value
         if (state.otp.trim().length < 6) {
-            _uiState.update { it.copy(errorMessage = "Kode verifikasi harus 6 digit") }
+            _uiState.update {
+                it.copy(
+                    infoMessage = null,
+                    errorMessage = AppStrings.get(R.string.settings_otp_error_length),
+                )
+            }
             return
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, infoMessage = null) }
 
             val result = ApiProfil.gantiEmail(
                 emailBaru = state.emailBaru,
@@ -125,7 +142,8 @@ class ChangeEmailViewModel : ViewModel() {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = exception.message ?: "Gagal mengganti email",
+                        infoMessage = null,
+                        errorMessage = exception.message ?: AppStrings.get(R.string.settings_email_error_update),
                     )
                 }
             }

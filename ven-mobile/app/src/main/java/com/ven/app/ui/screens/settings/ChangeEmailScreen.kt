@@ -80,11 +80,15 @@ fun ChangeEmailScreen(
                 .padding(horizontal = VexSpace.s6, vertical = VexSpace.s5)
                 .padding(bottom = VexSpace.s8),
         ) {
+            val hasFormError = state.errorMessage != null
+            val confirmMismatch = state.konfirmasiKataSandi.isNotEmpty() && state.kataSandi != state.konfirmasiKataSandi
+
             VexTextField(
                 value = state.emailBaru,
                 onValueChange = onEmailChange,
                 variant = VexTextFieldVariant.Boxed,
                 label = stringResource(R.string.settings_new_email_label),
+                isError = hasFormError,
             )
 
             Spacer(modifier = Modifier.height(VexSpace.s4))
@@ -95,6 +99,7 @@ fun ChangeEmailScreen(
                 variant = VexTextFieldVariant.Boxed,
                 placeholder = "",
                 label = stringResource(R.string.settings_password_label),
+                isError = hasFormError,
             )
 
             Spacer(modifier = Modifier.height(VexSpace.s4))
@@ -105,6 +110,8 @@ fun ChangeEmailScreen(
                 variant = VexTextFieldVariant.Boxed,
                 placeholder = "",
                 label = stringResource(R.string.settings_confirm_password_label),
+                isError = confirmMismatch || hasFormError,
+                errorMessage = if (confirmMismatch) stringResource(R.string.register_error_confirm) else "",
             )
 
             Spacer(modifier = Modifier.height(VexSpace.s4))

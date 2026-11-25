@@ -84,7 +84,7 @@ fun VexTextField(
     }
 
     val borderModifier = when {
-        isError -> Modifier.border(1.dp, colors.danger, shape)
+        isError -> Modifier.border(if (isFocused) 2.dp else 1.5.dp, colors.danger, shape)
         isFocused && variant == VexTextFieldVariant.Boxed -> Modifier.border(2.dp, colors.primary, shape)
         variant == VexTextFieldVariant.Boxed -> Modifier.border(1.dp, colors.borderInput, shape)
         else -> Modifier
@@ -97,7 +97,7 @@ fun VexTextField(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Medium,
                 ),
-                color = colors.text,
+                color = if (isError) colors.danger else colors.text,
                 modifier = Modifier.padding(bottom = VexSpace.s2),
             )
         }
@@ -110,7 +110,13 @@ fun VexTextField(
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             visualTransformation = visualTransformation,
-            cursorBrush = SolidColor(if (variant == VexTextFieldVariant.Pill) Color.Black else colors.primary),
+            cursorBrush = SolidColor(
+                when {
+                    isError -> colors.danger
+                    variant == VexTextFieldVariant.Pill -> Color.Black
+                    else -> colors.primary
+                }
+            ),
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = textColor),
             modifier = Modifier
                 .fillMaxWidth()

@@ -3,7 +3,10 @@ package com.ven.app.ui.screens.settings
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ven.app.R
+import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiProfil
+import com.ven.app.ui.screens.auth.PasswordValidator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -18,10 +21,19 @@ data class ChangePasswordUiState(
     val errorMessage: String? = null,
     val isSuccess: Boolean = false,
 ) {
+    val isPasswordStrong: Boolean get() = PasswordValidator.isStrong(kataSandi)
+
+    val isSameAsCurrent: Boolean
+        get() = kataSandiSaatIni.isNotEmpty() && kataSandi.isNotEmpty() && kataSandi == kataSandiSaatIni
+
+    val isPasswordMatch: Boolean get() = kataSandi == konfirmasiKataSandi
+
     val isFormValid: Boolean
         get() = kataSandiSaatIni.isNotBlank() &&
-                kataSandi.isNotBlank() &&
-                kataSandi == konfirmasiKataSandi &&
+                isPasswordStrong &&
+                !isSameAsCurrent &&
+                konfirmasiKataSandi.isNotEmpty() &&
+                isPasswordMatch &&
                 !isLoading
 }
 
@@ -44,8 +56,22 @@ class ChangePasswordViewModel : ViewModel() {
 
     fun simpan() {
         val state = _uiState.value
-        if (state.kataSandi != state.konfirmasiKataSandi) {
-            _uiState.update { it.copy(errorMessage = "Konfirmasi kata sandi tidak sesuai") }
+        if (!state.isPasswordStrong) {
+            _uiState.update {
+                it.copy(errorMessage = AppStrings.get(R.string.settings_change_password_helper))
+            }
+            return
+        }
+        if (state.isSameAsCurrent) {
+            _uiState.update {
+                it.copy(errorMessage = AppStrings.get(R.string.settings_change_password_same_as_current))
+            }
+            return
+        }
+        if (!state.isPasswordMatch) {
+            _uiState.update {
+                it.copy(errorMessage = AppStrings.get(R.string.register_error_confirm))
+            }
             return
         }
 

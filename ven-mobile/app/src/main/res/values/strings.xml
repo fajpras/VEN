@@ -131,8 +131,17 @@
     <string name="settings_new_password_label">New password</string>
     <string name="settings_change_email_helper">You need to verify your new email for the change to be applied</string>
     <string name="settings_change_password_helper">Use at least 8 characters with letters and numbers</string>
+    <string name="settings_change_password_same_as_current">New password must be different from current password</string>
     <string name="settings_send_otp">Send OTP</string>
     <string name="settings_verify_email_title">Verify email</string>
+    <string name="settings_verify_email_subtitle">Enter the 6-digit verification code sent to %1$s</string>
+    <string name="settings_otp_error_length">Verification code must be 6 digits</string>
+    <string name="settings_email_error_send_otp">Failed to send verification code</string>
+    <string name="settings_email_error_resend_otp">Failed to resend verification code</string>
+    <string name="settings_email_error_update">Failed to update email</string>
+    <string name="api_error_server">A server error occurred. Please try again later.</string>
+    <string name="api_error_request">The request could not be processed. Please try again.</string>
+    <string name="api_error_response">Failed to read server response. Please try again.</string>
     <string name="settings_didnt_get_mail">didn’t get your mail?</string>
     <string name="settings_resend">Resend</string>
 
@@ -335,7 +344,7 @@
     <string name="bottom_nav_ai">AI Assistant</string>
     <string name="auth_google_error_credentials">Unrecognized Google credentials</string>
     <string name="common_select_option">Select an option</string>
-    <string name="auth_password_rule_symbol">Contains a symbol (e.g. ! @ # $ %)</string>
+    <string name="auth_password_rule_symbol">Contains a symbol (e.g. ! @ # $ %%)</string>
     <string name="common_anonymous">Anonymous</string>
     <string name="auth_google_cancelled">Google authentication cancelled</string>
     <string name="settings_error_deactivate_failed">Failed to deactivate account</string>

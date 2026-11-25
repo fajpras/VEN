@@ -95,11 +95,16 @@ fun ResetPasswordScreen(
                     modifier = Modifier.padding(bottom = VexSpace.s2),
                 )
 
+                val hasFormError = state.errorMessage != null
+                val passwordWeak = state.newPassword.isNotEmpty() && !state.isPasswordStrong
+                val confirmMismatch = state.confirmPassword.isNotEmpty() && !state.isPasswordMatch
+
                 VexPasswordField(
                     value = state.newPassword,
                     onValueChange = onNewPasswordChange,
                     placeholder = stringResource(R.string.reset_password_new_label),
                     variant = VexTextFieldVariant.Boxed,
+                    isError = passwordWeak || hasFormError,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Next,
@@ -134,8 +139,8 @@ fun ResetPasswordScreen(
                     onValueChange = onConfirmPasswordChange,
                     placeholder = stringResource(R.string.reset_password_confirm_label),
                     variant = VexTextFieldVariant.Boxed,
-                    isError = state.confirmPassword.isNotEmpty() && !state.isPasswordMatch,
-                    errorMessage = stringResource(R.string.register_error_confirm),
+                    isError = confirmMismatch || hasFormError,
+                    errorMessage = if (confirmMismatch) stringResource(R.string.register_error_confirm) else "",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done,

@@ -164,13 +164,19 @@ fun RegisterScreen(
         title = stringResource(R.string.register_title),
         modifier = modifier,
         formContent = {
+            val hasFormError = state.errorMessage != null
+            val emailInvalid = state.email.isNotEmpty() && !state.isEmailValid
+            val usernameInvalid = state.username.isNotEmpty() && !state.isUsernameValid
+            val passwordWeak = state.password.isNotEmpty() && !state.isPasswordStrong
+            val confirmMismatch = state.confirmPassword.isNotEmpty() && !state.isPasswordMatch
+
             VexTextField(
                 value = state.email,
                 onValueChange = onEmailChange,
                 label = stringResource(R.string.auth_placeholder_email),
                 variant = VexTextFieldVariant.Boxed,
-                isError = state.email.isNotEmpty() && !state.isEmailValid,
-                errorMessage = stringResource(R.string.register_error_email),
+                isError = emailInvalid || hasFormError,
+                errorMessage = if (emailInvalid) stringResource(R.string.register_error_email) else "",
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Next,
@@ -184,8 +190,8 @@ fun RegisterScreen(
                 onValueChange = onUsernameChange,
                 label = stringResource(R.string.auth_placeholder_username),
                 variant = VexTextFieldVariant.Boxed,
-                isError = state.username.isNotEmpty() && !state.isUsernameValid,
-                errorMessage = stringResource(R.string.register_error_username),
+                isError = usernameInvalid || hasFormError,
+                errorMessage = if (usernameInvalid) stringResource(R.string.register_error_username) else "",
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next,
@@ -200,6 +206,7 @@ fun RegisterScreen(
                 label = stringResource(R.string.auth_placeholder_password),
                 placeholder = "",
                 variant = VexTextFieldVariant.Boxed,
+                isError = passwordWeak || hasFormError,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Next,
@@ -224,8 +231,8 @@ fun RegisterScreen(
                 label = stringResource(R.string.auth_placeholder_confirm_password),
                 placeholder = "",
                 variant = VexTextFieldVariant.Boxed,
-                isError = state.confirmPassword.isNotEmpty() && !state.isPasswordMatch,
-                errorMessage = stringResource(R.string.register_error_confirm),
+                isError = confirmMismatch || hasFormError,
+                errorMessage = if (confirmMismatch) stringResource(R.string.register_error_confirm) else "",
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done,

@@ -3,12 +3,14 @@ package com.ven.app.data.api
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.ven.app.BuildConfig
+import com.ven.app.R
+import com.ven.app.core.config.AppConfig
+import com.ven.app.core.localization.AppStrings
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import com.ven.app.core.config.AppConfig
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
@@ -31,8 +33,12 @@ object ApiClient {
 
     private val authInterceptor = Interceptor { chain ->
         val originalRequest = chain.request()
+        val lang = AppStrings.locale().language.lowercase()
+        val acceptLanguage = if (lang == "in" || lang == "id") "id" else "en"
+
         val requestBuilder = originalRequest.newBuilder()
             .header("Accept", "application/json")
+            .header("Accept-Language", acceptLanguage)
 
         // Content-Type sengaja tidak di-set di sini: OkHttp sudah menurunkannya
         // dari body (application/json untuk @Body, multipart/form-data + boundary
@@ -91,7 +97,11 @@ object ApiClient {
     }
 
     fun parseError(errorBody: String?): String {
-        if (errorBody.isNullOrBlank()) return "Terjadi kesalahan pada server"
+        val serverFallback = AppStrings.get(R.string.api_error_server).ifBlank { "Server error" }
+        val requestFallback = AppStrings.get(R.string.api_error_request).ifBlank { "Request error" }
+        val responseFallback = AppStrings.get(R.string.api_error_response).ifBlank { "Invalid server response" }
+
+        if (errorBody.isNullOrBlank()) return serverFallback
         return try {
             val json = gson.fromJson(errorBody, JsonObject::class.java)
             when {
@@ -105,11 +115,11 @@ object ApiClient {
                     ?.asJsonArray
                     ?.firstOrNull()
                     ?.asString
-                    ?: "Terjadi kesalahan pada permintaan"
-                else -> "Terjadi kesalahan pada permintaan"
+                    ?: requestFallback
+                else -> requestFallback
             }
         } catch (e: Exception) {
-            "Terjadi kesalahan pada respon server"
+            responseFallback
         }
     }
 }

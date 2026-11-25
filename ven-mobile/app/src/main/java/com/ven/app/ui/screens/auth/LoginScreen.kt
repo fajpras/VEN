@@ -54,11 +54,14 @@ fun LoginScreen(
         title = stringResource(R.string.login_title),
         modifier = modifier,
         formContent = {
+            val hasFormError = state.errorMessage != null
+
             VexTextField(
                 value = state.identifier,
                 onValueChange = onIdentifierChange,
                 label = stringResource(R.string.auth_placeholder_email_username),
                 variant = VexTextFieldVariant.Boxed,
+                isError = hasFormError,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Next,
@@ -73,6 +76,7 @@ fun LoginScreen(
                 label = stringResource(R.string.auth_placeholder_password),
                 placeholder = "",
                 variant = VexTextFieldVariant.Boxed,
+                isError = hasFormError,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done,
