@@ -14,12 +14,12 @@ final class KesalahanVoice extends RuntimeException
 
     public static function hanyaPrivat(): self
     {
-        return new self('Voice chat hanya tersedia di ruangan privat.', 403);
+        return new self(__('api.voice.private_only'), 403);
     }
 
     public static function tanpaSesiAktif(): self
     {
-        return new self('Anda tidak memiliki sesi diskusi aktif di ruangan ini.', 403);
+        return new self(__('api.voice.no_active_session'), 403);
     }
 
     public function kodeStatus(): int

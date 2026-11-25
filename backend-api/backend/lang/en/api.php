@@ -1,0 +1,49 @@
+<?php
+
+return [
+    'error' => [
+        '400' => 'The request could not be processed.',
+        '401' => 'Your session has expired or the token is invalid. Please sign in again.',
+        '403' => 'You do not have permission to access this endpoint.',
+        '404' => 'The requested endpoint or resource was not found.',
+        '405' => 'This request method is not supported for this endpoint.',
+        '408' => 'The request timed out. Please try again.',
+        '413' => 'The uploaded data exceeds the server size limit.',
+        '415' => 'The submitted media or data format is not supported.',
+        '419' => 'The form session has expired. Please reload the app.',
+        '422' => 'The submitted data is invalid.',
+        '429' => 'Too many requests. Please try again in a moment.',
+        '500' => 'A server error occurred. Please try again later.',
+        '503' => 'The service is temporarily unavailable. Please try again shortly.',
+        'invalid_signature' => 'The link is invalid or has expired.',
+    ],
+    'otp' => [
+        'invalid' => 'The verification code is invalid or has expired.',
+        'locked' => 'Too many attempts. Please request a new verification code.',
+        'cooldown' => 'Please wait :seconds seconds before requesting another verification code.',
+        'hourly_limit' => 'Hourly verification code request limit reached. Please try again later.',
+        'send_failed' => 'Failed to send verification code. Please try again shortly.',
+    ],
+    'voice' => [
+        'private_only' => 'Voice chat is only available in private rooms.',
+        'no_active_session' => 'You do not have an active discussion session in this room.',
+    ],
+    'auth' => [
+        'invalid_credentials' => 'Invalid email/username or password.',
+        'register_otp_sent' => 'If the email can be registered, a verification code has been sent.',
+        'email_or_username_taken' => 'Email or username is already registered.',
+        'register_success' => 'Registration successful.',
+        'login_success' => 'Login successful.',
+        'logout_success' => 'Logged out successfully.',
+        'google_invalid_token' => 'Invalid Google token.',
+        'password_reset_success' => 'Password updated successfully. Please sign in again.',
+    ],
+    'profile' => [
+        'otp_sent_new_email' => 'Verification code has been sent to your new email.',
+        'email_updated' => 'Email updated successfully.',
+        'email_taken' => 'This email is already in use by another account.',
+        'wrong_password' => 'Incorrect password.',
+        'wrong_current_password' => 'Current password is incorrect.',
+        'password_updated' => 'Password updated successfully.',
+    ],
+];

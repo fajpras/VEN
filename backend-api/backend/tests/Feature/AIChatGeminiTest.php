@@ -145,5 +145,39 @@ class AIChatGeminiTest extends TestCase
                 && str_contains($systemInstruction, '[Kategori: Lukisan]');
         });
     }
+
+    public function test_ai_chat_memfilter_simbol_markdown_dari_jawaban(): void
+    {
+        Config::set('services.ai.key', 'fake-gemini-api-key');
+        Config::set('services.ai.model', 'gemini-flash-lite-latest');
+        Config::set('services.ai.url', null);
+
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => "### Daftar Pameran\n* **\"Creative 2D Universe\"** oleh @kreator_digital\n- _Galeri Virtual_ dan `Ven+demo`",
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson('/api/ai/tanya', [
+                'pertanyaan' => 'Daftar pameran apa saja?',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath(
+                'data.jawaban',
+                "Daftar Pameran\n- \"Creative 2D Universe\" oleh @kreator_digital\n- Galeri Virtual dan Ven+demo"
+            );
+    }
 }
 

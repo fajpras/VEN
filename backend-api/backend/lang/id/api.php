@@ -1,0 +1,49 @@
+<?php
+
+return [
+    'error' => [
+        '400' => 'Permintaan tidak dapat diproses.',
+        '401' => 'Sesi berakhir atau token tidak valid. Silakan masuk kembali.',
+        '403' => 'Anda tidak memiliki hak akses ke endpoint ini.',
+        '404' => 'Endpoint atau data yang diminta tidak ditemukan.',
+        '405' => 'Metode permintaan tidak didukung untuk endpoint ini.',
+        '408' => 'Permintaan melebihi batas waktu. Silakan coba lagi.',
+        '413' => 'Data yang dikirim melebihi batas ukuran server.',
+        '415' => 'Format data yang dikirim tidak didukung.',
+        '419' => 'Sesi formulir kedaluwarsa. Silakan muat ulang aplikasi.',
+        '422' => 'Data yang dikirim tidak valid.',
+        '429' => 'Terlalu banyak permintaan. Silakan coba lagi dalam beberapa saat.',
+        '500' => 'Terjadi kesalahan pada server. Silakan coba lagi nanti.',
+        '503' => 'Layanan sedang tidak tersedia. Silakan coba beberapa saat lagi.',
+        'invalid_signature' => 'Tautan tidak valid atau sudah kedaluwarsa.',
+    ],
+    'otp' => [
+        'invalid' => 'Kode verifikasi tidak valid atau sudah kedaluwarsa.',
+        'locked' => 'Terlalu banyak percobaan. Minta kode verifikasi baru.',
+        'cooldown' => 'Tunggu :seconds detik sebelum meminta kode verifikasi lagi.',
+        'hourly_limit' => 'Batas permintaan kode verifikasi per jam tercapai. Coba lagi nanti.',
+        'send_failed' => 'Kode verifikasi gagal dikirim. Coba lagi beberapa saat.',
+    ],
+    'voice' => [
+        'private_only' => 'Voice chat hanya tersedia di ruangan privat.',
+        'no_active_session' => 'Anda tidak memiliki sesi diskusi aktif di ruangan ini.',
+    ],
+    'auth' => [
+        'invalid_credentials' => 'Identitas atau kata sandi salah.',
+        'register_otp_sent' => 'Jika email dapat didaftarkan, kode verifikasi telah dikirim.',
+        'email_or_username_taken' => 'Email atau nama panggilan sudah terdaftar.',
+        'register_success' => 'Registrasi berhasil.',
+        'login_success' => 'Login berhasil.',
+        'logout_success' => 'Logout berhasil.',
+        'google_invalid_token' => 'Token Google tidak valid.',
+        'password_reset_success' => 'Kata sandi berhasil diubah. Silakan login kembali.',
+    ],
+    'profile' => [
+        'otp_sent_new_email' => 'Kode verifikasi telah dikirim ke email baru.',
+        'email_updated' => 'Email diperbarui.',
+        'email_taken' => 'Email sudah digunakan akun lain.',
+        'wrong_password' => 'Kata sandi salah.',
+        'wrong_current_password' => 'Kata sandi saat ini salah.',
+        'password_updated' => 'Kata sandi diperbarui.',
+    ],
+];

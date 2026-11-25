@@ -9,6 +9,7 @@ use App\Console\Commands\UjiTransaksiPameran;
 use App\Exceptions\PenanganKesalahanApi;
 use App\Http\Middleware\GunakanKoneksiAdmin;
 use App\Http\Middleware\HanyaAdmin;
+use App\Http\Middleware\SinkronBahasaApi;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -36,6 +37,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(
             fn (Request $request) => $request->is('api', 'api/*') ? null : route('admin.login'),
         );
+
+        $middleware->api(prepend: [
+            SinkronBahasaApi::class,
+        ]);
 
         $middleware->alias([
             'admin' => HanyaAdmin::class,

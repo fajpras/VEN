@@ -127,4 +127,28 @@ class PenanganKesalahanApiTest extends TestCase
             (string) $response->getContent(),
         );
     }
+
+    public function test_sinkronisasi_bahasa_error_fallback_mengikuti_accept_language(): void
+    {
+        $this->get('/api/profil', ['Accept' => 'application/json', 'Accept-Language' => 'en'])
+            ->assertStatus(401)
+            ->assertJson([
+                'data' => null,
+                'message' => 'Your session has expired or the token is invalid. Please sign in again.',
+            ]);
+
+        $this->get('/api/endpoint-tidak-ada', ['Accept' => 'application/json', 'Accept-Language' => 'en-US'])
+            ->assertStatus(404)
+            ->assertJson([
+                'data' => null,
+                'message' => 'The requested endpoint or resource was not found.',
+            ]);
+
+        $this->get('/api/profil', ['Accept' => 'application/json', 'Accept-Language' => 'id'])
+            ->assertStatus(401)
+            ->assertJson([
+                'data' => null,
+                'message' => PenanganKesalahanApi::PESAN_SESI_BERAKHIR,
+            ]);
+    }
 }

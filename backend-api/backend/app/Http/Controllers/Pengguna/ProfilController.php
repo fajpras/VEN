@@ -116,7 +116,7 @@ class ProfilController extends Controller
         $pengguna = $request->user();
 
         if ($pengguna->kata_sandi && ! Hash::check((string) $request->validated('kata_sandi'), $pengguna->kata_sandi)) {
-            return $this->error('Kata sandi salah.', 422);
+            return $this->error(__('api.profile.wrong_password'), 422);
         }
 
         $this->layananOtp->terbitkan(TujuanOtp::GantiEmail, $request->validated('email_baru'), $pengguna->id_pengguna);
@@ -130,7 +130,7 @@ class ProfilController extends Controller
             aksi: 'ubah',
         );
 
-        return $this->ok(null, 'Kode verifikasi telah dikirim ke email baru.');
+        return $this->ok(null, __('api.profile.otp_sent_new_email'));
     }
 
     public function gantiEmail(GantiEmailRequest $request): JsonResponse
@@ -143,10 +143,10 @@ class ProfilController extends Controller
         try {
             $pengguna->forceFill(['email' => $data['email_baru']])->save();
         } catch (UniqueConstraintViolationException) {
-            return $this->error('Email sudah digunakan akun lain.', 409);
+            return $this->error(__('api.profile.email_taken'), 409);
         }
 
-        return $this->ok($pengguna->fresh(), 'Email diperbarui.');
+        return $this->ok($pengguna->fresh(), __('api.profile.email_updated'));
     }
 
     public function updatePassword(Request $request)
@@ -160,7 +160,7 @@ class ProfilController extends Controller
         ]);
 
         if ($pengguna->kata_sandi && ! Hash::check($validated['kata_sandi_saat_ini'], $pengguna->kata_sandi)) {
-            return $this->error('Kata sandi saat ini salah.', 422);
+            return $this->error(__('api.profile.wrong_current_password'), 422);
         }
 
         $pengguna->forceFill(['kata_sandi' => $validated['kata_sandi']])->saveQuietly();
@@ -175,7 +175,7 @@ class ProfilController extends Controller
             aksi: 'ubah',
         );
 
-        return $this->ok(null, 'Kata sandi diperbarui.');
+        return $this->ok(null, __('api.profile.password_updated'));
     }
 
     public function updateStatus(Request $request)

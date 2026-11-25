@@ -42,7 +42,7 @@ class AuthController extends Controller
             $this->layananOtp->terbitkan(TujuanOtp::Registrasi, $email);
         }
 
-        return $this->ok(null, 'Jika email dapat didaftarkan, kode verifikasi telah dikirim.');
+        return $this->ok(null, __('api.auth.register_otp_sent'));
     }
 
     public function register(RegistrasiRequest $request): JsonResponse
@@ -54,10 +54,10 @@ class AuthController extends Controller
         try {
             $pengguna = Pengguna::create(Arr::except($data, ['otp']));
         } catch (UniqueConstraintViolationException) {
-            return $this->error('Email atau nama panggilan sudah terdaftar.', 409);
+            return $this->error(__('api.auth.email_or_username_taken'), 409);
         }
 
-        return $this->created($this->withToken($pengguna), 'Registrasi berhasil.');
+        return $this->created($this->withToken($pengguna), __('api.auth.register_success'));
     }
 
     public function login(Request $request): JsonResponse
@@ -80,10 +80,10 @@ class AuthController extends Controller
 
             event(new Failed('sanctum', $pengguna, ['identitas' => '[disamarkan]']));
 
-            return $this->error('Identitas atau kata sandi salah.', 401);
+            return $this->error(__('api.auth.invalid_credentials'), 401);
         }
 
-        return $this->masuk($pengguna, 'Login berhasil.');
+        return $this->masuk($pengguna, __('api.auth.login_success'));
     }
 
     public function logout(Request $request): JsonResponse
@@ -93,7 +93,7 @@ class AuthController extends Controller
 
         event(new Logout('sanctum', $pengguna));
 
-        return $this->ok(null, 'Logout berhasil.');
+        return $this->ok(null, __('api.auth.logout_success'));
     }
 
     public function registerGoogle(Request $request): JsonResponse

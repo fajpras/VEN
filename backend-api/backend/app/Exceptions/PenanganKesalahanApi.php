@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Http\Middleware\SinkronBahasaApi;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\PostTooLargeException;
@@ -62,6 +63,8 @@ final class PenanganKesalahanApi
             return redirect('/404');
         }
 
+        SinkronBahasaApi::terapkanDariRequest($request);
+
         return self::responsJson($e);
     }
 
@@ -88,7 +91,7 @@ final class PenanganKesalahanApi
     private static function responsJson(Throwable $e): JsonResponse
     {
         return match (true) {
-            $e instanceof AuthenticationException => self::buat(401, self::PESAN_SESI_BERAKHIR),
+            $e instanceof AuthenticationException => self::buat(401, __('api.error.401')),
             $e instanceof ValidationException => self::buat(
                 status: 422,
                 pesan: $e->getMessage(),
@@ -96,25 +99,25 @@ final class PenanganKesalahanApi
                 // Dipertahankan agar klien lama yang membaca "errors" tetap bekerja.
                 galat: $e->errors(),
             ),
-            $e instanceof InvalidSignatureException => self::buat(403, 'Tautan tidak valid atau sudah kedaluwarsa.'),
-            $e instanceof PostTooLargeException => self::buat(413, 'Data yang dikirim melebihi batas ukuran server.'),
+            $e instanceof InvalidSignatureException => self::buat(403, __('api.error.invalid_signature')),
+            $e instanceof PostTooLargeException => self::buat(413, __('api.error.413')),
             $e instanceof ThrottleRequestsException => self::buat(
                 429,
-                'Terlalu banyak permintaan. Silakan coba lagi dalam beberapa saat.',
+                __('api.error.429'),
                 null,
                 $e->getHeaders(),
             ),
-            $e instanceof NotFoundHttpException => self::buat(404, 'Endpoint atau data yang diminta tidak ditemukan.'),
+            $e instanceof NotFoundHttpException => self::buat(404, __('api.error.404')),
             $e instanceof MethodNotAllowedHttpException => self::buat(
                 405,
-                'Metode permintaan tidak didukung untuk endpoint ini.',
+                __('api.error.405'),
                 null,
                 $e->getHeaders(),
             ),
-            $e instanceof TokenMismatchException => self::buat(419, 'Sesi formulir kedaluwarsa. Silakan muat ulang aplikasi.'),
+            $e instanceof TokenMismatchException => self::buat(419, __('api.error.419')),
             $e instanceof HttpExceptionInterface => self::buatHttp($e),
             // Jangan pernah bocorkan detail internal (query SQL, path, dsb.) ke klien.
-            default => self::buat(500, 'Terjadi kesalahan pada server. Silakan coba lagi nanti.'),
+            default => self::buat(500, __('api.error.500')),
         };
     }
 
@@ -160,21 +163,21 @@ final class PenanganKesalahanApi
     private static function pesanStatus(int $status): string
     {
         return match ($status) {
-            400 => 'Permintaan tidak dapat diproses.',
-            401 => self::PESAN_SESI_BERAKHIR,
-            403 => 'Anda tidak memiliki hak akses ke endpoint ini.',
-            404 => 'Endpoint atau data yang diminta tidak ditemukan.',
-            405 => 'Metode permintaan tidak didukung untuk endpoint ini.',
-            408 => 'Permintaan melebihi batas waktu. Silakan coba lagi.',
-            413 => 'Data yang dikirim melebihi batas ukuran server.',
-            415 => 'Format data yang dikirim tidak didukung.',
-            419 => 'Sesi formulir kedaluwarsa. Silakan muat ulang aplikasi.',
-            422 => 'Data yang dikirim tidak valid.',
-            429 => 'Terlalu banyak permintaan. Silakan coba lagi dalam beberapa saat.',
-            502, 503, 504 => 'Layanan sedang tidak tersedia. Silakan coba beberapa saat lagi.',
+            400 => __('api.error.400'),
+            401 => __('api.error.401'),
+            403 => __('api.error.403'),
+            404 => __('api.error.404'),
+            405 => __('api.error.405'),
+            408 => __('api.error.408'),
+            413 => __('api.error.413'),
+            415 => __('api.error.415'),
+            419 => __('api.error.419'),
+            422 => __('api.error.422'),
+            429 => __('api.error.429'),
+            502, 503, 504 => __('api.error.503'),
             default => $status >= 500
-                ? 'Terjadi kesalahan pada server. Silakan coba lagi nanti.'
-                : (Response::$statusTexts[$status] ?? 'Permintaan tidak dapat diproses.'),
+                ? __('api.error.500')
+                : (Response::$statusTexts[$status] ?? __('api.error.400')),
         };
     }
 }

@@ -14,27 +14,27 @@ final class KesalahanOtp extends RuntimeException
 
     public static function tidakValid(): self
     {
-        return new self('Kode verifikasi tidak valid atau sudah kedaluwarsa.', 422);
+        return new self(__('api.otp.invalid'), 422);
     }
 
     public static function terkunci(): self
     {
-        return new self('Terlalu banyak percobaan. Minta kode verifikasi baru.', 429);
+        return new self(__('api.otp.locked'), 429);
     }
 
     public static function terlaluSering(int $sisaDetik): self
     {
-        return new self("Tunggu {$sisaDetik} detik sebelum meminta kode verifikasi lagi.", 429);
+        return new self(__('api.otp.cooldown', ['seconds' => $sisaDetik]), 429);
     }
 
     public static function melampauiBatasPerJam(): self
     {
-        return new self('Batas permintaan kode verifikasi per jam tercapai. Coba lagi nanti.', 429);
+        return new self(__('api.otp.hourly_limit'), 429);
     }
 
     public static function gagalKirim(): self
     {
-        return new self('Kode verifikasi gagal dikirim. Coba lagi beberapa saat.', 503);
+        return new self(__('api.otp.send_failed'), 503);
     }
 
     public function kodeStatus(): int
