@@ -74,7 +74,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Object__ctor_mE837C6B9FA8C6D5D109F4B2EC8
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 116649
+// Method Definition Index: 117069
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR String_t* Releases_get_Pointer_mC22A3A9EB5707A4DB0DC829CEECB06831982EBEA (Releases_t92E23136205E4FC9CDC45F1D229FB792ED398ADC* __this, const RuntimeMethod* method) 
 {
 	{
@@ -83,7 +83,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR String_t* Releases_get_Pointer_mC22A3A9EB5707
 		return L_0;
 	}
 }
-// Method Definition Index: 116650
+// Method Definition Index: 117070
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Releases_set_Pointer_m8775C654ED6C608A7C77D351E87290627E0ABEC0 (Releases_t92E23136205E4FC9CDC45F1D229FB792ED398ADC* __this, String_t* ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -94,7 +94,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Releases_set_Pointer_m8775C654ED6C608A7C
 		return;
 	}
 }
-// Method Definition Index: 116651
+// Method Definition Index: 117071
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR String_t* Releases_get_ReleaseName_m32CA6B813C5782B0842D58D777E8FC040938051D (Releases_t92E23136205E4FC9CDC45F1D229FB792ED398ADC* __this, const RuntimeMethod* method) 
 {
 	{
@@ -103,7 +103,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR String_t* Releases_get_ReleaseName_m32CA6B813
 		return L_0;
 	}
 }
-// Method Definition Index: 116652
+// Method Definition Index: 117072
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Releases_set_ReleaseName_mFAC776D723F2F9EC65564B29FDB904019223E2B9 (Releases_t92E23136205E4FC9CDC45F1D229FB792ED398ADC* __this, String_t* ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -114,7 +114,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Releases_set_ReleaseName_mFAC776D723F2F9
 		return;
 	}
 }
-// Method Definition Index: 116653
+// Method Definition Index: 117073
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Releases__ctor_m0797A74A591C906A2A6D0909D8F8A33B4D18386F (Releases_t92E23136205E4FC9CDC45F1D229FB792ED398ADC* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>

@@ -28156,7 +28156,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Stopwatch_get_IsRunning_mB1C
 		return L_0;
 	}
 }
-// Method Definition Index: 80249
+// Method Definition Index: 80288
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void JsonSerializerSettings_set_Converters_mF3D958F510BA4BBC18E2D2088EF9D3FC839AFB4C_inline (JsonSerializerSettings_t152F58F4E62A8349D748C945AF1699F84546D3FF* __this, RuntimeObject* ___0_value, const RuntimeMethod* method) 
 {
 	{
