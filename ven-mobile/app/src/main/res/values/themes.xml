@@ -17,10 +17,10 @@
         <item name="postSplashScreenTheme">@style/Theme.VEN</item>
     </style>
 
-    <style name="Theme.VEN.UnityLoading" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:windowBackground">#110E1C</item>
-        <item name="android:statusBarColor">#110E1C</item>
-        <item name="android:navigationBarColor">#110E1C</item>
+    <style name="Theme.VEN.UnityLoading" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowAnimationStyle">@null</item>
     </style>
 </resources>

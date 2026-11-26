@@ -86,6 +86,22 @@ object UnityBridge {
     }
 
     @JvmStatic
+    fun openArtworkDetail(
+        title: String,
+        description: String,
+        contentType: String,
+        contentUrl: String,
+    ) {
+        if (BuildConfig.DEBUG) Log.d(TAG, "Unity requested artwork detail: title='$title', type='$contentType'")
+        com.ven.app.ui.screens.unity.VenUnityActivity.showArtworkDetail(
+            title = title,
+            description = description,
+            contentType = contentType,
+            contentUrl = contentUrl,
+        )
+    }
+
+    @JvmStatic
     fun sendRoomData(json: String) {
         currentRoomJson = json
         UnityPlayer.UnitySendMessage("PlayBridge", "OnRoomData", json)

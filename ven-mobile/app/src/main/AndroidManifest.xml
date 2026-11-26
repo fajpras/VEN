@@ -47,6 +47,27 @@
         </activity>
 
         <activity
+            android:name=".ui.screens.unity.VenUnityActivity"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale|layoutDirection|density"
+            android:exported="false"
+            android:hardwareAccelerated="true"
+            android:launchMode="singleTask"
+            android:process=":unity"
+            android:resizeableActivity="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VEN.UnityLoading">
+            <meta-data
+                android:name="unityplayer.UnityActivity"
+                android:value="true" />
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="game" />
+            <meta-data
+                android:name="notch_support"
+                android:value="true" />
+        </activity>
+
+        <activity
             android:name="com.unity3d.player.UnityPlayerGameActivity"
             android:exported="false"
             android:process=":unity"

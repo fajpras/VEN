@@ -2,11 +2,27 @@ package com.ven.app.util
 
 import android.content.Context
 import android.content.Intent
-import com.unity3d.player.UnityPlayerGameActivity
+import android.content.res.Configuration
 import com.ven.app.core.config.AppConfig
 import com.ven.app.data.api.SessionManager
+import com.ven.app.data.preference.AppLanguage
+import com.ven.app.data.preference.ThemePreferences
+import com.ven.app.ui.screens.unity.VenUnityActivity
+import com.ven.app.ui.theme.ThemeMode
+
+data class PendingArtworkPlacement(
+    val karyaId: String,
+    val title: String,
+    val description: String,
+    val contentUrl: String,
+    val categoryId: Int,
+    val isVideo: Boolean,
+)
 
 object UnityLauncher {
+
+    @Volatile
+    var pendingArtworkPlacement: PendingArtworkPlacement? = null
 
     /**
      * Memetakan ID template dari format VEN mobile ke format template Unity yang ada di TemplateLoader:
@@ -25,6 +41,25 @@ object UnityLauncher {
         }
     }
 
+    private fun resolveThemeMode(context: Context): String {
+        val mode = ThemePreferences.getInstance(context).themeMode.value
+        return when (mode) {
+            ThemeMode.Dark -> "dark"
+            ThemeMode.Light -> "light"
+            ThemeMode.System -> {
+                val nightFlags = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+                if (nightFlags == Configuration.UI_MODE_NIGHT_YES) "dark" else "light"
+            }
+        }
+    }
+
+    private fun resolveLanguageCode(): String {
+        return when (AppLanguage.current()) {
+            AppLanguage.English -> "en"
+            AppLanguage.Indonesian -> "id"
+        }
+    }
+
     fun createEditorIntent(
         context: Context,
         templateId: String = "template01",
@@ -32,18 +67,19 @@ object UnityLauncher {
         description: String = "",
         bannerUrl: String = "",
         tipe: String = "kecil",
+        editRoomId: String = "",
     ): Intent {
         val sessionManager = SessionManager.getInstance(context)
         val token = sessionManager.getToken().orEmpty()
         val baseUrl = AppConfig.baseUrl
         val finalTemplateId = mapTemplateId(templateId)
 
-        return Intent(context, UnityPlayerGameActivity::class.java).apply {
+        return Intent(context, VenUnityActivity::class.java).apply {
             putExtra("mode", "editor")
             putExtra("templateId", finalTemplateId)
             putExtra("template_id", finalTemplateId)
-            putExtra("roomId", "")
-            putExtra("room_id", "")
+            putExtra("roomId", editRoomId)
+            putExtra("room_id", editRoomId)
             putExtra("tipe", tipe)
             putExtra("tipe_pameran", tipe)
             putExtra("title", title)
@@ -57,6 +93,17 @@ object UnityLauncher {
             putExtra("token", token)
             putExtra("apiBaseUrl", baseUrl)
             putExtra("api_base_url", baseUrl)
+            putExtra("themeMode", resolveThemeMode(context))
+            putExtra("language", resolveLanguageCode())
+            pendingArtworkPlacement?.let { pending ->
+                putExtra("pendingKaryaId", pending.karyaId)
+                putExtra("pendingKaryaTitle", pending.title)
+                putExtra("pendingKaryaDesc", pending.description)
+                putExtra("pendingKaryaUrl", pending.contentUrl)
+                putExtra("pendingKaryaCategoryId", pending.categoryId.toString())
+                putExtra("pendingKaryaIsVideo", if (pending.isVideo) "1" else "0")
+                pendingArtworkPlacement = null
+            }
         }
     }
 
@@ -82,7 +129,7 @@ object UnityLauncher {
                 ]}"""
         }
 
-        return Intent(context, UnityPlayerGameActivity::class.java).apply {
+        return Intent(context, VenUnityActivity::class.java).apply {
             putExtra("mode", "viewer")
             putExtra("roomType", roomType)
             putExtra("templateId", finalTemplateId)
@@ -93,6 +140,8 @@ object UnityLauncher {
             putExtra("token", token)
             putExtra("apiBaseUrl", baseUrl)
             putExtra("api_base_url", baseUrl)
+            putExtra("themeMode", resolveThemeMode(context))
+            putExtra("language", resolveLanguageCode())
         }
     }
 
