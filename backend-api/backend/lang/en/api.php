@@ -43,7 +43,10 @@ return [
     'profile' => [
         'otp_sent_new_email' => 'Verification code has been sent to your new email.',
         'email_updated' => 'Email updated successfully.',
+        'email_required' => 'New email is required.',
+        'email_invalid' => 'Please enter a valid email address.',
         'email_taken' => 'This email is already in use by another account.',
+        'password_required' => 'Password is required.',
         'wrong_password' => 'Incorrect password.',
         'wrong_current_password' => 'Current password is incorrect.',
         'password_updated' => 'Password updated successfully.',

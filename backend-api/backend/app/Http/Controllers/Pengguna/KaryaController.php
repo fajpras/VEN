@@ -146,6 +146,9 @@ class KaryaController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
+        if ($request->has('id_pameran') && $request->input('id_pameran') === '') {
+            $request->merge(['id_pameran' => null]);
+        }
         $validated = $request->validate($this->rules($request, true));
 
         $path = $request->file('file')->store('karya', 'local');
@@ -172,6 +175,10 @@ class KaryaController extends Controller
     {
         $this->pastikanPemilik($request, $karya->id_pengguna);
 
+        if ($request->has('id_pameran') && $request->input('id_pameran') === '') {
+            $request->merge(['id_pameran' => null]);
+        }
+
         $validated = $request->validate($this->rules($request, false));
         $pathLama = null;
         $pathBaru = null;
@@ -187,6 +194,11 @@ class KaryaController extends Controller
 
                 if ($pathBaru) {
                     $data['file'] = $pathBaru;
+                }
+
+                // Jika pameran dilepas atau dipindah ke pameran lain, bersihkan tautan objek 3D lama
+                if (array_key_exists('id_pameran', $data) && $data['id_pameran'] != $karya->id_pameran) {
+                    $data['id_objek'] = null;
                 }
 
                 if (! empty($validated['objek'])) {
@@ -217,7 +229,14 @@ class KaryaController extends Controller
     {
         $this->pastikanPemilik($request, $karya->id_pengguna);
 
-        $karya->delete();
+        $filePath = $karya->file;
+        $karya->forceDelete();
+
+        if ($filePath && ! str_contains($filePath, 'default_artwork')) {
+            $cleanPath = ltrim(preg_replace('#^/?storage/#', '', $filePath), '/');
+            Storage::disk('public')->delete($cleanPath);
+            Storage::disk('local')->delete($filePath);
+        }
 
         return $this->ok(null, 'Karya dihapus.');
     }

@@ -49,10 +49,11 @@ Route::middleware(CatatKeamanan::class)->group(function () {
             Route::post('pameran', 'store');
             Route::post('pameran/banner', 'uploadBanner');
             Route::post('exhibitions', 'storeFromUnity');
+            Route::put('exhibitions/{pameran}', 'updateFromUnity')->whereNumber('pameran');
             Route::get('exhibitions/{pameran}/room-dto', 'roomDto')->whereNumber('pameran');
             Route::get('pameran/{pameran}', 'show')->whereNumber('pameran');
             Route::get('pameran/{pameran}/room-dto', 'roomDto')->whereNumber('pameran');
-            Route::put('pameran/{pameran}', 'update')->whereNumber('pameran');
+            Route::match(['put', 'patch', 'post'], 'pameran/{pameran}', 'update')->whereNumber('pameran');
             Route::delete('pameran/{pameran}', 'destroy')->whereNumber('pameran');
             Route::post('pameran/{pameran}/ruangan', 'storeRuangan')->whereNumber('pameran');
         });

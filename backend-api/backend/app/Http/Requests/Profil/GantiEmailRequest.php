@@ -26,4 +26,15 @@ final class GantiEmailRequest extends FormRequest
             'otp' => ['required', 'digits:'.config('otp.panjang')],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'email_baru.required' => __('api.profile.email_required'),
+            'email_baru.email' => __('api.profile.email_invalid'),
+            'email_baru.unique' => __('api.profile.email_taken'),
+            'otp.required' => __('api.otp.invalid'),
+            'otp.digits' => __('api.otp.invalid'),
+        ];
+    }
 }

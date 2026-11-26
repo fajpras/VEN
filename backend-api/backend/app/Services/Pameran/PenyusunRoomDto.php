@@ -42,9 +42,12 @@ final class PenyusunRoomDto
                     'z' => 0.0,
                 ],
                 'contentType' => $karya?->jenis ?? '',
-                'contentUrl' => $karya?->file ?? '',
+                'contentUrl' => $karya?->file_url ?? '',
                 'title' => $karya?->judul ?? '',
                 'description' => $karya?->deskripsi ?? '',
+                'karyaId' => (string) ($karya?->id_karya ?? ''),
+                'categoryId' => (int) ($karya?->id_kategori ?? 1),
+                'isVideo' => $karya?->jenis === 'video',
             ];
         }
 

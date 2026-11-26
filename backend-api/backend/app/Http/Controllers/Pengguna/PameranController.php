@@ -141,7 +141,16 @@ class PameranController extends Controller
 
         return DB::transaction(function () use ($pameran) {
             $bannerUrl = $pameran->banner;
-            $pameran->delete();
+
+
+            Karya::withTrashed()
+                ->where('id_pameran', $pameran->id_pameran)
+                ->update(['id_pameran' => null, 'id_objek' => null]);
+
+            Objek::where('id_pameran', $pameran->id_pameran)->delete();
+            Ruangan::where('id_pameran', $pameran->id_pameran)->delete();
+
+            $pameran->forceDelete();
 
             if ($bannerUrl) {
                 $oldPath = str_replace('/storage/', '', parse_url($bannerUrl, PHP_URL_PATH));
@@ -338,7 +347,7 @@ class PameranController extends Controller
                         $artworkTitle = !empty($item['artworkTitle']) ? trim($item['artworkTitle']) : ($validated['title'] . ' - Karya');
                         $artworkDesc = !empty($item['artworkDescription']) ? trim($item['artworkDescription']) : ($validated['description'] ?? 'Karya dalam pameran virtual');
                         $categoryId = !empty($item['categoryId']) ? (int) $item['categoryId'] : ($defaultCategory?->id_kategori ?? 1);
-                        $fileUrl = !empty($item['contentUrl']) ? $item['contentUrl'] : 'karya/default_artwork.jpg';
+                        $fileUrl = $this->normalisasiPathKarya($item['contentUrl'] ?? null);
 
                         Karya::create([
                             'id_kategori' => $categoryId,
@@ -373,11 +382,222 @@ class PameranController extends Controller
         ], 'pameran berhasil dipublikasi');
     }
 
+    public function updateFromUnity(Request $request, Pameran $pameran)
+    {
+        $this->pastikanPemilik($request, $pameran->id_pengguna);
+
+        $validated = $request->validate([
+            'templateId' => ['nullable', 'string'],
+            'title' => ['required', 'string', 'max:100'],
+            'description' => ['nullable', 'string'],
+            'banner' => ['nullable', 'string'],
+            'wallColor' => ['nullable', 'string', 'max:10'],
+            'items' => ['nullable', 'array'],
+        ]);
+
+        if (ProfanityFilter::containsProfanity($validated['title'], $validated['description'] ?? '')) {
+            return response()->json(['message' => 'mengandung kata kasar'], 422);
+        }
+
+        [$tipe, $canonicalKey, $maxPanels, $maxObjects] = $this->resolusiKonfigurasiTemplate(
+            $validated['templateId'] ?? $pameran->tipe ?? 'template01'
+        );
+
+        $items = $validated['items'] ?? [];
+        $panelCount = 0;
+        $objectCount = 0;
+
+        foreach ($items as $item) {
+            $surface = strtolower($item['surface'] ?? '');
+            $prefabId = strtolower($item['prefabId'] ?? '');
+            $isPanel = ($surface === 'wall') || str_contains($prefabId, 'panel') || str_contains($prefabId, 'poster') || str_contains($prefabId, 'frame');
+            if ($isPanel) {
+                $panelCount++;
+            } else {
+                $objectCount++;
+            }
+        }
+
+        if ($panelCount > $maxPanels) {
+            return response()->json(['message' => 'panel melebihi jumlah maksimal'], 422);
+        }
+
+        if ($objectCount > $maxObjects) {
+            return response()->json(['message' => 'objek melebihi jumlah maksimal'], 422);
+        }
+
+        $pameran = DB::transaction(function () use ($request, $pameran, $validated, $tipe, $items) {
+            $user = $request->user();
+
+            $updateData = [
+                'judul' => $validated['title'],
+                'warna' => substr($validated['wallColor'] ?? ($pameran->warna ?? '#1565C0'), 0, 7),
+                'tipe' => $tipe,
+            ];
+            if (! empty($validated['banner'])) {
+                $updateData['banner'] = $validated['banner'];
+            }
+            $pameran->fill($updateData)->save();
+
+            // Lepas referensi objek lama pada karya agar UUID karya tetap aman sebelum objek lama diganti
+            $oldObjekIds = Objek::where('id_pameran', $pameran->id_pameran)->pluck('id_objek');
+            $oldPosisiIds = Objek::where('id_pameran', $pameran->id_pameran)->pluck('id_posisi')->filter();
+
+            if ($oldObjekIds->isNotEmpty()) {
+                Karya::whereIn('id_objek', $oldObjekIds)->update(['id_objek' => null]);
+                Objek::whereIn('id_objek', $oldObjekIds)->delete();
+            }
+            if ($oldPosisiIds->isNotEmpty()) {
+                PosisiObjek::whereIn('id_posisi', $oldPosisiIds)->delete();
+            }
+
+            $defaultCategory = Kategori::first();
+
+            foreach ($items as $item) {
+                $posisi = PosisiObjek::create([
+                    'posisi_x' => (float) ($item['x'] ?? 0.0),
+                    'posisi_y' => (float) ($item['y'] ?? 0.0),
+                    'posisi_z' => (float) ($item['z'] ?? 0.0),
+                    'rotasi_z' => (float) ($item['rotY'] ?? 0.0),
+                ]);
+
+                $objekModel = Model3D::firstOrCreate(
+                    ['nama' => $item['prefabId'] ?? 'Artwork Panel'],
+                    [
+                        'jenis' => 'objek',
+                        'file' => 'models/' . ($item['prefabId'] ?? 'panel') . '.glb',
+                        'kapasitas' => '1',
+                        'gambar' => 'models/panel_preview.png',
+                    ]
+                );
+
+                $itemSurface = strtolower($item['surface'] ?? '');
+                $itemPrefab = strtolower($item['prefabId'] ?? '');
+                $isItemPanel = ($itemSurface === 'wall') || str_contains($itemPrefab, 'panel') || str_contains($itemPrefab, 'poster') || str_contains($itemPrefab, 'frame');
+
+                $objek = Objek::create([
+                    'id_pameran' => $pameran->id_pameran,
+                    'id_posisi' => $posisi->id_posisi,
+                    'id_model' => $objekModel->id_model,
+                    'jenis' => $isItemPanel ? 'panel' : 'aset',
+                ]);
+
+                if (! empty($item['contentUrl']) || ! empty($item['artworkTitle']) || ! empty($item['karyaId'])) {
+                    $artworkTitle = ! empty($item['artworkTitle']) ? trim($item['artworkTitle']) : ($validated['title'] . ' - Karya');
+                    $artworkDesc = ! empty($item['artworkDescription']) ? trim($item['artworkDescription']) : ($validated['description'] ?? 'Karya dalam pameran virtual');
+                    $categoryId = ! empty($item['categoryId']) ? (int) $item['categoryId'] : ($defaultCategory?->id_kategori ?? 1);
+                    $existingKarya = ! empty($item['karyaId'])
+                        ? Karya::where('id_karya', $item['karyaId'])
+                            ->where('id_pengguna', $user->id_pengguna)
+                            ->first()
+                        : null;
+
+                    $fileUrl = $this->normalisasiPathKarya($item['contentUrl'] ?? null, $existingKarya?->file);
+                    $jenisKarya = ! empty($item['isVideo']) ? 'video' : 'poster';
+
+                    if ($existingKarya) {
+                        $existingKarya->fill([
+                            'id_kategori' => $categoryId,
+                            'id_pameran' => $pameran->id_pameran,
+                            'id_objek' => $objek->id_objek,
+                            'judul' => $artworkTitle,
+                            'jenis' => $jenisKarya,
+                            'deskripsi' => $artworkDesc,
+                            'file' => $fileUrl ?: $existingKarya->file,
+                        ])->save();
+                    } else {
+                        Karya::create([
+                            'id_kategori' => $categoryId,
+                            'id_pengguna' => $user->id_pengguna,
+                            'id_pameran' => $pameran->id_pameran,
+                            'id_objek' => $objek->id_objek,
+                            'judul' => $artworkTitle,
+                            'jenis' => $jenisKarya,
+                            'deskripsi' => $artworkDesc,
+                            'file' => $fileUrl,
+                        ]);
+                    }
+                }
+            }
+
+            return $pameran->fresh(['ruangan', 'model3d']);
+        });
+
+        LogSistem::aktivitas(
+            entitas: $pameran->judul,
+            jenis: 'pameran',
+            pesan: "Memperbarui tata letak 3D pameran #{$pameran->id_pameran} \"{$pameran->judul}\"",
+            status: 'berhasil',
+            idPengguna: $request->user()->id_pengguna,
+            aksi: 'ubah',
+        );
+
+        return $this->ok([
+            'id_pameran' => $pameran->id_pameran,
+            'pameran' => $pameran,
+        ], 'pameran berhasil diperbarui');
+    }
+
     public function roomDto(Pameran $pameran, Request $request)
     {
         $dto = $this->penyusunRoomDto->susun($pameran, $request->user());
 
         return response()->json($dto);
+    }
+
+    /**
+     * @return array{0: string, 1: string, 2: int, 3: int}
+     */
+    private function resolusiKonfigurasiTemplate(string $rawTemplateId): array
+    {
+        $normalized = strtolower(trim($rawTemplateId));
+        $templatesConfig = config('exhibition_templates.templates', []);
+        $matchedConfig = null;
+        $canonicalKey = 'template01';
+
+        foreach ($templatesConfig as $key => $cfg) {
+            $aliases = array_map('strtolower', $cfg['aliases'] ?? []);
+            if ($normalized === strtolower($key) || in_array($normalized, $aliases, true)) {
+                $matchedConfig = $cfg;
+                $canonicalKey = $key;
+                break;
+            }
+        }
+
+        if (! $matchedConfig) {
+            $matchedConfig = $templatesConfig['template01'] ?? [
+                'name' => 'Small',
+                'max_panels' => 9,
+                'max_objects' => 9,
+                'tipe' => 'kecil',
+            ];
+        }
+
+        return [
+            $matchedConfig['tipe'] ?? 'kecil',
+            $canonicalKey,
+            (int) ($matchedConfig['max_panels'] ?? 9),
+            (int) ($matchedConfig['max_objects'] ?? 9),
+        ];
+    }
+
+    private function normalisasiPathKarya(?string $contentUrl, ?string $existingFile = null): string
+    {
+        $raw = trim((string) $contentUrl);
+        if ($raw === '') {
+            return $existingFile ?: 'karya/default_artwork.jpg';
+        }
+
+        // Jangan pernah menimpa kolom `file` dengan signed URL `/api/karya/{id}/berkas?...`
+        if (str_contains($raw, '/api/karya/') && str_contains($raw, '/berkas')) {
+            return $existingFile ?: 'karya/default_artwork.jpg';
+        }
+
+        if (str_contains($raw, '/storage/')) {
+            return ltrim(substr($raw, strpos($raw, '/storage/') + strlen('/storage/')), '/');
+        }
+
+        return $raw;
     }
 
     private function rules(bool $wajib): array
@@ -387,6 +607,7 @@ class PameranController extends Controller
         return [
             'judul' => [$r, 'string', 'max:255'],
             'banner' => [$r, 'file', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
+            'warna' => ['sometimes', 'nullable', 'string', 'max:7'],
             'tipe' => [$r, Rule::in(['kecil', 'sedang', 'besar', 'acara'])],
             'id_model' => [$r, 'integer', Rule::exists('model', 'id_model')->where('jenis', 'hall')],
         ];

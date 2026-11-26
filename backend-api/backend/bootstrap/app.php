@@ -9,11 +9,13 @@ use App\Console\Commands\UjiTransaksiPameran;
 use App\Exceptions\PenanganKesalahanApi;
 use App\Http\Middleware\GunakanKoneksiAdmin;
 use App\Http\Middleware\HanyaAdmin;
+use App\Http\Middleware\PilihKoneksi;
 use App\Http\Middleware\SinkronBahasaApi;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -46,15 +48,16 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => HanyaAdmin::class,
             'admin.db' => GunakanKoneksiAdmin::class,
         ]);
+
+
+        $middleware->prependToPriorityList(SubstituteBindings::class, PilihKoneksi::class);
+        $middleware->prependToPriorityList(SubstituteBindings::class, GunakanKoneksiAdmin::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api', 'api/*') || $request->expectsJson(),
         );
 
-        // Seluruh galat pada /api/* selalu menjadi JSON yang seragam, termasuk
-        // endpoint yang tidak ada, metode yang salah, token tidak valid, dan
-        // kesalahan server yang tidak terduga.
         $exceptions->render(
             fn (Throwable $e, Request $request) => PenanganKesalahanApi::render($e, $request),
         );

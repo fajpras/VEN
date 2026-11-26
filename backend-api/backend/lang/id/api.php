@@ -43,7 +43,10 @@ return [
     'profile' => [
         'otp_sent_new_email' => 'Kode verifikasi telah dikirim ke email baru.',
         'email_updated' => 'Email diperbarui.',
+        'email_required' => 'Email baru wajib diisi.',
+        'email_invalid' => 'Format alamat email tidak valid.',
         'email_taken' => 'Email sudah digunakan akun lain.',
+        'password_required' => 'Kata sandi wajib diisi.',
         'wrong_password' => 'Kata sandi salah.',
         'wrong_current_password' => 'Kata sandi saat ini salah.',
         'password_updated' => 'Kata sandi diperbarui.',
