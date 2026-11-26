@@ -27,21 +27,30 @@ sealed class Screen(val route: String) {
     }
 
     data object CreatePost : Screen("create_post")
+    data object EditPost : Screen("edit_post/{postId}") {
+        fun createRoute(postId: String) = "edit_post/$postId"
+    }
+    data object EditExhibit : Screen("edit_exhibit/{exhibitId}") {
+        fun createRoute(exhibitId: Int) = "edit_exhibit/$exhibitId"
+    }
     data object CreateExhibitInfo : Screen("create_exhibit_info")
     data object CreateExhibit : Screen("create_exhibit")
-    data object CreateExhibitEditor : Screen("create_exhibit_editor/{templateId}?title={title}&description={description}&bannerUrl={bannerUrl}&tipe={tipe}") {
+    data object CreateExhibitEditor : Screen("create_exhibit_editor/{templateId}?title={title}&description={description}&bannerUrl={bannerUrl}&tipe={tipe}&editRoomId={editRoomId}") {
         fun createRoute(
             templateId: String,
             title: String = "",
             description: String = "",
             bannerUrl: String = "",
             tipe: String = "kecil",
+            editRoomId: String = "",
         ): String {
             val encodedTitle = java.net.URLEncoder.encode(title, "UTF-8")
             val encodedDesc = java.net.URLEncoder.encode(description, "UTF-8")
             val encodedBanner = java.net.URLEncoder.encode(bannerUrl, "UTF-8")
             val encodedTipe = java.net.URLEncoder.encode(tipe, "UTF-8")
-            return "create_exhibit_editor/$templateId?title=$encodedTitle&description=$encodedDesc&bannerUrl=$encodedBanner&tipe=$encodedTipe"
+            val encodedEditRoomId = java.net.URLEncoder.encode(editRoomId, "UTF-8")
+            val base = "create_exhibit_editor/$templateId?title=$encodedTitle&description=$encodedDesc&bannerUrl=$encodedBanner&tipe=$encodedTipe"
+            return if (editRoomId.isNotBlank()) "$base&editRoomId=$encodedEditRoomId" else base
         }
     }
 

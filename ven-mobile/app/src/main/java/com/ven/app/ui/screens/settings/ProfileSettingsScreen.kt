@@ -170,22 +170,24 @@ fun ProfileSettingsScreen(
                 imageBitmap = fotoBitmap,
             )
 
-            Spacer(modifier = Modifier.height(VexSpace.s2))
+            if (isEditing) {
+                Spacer(modifier = Modifier.height(VexSpace.s2))
 
-            Text(
-                text = if (isUploadingPhoto) {
-                    stringResource(R.string.settings_photo_uploading)
-                } else {
-                    stringResource(R.string.settings_new_photo)
-                },
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Medium,
-                ),
-                color = if (isUploadingPhoto) colors.textMuted else colors.primaryText,
-                modifier = Modifier
-                    .clickable(enabled = isEditing && !isUploadingPhoto) { onPhotoClick() }
-                    .padding(VexSpace.s1),
-            )
+                Text(
+                    text = if (isUploadingPhoto) {
+                        stringResource(R.string.settings_photo_uploading)
+                    } else {
+                        stringResource(R.string.settings_new_photo)
+                    },
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium,
+                    ),
+                    color = if (isUploadingPhoto) colors.textMuted else colors.primaryText,
+                    modifier = Modifier
+                        .clickable(enabled = !isUploadingPhoto) { onPhotoClick() }
+                        .padding(VexSpace.s1),
+                )
+            }
 
             if (errorMessage != null) {
                 Spacer(modifier = Modifier.height(VexSpace.s4))

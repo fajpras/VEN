@@ -3,6 +3,7 @@ package com.ven.app.ui.screens.profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,19 +18,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,8 +43,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -76,10 +83,15 @@ fun ProfileScreen(
     onMediaClick: (MediaGridItem) -> Unit,
     modifier: Modifier = Modifier,
     onRetryClick: () -> Unit = {},
+    onEditExhibitInfoClick: ((Int) -> Unit)? = null,
+    onEditExhibit3dClick: ((Int, String) -> Unit)? = null,
+    onDeleteExhibitClick: ((Int) -> Unit)? = null,
 ) {
     val colors = VexTheme.colors
     val uriHandler = LocalUriHandler.current
     val profile = uiState.profile
+    var actionTargetExhibit by remember { mutableStateOf<MediaGridItem?>(null) }
+    var deleteConfirmExhibit by remember { mutableStateOf<MediaGridItem?>(null) }
 
     AppScaffold(
         currentTab = BottomNavTab.Profile,
@@ -375,7 +387,13 @@ fun ProfileScreen(
                         ) { item ->
                             MediaGridTile(
                                 item = item,
-                                onClick = { onMediaClick(item) },
+                                onClick = {
+                                    if (isExhibits && (onEditExhibitInfoClick != null || onEditExhibit3dClick != null || onDeleteExhibitClick != null)) {
+                                        actionTargetExhibit = item
+                                    } else {
+                                        onMediaClick(item)
+                                    }
+                                },
                                 aspectRatio = if (isExhibits) (16f / 9f) else VexAspect.poster,
                                 modifier = if (isExhibits) {
                                     Modifier
@@ -447,6 +465,173 @@ fun ProfileScreen(
                 }
             }
         }
+
+        actionTargetExhibit?.let { exhibit ->
+            val exhibitId = exhibit.id.toIntOrNull()
+            VexBottomSheet(
+                onDismissRequest = { actionTargetExhibit = null },
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = VexSpace.s6)
+                        .navigationBarsPadding(),
+                ) {
+                    Text(
+                        text = exhibit.title.ifBlank { stringResource(R.string.profile_tab_exhibits) },
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = colors.text,
+                        modifier = Modifier.padding(horizontal = VexSpace.s6, vertical = VexSpace.s3),
+                    )
+
+                    ProfileActionRow(
+                        iconRes = VexIcons.Play,
+                        iconTint = colors.primary,
+                        iconBgColor = colors.primary.copy(alpha = 0.10f),
+                        label = stringResource(R.string.exhibit_action_enter),
+                        labelColor = colors.text,
+                        onClick = {
+                            actionTargetExhibit = null
+                            onMediaClick(exhibit)
+                        },
+                    )
+
+                    if (exhibitId != null && onEditExhibitInfoClick != null) {
+                        ProfileActionRow(
+                            iconRes = VexIcons.Edit,
+                            iconTint = colors.primary,
+                            iconBgColor = colors.primary.copy(alpha = 0.10f),
+                            label = stringResource(R.string.exhibit_action_edit_info),
+                            labelColor = colors.text,
+                            onClick = {
+                                actionTargetExhibit = null
+                                onEditExhibitInfoClick(exhibitId)
+                            },
+                        )
+                    }
+
+                    if (exhibitId != null && onEditExhibit3dClick != null) {
+                        ProfileActionRow(
+                            iconRes = VexIcons.Tab.Exhibits.filled,
+                            iconTint = colors.accentWarning,
+                            iconBgColor = colors.accentWarning.copy(alpha = 0.12f),
+                            label = stringResource(R.string.exhibit_action_edit_3d),
+                            labelColor = colors.text,
+                            onClick = {
+                                actionTargetExhibit = null
+                                onEditExhibit3dClick(exhibitId, exhibit.title)
+                            },
+                        )
+                    }
+
+                    if (exhibitId != null && onDeleteExhibitClick != null) {
+                        ProfileActionRow(
+                            iconRes = VexIcons.Close,
+                            iconTint = colors.danger,
+                            iconBgColor = colors.danger.copy(alpha = 0.12f),
+                            label = stringResource(R.string.exhibit_action_delete),
+                            labelColor = colors.danger,
+                            onClick = {
+                                actionTargetExhibit = null
+                                deleteConfirmExhibit = exhibit
+                            },
+                        )
+                    }
+                }
+            }
+        }
+
+        deleteConfirmExhibit?.let { exhibit ->
+            val exhibitId = exhibit.id.toIntOrNull()
+            AlertDialog(
+                onDismissRequest = { deleteConfirmExhibit = null },
+                containerColor = colors.surface,
+                title = {
+                    Text(
+                        text = stringResource(R.string.exhibit_delete_confirm_title),
+                        color = colors.text,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(R.string.exhibit_delete_confirm_body),
+                        color = colors.textSecondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            deleteConfirmExhibit = null
+                            if (exhibitId != null) {
+                                onDeleteExhibitClick?.invoke(exhibitId)
+                            }
+                        },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.exhibit_action_delete),
+                            color = colors.danger,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { deleteConfirmExhibit = null }) {
+                        Text(
+                            text = stringResource(R.string.common_cancel),
+                            color = colors.textMuted,
+                        )
+                    }
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProfileActionRow(
+    iconRes: Int,
+    iconTint: Color,
+    iconBgColor: Color,
+    label: String,
+    labelColor: Color,
+    onClick: () -> Unit,
+) {
+    val colors = VexTheme.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(color = colors.text.copy(alpha = 0.08f)),
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .padding(horizontal = VexSpace.s6, vertical = VexSpace.s3),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(VexRadius.md))
+                .background(iconBgColor),
+            contentAlignment = Alignment.Center,
+        ) {
+            VexIcon(
+                id = iconRes,
+                contentDescription = null,
+                tint = iconTint,
+                size = 20.dp,
+            )
+        }
+        Spacer(modifier = Modifier.width(VexSpace.s4))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+            color = labelColor,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 

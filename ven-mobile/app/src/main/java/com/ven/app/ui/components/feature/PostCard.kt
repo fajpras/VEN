@@ -317,6 +317,7 @@ fun PostCard(
     seeLessText: String = stringResource(R.string.post_see_less),
     onUsernameClick: (() -> Unit)? = null,
     onUrlClick: ((String) -> Unit)? = null,
+    onMoreClick: (() -> Unit)? = null,
 ) {
     val colors = VexTheme.colors
 
@@ -367,6 +368,17 @@ fun PostCard(
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
+                }
+            }
+
+            if (onMoreClick != null) {
+                IconButton(onClick = onMoreClick) {
+                    VexIcon(
+                        id = VexIcons.MoreVert,
+                        contentDescription = stringResource(R.string.post_more_options),
+                        size = 20.dp,
+                        tint = colors.textMuted,
+                    )
                 }
             }
         }

@@ -12,6 +12,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
 import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiClient
+import com.ven.app.data.api.ApiKarya
 import com.ven.app.data.api.ApiPencarian
 import com.ven.app.ui.screens.profile.ProfileViewModel
 import com.ven.app.util.DateFormatter
@@ -25,6 +26,7 @@ fun UserPostsFeedRoute(
     onRequestMeetingClick: (String) -> Unit,
     onView3dClick: (String) -> Unit,
     onUserClick: (String) -> Unit,
+    onEditPostClick: ((String) -> Unit)? = null,
 ) {
     val profileViewModel: ProfileViewModel = viewModel()
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
@@ -76,16 +78,30 @@ fun UserPostsFeedRoute(
         if (userId == "me") profileViewModel.muat() else loadUserPosts()
     }
 
+    val isOwnFeed = userId == "me"
+
     PostsFeedScreen(
-        posts = if (userId == "me") profileState.feedPosts else userPosts,
-        isRefreshing = if (userId == "me") profileState.isLoading else isUserLoading,
+        posts = if (isOwnFeed) profileState.feedPosts else userPosts,
+        isRefreshing = if (isOwnFeed) profileState.isLoading else isUserLoading,
         onRefresh = {
-            if (userId == "me") profileViewModel.muat() else loadUserPosts()
+            if (isOwnFeed) profileViewModel.muat() else loadUserPosts()
         },
         onBackClick = onBackClick,
         onRequestMeetingClick = onRequestMeetingClick,
         onView3dClick = onView3dClick,
         initialPostId = initialPostId,
         onUserClick = onUserClick,
+        onEditPostClick = if (isOwnFeed) onEditPostClick else null,
+        onDeletePostClick = if (isOwnFeed) {
+            { postId ->
+                scope.launch {
+                    ApiKarya.hapus(postId).onSuccess {
+                        profileViewModel.muat()
+                    }
+                }
+            }
+        } else {
+            null
+        },
     )
 }

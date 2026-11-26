@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ven.app.data.api.ApiClient
+import com.ven.app.data.api.ApiPameran
 import com.ven.app.data.api.ApiProfil
 import com.ven.app.ui.components.feature.MediaGridItem
 import com.ven.app.ui.screens.explore.PostsFeedItem
@@ -114,6 +115,14 @@ class ProfileViewModel : ViewModel() {
 
     fun aturSkillSheet(buka: Boolean) {
         _uiState.update { it.copy(isSkillSheetOpen = buka) }
+    }
+
+    fun hapusPameran(exhibitId: Int) {
+        viewModelScope.launch {
+            ApiPameran.deletePameran(exhibitId).onSuccess {
+                muat()
+            }
+        }
     }
 
     private fun tampilkanGagal(pesan: String) {

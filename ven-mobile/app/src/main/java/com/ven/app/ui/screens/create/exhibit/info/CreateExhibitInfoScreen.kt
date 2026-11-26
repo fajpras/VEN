@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -45,6 +46,8 @@ import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonVariant
 import com.ven.app.ui.components.ui.VexTextArea
 import com.ven.app.ui.components.ui.VexTextField
+import com.ven.app.ui.icons.VexIcon
+import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.screens.create.exhibit.CreateExhibitUiState
 import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
@@ -114,31 +117,55 @@ fun CreateExhibitInfoScreen(
                     .imePadding(),
                 verticalArrangement = Arrangement.spacedBy(VexSpace.s5),
             ) {
-                // Selected Template Info Badge
+                // Informasi Hall yang dipilih (jelas & rapi)
                 state.selectedTemplate?.let { tmpl ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(VexRadius.md))
-                            .background(colors.surfaceInput)
-                            .padding(horizontal = VexSpace.s4, vertical = VexSpace.s3),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(VexSpace.s2)) {
                         Text(
-                            text = "Template: ${stringResource(tmpl.nameRes)}",
+                            text = stringResource(R.string.create_exhibit_hall_label),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.SemiBold,
                             ),
                             color = colors.text,
                         )
-                        Text(
-                            text = "${tmpl.capacity} Post",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Medium,
-                            ),
-                            color = colors.primaryText,
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(VexRadius.md))
+                                .background(colors.surfaceInput)
+                                .border(1.dp, colors.border, RoundedCornerShape(VexRadius.md))
+                                .padding(horizontal = VexSpace.s4, vertical = VexSpace.s3),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(VexSpace.s3),
+                            ) {
+                                VexIcon(
+                                    id = VexIcons.Tab.Exhibits.filled,
+                                    contentDescription = null,
+                                    size = 20.dp,
+                                    tint = colors.primary,
+                                )
+                                Text(
+                                    text = stringResource(
+                                        R.string.create_exhibit_hall_value,
+                                        stringResource(tmpl.nameRes),
+                                    ),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                    ),
+                                    color = colors.text,
+                                )
+                            }
+                            Text(
+                                text = stringResource(R.string.create_exhibit_hall_capacity, tmpl.capacity),
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                ),
+                                color = colors.primaryText,
+                            )
+                        }
                     }
                 }
 

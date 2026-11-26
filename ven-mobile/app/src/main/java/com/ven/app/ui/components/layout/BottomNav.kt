@@ -27,8 +27,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -38,6 +41,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.ven.app.data.api.SessionManager
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.navigation.BottomNavTab
 import com.ven.app.ui.theme.DarkVexColors
@@ -58,6 +63,19 @@ fun BottomNav(
 ) {
     val colors = VexTheme.colors
     val isDark = colors.bg == DarkVexColors.bg
+    val isPreview = LocalInspectionMode.current
+    val context = LocalContext.current
+
+    // Sinkronkan foto & inisial avatar pada tab Profil dengan sesi pengguna aktif
+    val sessionUser = if (isPreview) null else SessionManager.getInstance(context).getUser()
+    val resolvedInitials = sessionUser?.nama?.trim()?.takeIf { it.isNotEmpty() }
+        ?: sessionUser?.namaPanggilan?.trim()?.takeIf { it.isNotEmpty() }
+        ?: profileInitials
+    val resolvedPhotoBitmap = if (profilePainter == null && profileContent == null) {
+        rememberAsyncImageBitmap(sessionUser?.fotoProfil)
+    } else {
+        null
+    }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -99,7 +117,8 @@ fun BottomNav(
                             .weight(1f)
                             .fillMaxHeight(),
                         profilePainter = profilePainter,
-                        profileInitials = profileInitials,
+                        profileBitmap = resolvedPhotoBitmap,
+                        profileInitials = resolvedInitials,
                         profileContent = profileContent,
                     )
                 }
@@ -115,6 +134,7 @@ private fun BottomNavItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     profilePainter: Painter? = null,
+    profileBitmap: ImageBitmap? = null,
     profileInitials: String = "V",
     profileContent: (@Composable (isSelected: Boolean) -> Unit)? = null,
 ) {
@@ -146,6 +166,7 @@ private fun BottomNavItem(
                 isSelected = isSelected,
                 contentDescription = title,
                 profilePainter = profilePainter,
+                profileBitmap = profileBitmap,
                 profileInitials = profileInitials,
                 profileContent = profileContent,
             )
@@ -172,6 +193,7 @@ private fun ProfileTabItem(
     contentDescription: String,
     modifier: Modifier = Modifier,
     profilePainter: Painter? = null,
+    profileBitmap: ImageBitmap? = null,
     profileInitials: String = "V",
     profileContent: (@Composable (isSelected: Boolean) -> Unit)? = null,
 ) {
@@ -185,7 +207,11 @@ private fun ProfileTabItem(
             shape = CircleShape,
         )
     } else {
-        Modifier
+        Modifier.border(
+            width = 1.dp,
+            color = colors.borderInput,
+            shape = CircleShape,
+        )
     }
 
     Box(
@@ -197,6 +223,16 @@ private fun ProfileTabItem(
         when {
             profileContent != null -> {
                 profileContent(isSelected)
+            }
+            profileBitmap != null -> {
+                Image(
+                    bitmap = profileBitmap,
+                    contentDescription = contentDescription,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                )
             }
             profilePainter != null -> {
                 Image(

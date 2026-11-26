@@ -265,6 +265,9 @@
     <!-- Create Exhibit Strings (§8.14 Create Exhibit) -->
     <string name="create_exhibit_title">New Exhibit</string>
     <string name="create_exhibit_info_title">Exhibit Information</string>
+    <string name="create_exhibit_hall_label">Exhibition Hall</string>
+    <string name="create_exhibit_hall_value">%1$s Hall</string>
+    <string name="create_exhibit_hall_capacity">%1$d Panels</string>
     <string name="create_exhibit_next_step">Open 3D Editor</string>
     <string name="create_exhibit_template_small">Small</string>
     <string name="create_exhibit_template_medium">Medium</string>
@@ -442,4 +445,55 @@
     <string name="suspended_bullet_restore_temp">Access will be restored automatically once the suspension period ends.</string>
     <string name="suspended_bullet_restore_permanent">You can no longer sign in to this account. Contact VEN Support if you believe this is a mistake.</string>
     <string name="suspended_understood_button">Understood</string>
+    <!-- Create/Edit Post & Exhibit -->
+    <string name="create_post_exhibition_label">Select Exhibition *</string>
+    <string name="create_post_exhibition_subtitle">Choose an exhibition room where you will place this artwork in 3D.</string>
+    <string name="create_post_exhibition_required">Please select an exhibition to place your artwork.</string>
+    <string name="create_post_exhibition_empty_title">No Exhibitions Yet</string>
+    <string name="create_post_exhibition_empty_body">Create a 3D exhibition room first so you can place and showcase your artwork inside.</string>
+    <string name="create_post_exhibition_create_cta">Create Exhibition (3D)</string>
+    <string name="create_post_place_in_3d">Place in 3D</string>
+    <string name="create_post_step_media">1. Media</string>
+    <string name="create_post_step_details">2. Details &amp; Exhibit</string>
+    <string name="create_post_badge_poster">POSTER</string>
+    <string name="create_post_badge_video">VIDEO</string>
+    <string name="create_post_exhibition_none">None (Standalone Post)</string>
+    <string name="edit_post_title">Edit Post</string>
+    <string name="edit_post_save">Save</string>
+    <string name="edit_post_change_media">Change Media</string>
+    <string name="edit_post_position_3d_hint">To adjust this artwork\'s 3D position or placement, open the 3D Room Editor in your exhibition.</string>
+    <string name="edit_post_load_error">Failed to load artwork details.</string>
+    <string name="post_more_options">Post options</string>
+    <string name="post_action_edit">Edit Post</string>
+    <string name="post_action_delete">Delete Post</string>
+    <string name="post_delete_confirm_title">Delete Artwork?</string>
+    <string name="post_delete_confirm_body">This artwork will be removed from your feed and profile.</string>
+    <string name="exhibit_action_enter">Enter 3D Exhibition</string>
+    <string name="exhibit_action_edit_info">Edit Info &amp; Banner</string>
+    <string name="exhibit_action_edit_3d">Edit 3D Room Layout</string>
+    <string name="exhibit_action_delete">Delete Exhibition</string>
+    <string name="exhibit_delete_confirm_title">Delete Exhibition?</string>
+    <string name="exhibit_delete_confirm_body">This exhibition room will be removed from your profile.</string>
+    <string name="edit_exhibit_title">Edit Exhibition</string>
+    <string name="edit_exhibit_save">Save Changes</string>
+    <string name="edit_exhibit_open_3d">Open 3D Room Editor</string>
+    <string name="edit_exhibit_wall_color">Wall Color</string>
+    <string name="edit_exhibit_size_label">Room Size</string>
+    <string name="edit_exhibit_load_error">Failed to load exhibition details.</string>
+    <string name="edit_exhibit_title_required">Exhibition title is required.</string>
+
+    <!-- Unity Native Overlay (Loading, Editor Form, PlayScene Detail) -->
+    <string name="unity_loading_editor_title">Opening 3D Editor…</string>
+    <string name="unity_loading_viewer_title">Opening 3D Exhibition…</string>
+    <string name="unity_artwork_form_title">Artwork Details</string>
+    <string name="unity_artwork_form_pick_media">Choose Photo or Video</string>
+    <string name="unity_artwork_form_uploading">Uploading media…</string>
+    <string name="unity_artwork_form_media_ready">Media ready</string>
+    <string name="unity_artwork_form_save">Save</string>
+    <string name="unity_artwork_form_error_title">Title is required.</string>
+    <string name="unity_artwork_form_error_media">Please choose a photo or video first.</string>
+    <string name="unity_artwork_detail_title">Artwork Details</string>
+    <string name="unity_artwork_detail_desc_label">Description</string>
+    <string name="unity_artwork_detail_empty_desc">No description.</string>
+    <string name="unity_artwork_detail_close">Close</string>
 </resources>

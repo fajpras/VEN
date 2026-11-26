@@ -42,6 +42,7 @@ import com.ven.app.ui.screens.auth.ResetPasswordScreen
 import com.ven.app.ui.screens.auth.VerifyOtpScreen
 import com.ven.app.ui.screens.create.exhibit.CreateExhibitTemplateScreen
 import com.ven.app.ui.screens.create.exhibit.CreateExhibitViewModel
+import com.ven.app.ui.screens.create.exhibit.edit.EditExhibitRoute
 import com.ven.app.ui.screens.create.exhibit.info.CreateExhibitInfoScreen
 import com.ven.app.ui.screens.unity.UnityLoadingScreen
 import com.ven.app.ui.screens.create.post.CreatePostRoute
@@ -284,6 +285,18 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onNavigateToExhibitEditor = { id ->
                     navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "template01" }))
                 },
+                onNavigateToEditExhibit = { exhibitId ->
+                    navController.navigate(Screen.EditExhibit.createRoute(exhibitId))
+                },
+                onNavigateToEditExhibit3d = { exhibitId, title ->
+                    navController.navigate(
+                        Screen.CreateExhibitEditor.createRoute(
+                            templateId = "template01",
+                            title = title,
+                            editRoomId = exhibitId.toString(),
+                        ),
+                    )
+                },
                 onNavigateToExhibitViewer = { id, roomId ->
                     navController.navigate(Screen.ViewExhibit.createRoute(id, roomId))
                 },
@@ -297,13 +310,80 @@ fun AppNavHost(showExplore: Boolean = false) {
             CreatePostRoute(
                 onCloseClick = { navController.popBackStack() },
                 onPostSuccess = {
+                    homeViewModel.muatUlang(filterSeen = false)
                     navController.popBackStack()
+                },
+                onPlaceInExhibition = { exhibitId, templateId, exhibitTitle, tipe, placement ->
+                    homeViewModel.muatUlang(filterSeen = false)
+                    com.ven.app.util.UnityLauncher.pendingArtworkPlacement = placement
+                    navController.navigate(
+                        Screen.CreateExhibitEditor.createRoute(
+                            templateId = templateId,
+                            title = exhibitTitle,
+                            tipe = tipe,
+                            editRoomId = exhibitId.toString(),
+                        ),
+                    ) {
+                        popUpTo(Screen.CreatePost.route) { inclusive = true }
+                    }
                 },
                 onNavigateToExhibit = {
                     navController.navigate(Screen.CreateExhibit.route) {
                         popUpTo(Screen.CreatePost.route) { inclusive = true }
                         launchSingleTop = true
                     }
+                },
+            )
+        }
+
+        composable(
+            route = Screen.EditPost.route,
+            arguments = listOf(
+                navArgument("postId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+            ),
+        ) { backStackEntry ->
+            val postId = backStackEntry.arguments?.getString("postId").orEmpty()
+            CreatePostRoute(
+                editingPostId = postId,
+                onCloseClick = { navController.popBackStack() },
+                onPostSuccess = {
+                    homeViewModel.muatUlang(filterSeen = false)
+                    navController.popBackStack()
+                },
+                onNavigateToExhibit = {},
+            )
+        }
+
+        composable(
+            route = Screen.EditExhibit.route,
+            arguments = listOf(
+                navArgument("exhibitId") {
+                    type = NavType.IntType
+                    defaultValue = 0
+                },
+            ),
+        ) { backStackEntry ->
+            val exhibitId = backStackEntry.arguments?.getInt("exhibitId") ?: 0
+            EditExhibitRoute(
+                exhibitId = exhibitId,
+                onBackClick = { navController.popBackStack() },
+                onSaved = {
+                    homeViewModel.muatUlang(filterSeen = false)
+                    navController.popBackStack()
+                },
+                onOpen3dEditor = { templateId, title, tipe, bannerUrl ->
+                    navController.navigate(
+                        Screen.CreateExhibitEditor.createRoute(
+                            templateId = templateId,
+                            title = title,
+                            bannerUrl = bannerUrl,
+                            tipe = tipe,
+                            editRoomId = exhibitId.toString(),
+                        ),
+                    )
                 },
             )
         }
@@ -399,6 +479,10 @@ fun AppNavHost(showExplore: Boolean = false) {
                     type = NavType.StringType
                     defaultValue = "kecil"
                 },
+                navArgument("editRoomId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
             ),
         ) { backStackEntry ->
             val templateId = backStackEntry.arguments?.getString("templateId") ?: "template01"
@@ -406,6 +490,7 @@ fun AppNavHost(showExplore: Boolean = false) {
             val description = backStackEntry.arguments?.getString("description") ?: ""
             val bannerUrl = backStackEntry.arguments?.getString("bannerUrl") ?: ""
             val tipe = backStackEntry.arguments?.getString("tipe") ?: "kecil"
+            val editRoomId = backStackEntry.arguments?.getString("editRoomId")?.toIntOrNull()
             UnityLoadingScreen(
                 targetId = templateId,
                 title = title,
@@ -413,6 +498,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                 bannerUrl = bannerUrl,
                 tipe = tipe,
                 isEditor = true,
+                roomId = editRoomId,
                 onBackClick = {
                     createExhibitViewModel.clearTemporaryData()
                     if (!navController.popBackStack(Screen.Home.route, inclusive = false)) {
@@ -484,6 +570,9 @@ fun AppNavHost(showExplore: Boolean = false) {
                     },
                     onUserClick = { clickedUserId ->
                         navController.navigate(Screen.UserProfile.createRoute(clickedUserId))
+                    },
+                    onEditPostClick = { editPostId ->
+                        navController.navigate(Screen.EditPost.createRoute(editPostId))
                     },
                 )
             } else {
@@ -735,6 +824,8 @@ fun MainHomeScreen(
     onNavigateToCreatePost: () -> Unit = {},
     onNavigateToCreateExhibit: () -> Unit = {},
     onNavigateToExhibitEditor: (templateIdOrExhibitId: String) -> Unit = {},
+    onNavigateToEditExhibit: (exhibitId: Int) -> Unit = {},
+    onNavigateToEditExhibit3d: (exhibitId: Int, title: String) -> Unit = { _, _ -> },
     onNavigateToExhibitViewer: (exhibitId: String, roomId: Int?) -> Unit = { _, _ -> },
     onNavigateToUserProfile: (userId: String) -> Unit = {},
 ) {
@@ -872,7 +963,7 @@ fun MainHomeScreen(
                     onMenuClick = onNavigateToSettings,
                     onProfileTabChange = profileViewModel::pilihTab,
                     onSkillSheetToggle = profileViewModel::aturSkillSheet,
-                        onRetryClick = profileViewModel::muat,
+                    onRetryClick = profileViewModel::muat,
                     onMediaClick = { media ->
                         if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
                             onNavigateToExhibitViewer(media.id, null)
@@ -880,6 +971,9 @@ fun MainHomeScreen(
                             onNavigateToPostsFeed(media.id, "me")
                         }
                     },
+                    onEditExhibitInfoClick = onNavigateToEditExhibit,
+                    onEditExhibit3dClick = onNavigateToEditExhibit3d,
+                    onDeleteExhibitClick = profileViewModel::hapusPameran,
                 )
             }
         }

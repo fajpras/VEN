@@ -242,6 +242,9 @@
 
     <!-- Create Exhibit Strings (§8.14 Create Exhibit) -->
     <string name="create_exhibit_title">Pameran Baru</string>
+    <string name="create_exhibit_hall_label">Hall Pameran</string>
+    <string name="create_exhibit_hall_value">Hall %1$s</string>
+    <string name="create_exhibit_hall_capacity">%1$d Panel</string>
     <string name="create_exhibit_template_small">Kecil</string>
     <string name="create_exhibit_template_medium">Sedang</string>
     <string name="create_exhibit_template_big">Besar</string>
@@ -432,4 +435,55 @@
     <string name="suspended_bullet_restore_temp">Akses akun akan pulih otomatis setelah masa penangguhan berakhir.</string>
     <string name="suspended_bullet_restore_permanent">Anda tidak lagi dapat masuk ke akun ini. Hubungi Dukungan VEN jika Anda merasa ini kekeliruan.</string>
     <string name="suspended_understood_button">Mengerti</string>
+    <!-- Buat/Edit Karya & Pameran -->
+    <string name="create_post_exhibition_label">Pilih Pameran *</string>
+    <string name="create_post_exhibition_subtitle">Pilih ruang pameran tempat Anda akan mengatur posisi karya ini secara 3D.</string>
+    <string name="create_post_exhibition_required">Pilih pameran terlebih dahulu untuk menaruh karya Anda.</string>
+    <string name="create_post_exhibition_empty_title">Belum Ada Pameran</string>
+    <string name="create_post_exhibition_empty_body">Buat ruang pameran 3D terlebih dahulu agar Anda bisa menaruh dan memajang karya di dalamnya.</string>
+    <string name="create_post_exhibition_create_cta">Buat Pameran (3D)</string>
+    <string name="create_post_place_in_3d">Atur Posisi 3D</string>
+    <string name="create_post_step_media">1. Media</string>
+    <string name="create_post_step_details">2. Detail &amp; Pameran</string>
+    <string name="create_post_badge_poster">POSTER</string>
+    <string name="create_post_badge_video">VIDEO</string>
+    <string name="create_post_exhibition_none">Tanpa Pameran (Postingan Mandiri)</string>
+    <string name="edit_post_title">Edit Karya</string>
+    <string name="edit_post_save">Simpan</string>
+    <string name="edit_post_change_media">Ganti Media</string>
+    <string name="edit_post_position_3d_hint">Untuk mengatur posisi panel karya ini, buka Editor Ruang 3D pada pameran Anda.</string>
+    <string name="edit_post_load_error">Gagal memuat detail karya.</string>
+    <string name="post_more_options">Opsi karya</string>
+    <string name="post_action_edit">Edit Karya</string>
+    <string name="post_action_delete">Hapus Karya</string>
+    <string name="post_delete_confirm_title">Hapus Karya?</string>
+    <string name="post_delete_confirm_body">Karya ini akan dihapus dari beranda dan profil Anda.</string>
+    <string name="exhibit_action_enter">Masuk Pameran 3D</string>
+    <string name="exhibit_action_edit_info">Edit Info &amp; Banner</string>
+    <string name="exhibit_action_edit_3d">Edit Tata Letak Ruang 3D</string>
+    <string name="exhibit_action_delete">Hapus Pameran</string>
+    <string name="exhibit_delete_confirm_title">Hapus Pameran?</string>
+    <string name="exhibit_delete_confirm_body">Ruang pameran ini akan dihapus dari profil Anda.</string>
+    <string name="edit_exhibit_title">Edit Pameran</string>
+    <string name="edit_exhibit_save">Simpan Perubahan</string>
+    <string name="edit_exhibit_open_3d">Buka Editor Ruang 3D</string>
+    <string name="edit_exhibit_wall_color">Warna Dinding</string>
+    <string name="edit_exhibit_size_label">Ukuran Ruang</string>
+    <string name="edit_exhibit_load_error">Gagal memuat detail pameran.</string>
+    <string name="edit_exhibit_title_required">Judul pameran wajib diisi.</string>
+
+    <!-- Unity Native Overlay (Loading, Form Editor, Detail PlayScene) -->
+    <string name="unity_loading_editor_title">Membuka Ruang 3D…</string>
+    <string name="unity_loading_viewer_title">Memuat Pameran 3D…</string>
+    <string name="unity_artwork_form_title">Detail Karya</string>
+    <string name="unity_artwork_form_pick_media">Pilih Foto / Video</string>
+    <string name="unity_artwork_form_uploading">Mengunggah media…</string>
+    <string name="unity_artwork_form_media_ready">Media terpasang</string>
+    <string name="unity_artwork_form_save">Simpan</string>
+    <string name="unity_artwork_form_error_title">Judul karya wajib diisi.</string>
+    <string name="unity_artwork_form_error_media">Pilih foto atau video terlebih dahulu.</string>
+    <string name="unity_artwork_detail_title">Detail Karya</string>
+    <string name="unity_artwork_detail_desc_label">Deskripsi</string>
+    <string name="unity_artwork_detail_empty_desc">Tidak ada deskripsi.</string>
+    <string name="unity_artwork_detail_close">Tutup</string>
 </resources>

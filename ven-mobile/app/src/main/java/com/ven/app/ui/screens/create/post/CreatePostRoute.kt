@@ -42,6 +42,8 @@ fun CreatePostRoute(
     onPostSuccess: () -> Unit,
     onNavigateToExhibit: () -> Unit,
     modifier: Modifier = Modifier,
+    editingPostId: String? = null,
+    onPlaceInExhibition: ((Int, String, String, String, com.ven.app.util.PendingArtworkPlacement) -> Unit)? = null,
     viewModel: CreatePostViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -51,10 +53,29 @@ fun CreatePostRoute(
     var mediaFile by remember { mutableStateOf<File?>(null) }
     var mediaPreview by remember { mutableStateOf<ImageBitmap?>(null) }
 
+    LaunchedEffect(editingPostId) {
+        if (!editingPostId.isNullOrBlank()) {
+            viewModel.muatKaryaUntukEdit(editingPostId)
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 CreatePostEvent.PostSuccess -> onPostSuccess()
+                is CreatePostEvent.PlaceInExhibition -> {
+                    if (onPlaceInExhibition != null) {
+                        onPlaceInExhibition(
+                            event.exhibitId,
+                            event.templateId,
+                            event.exhibitTitle,
+                            event.tipe,
+                            event.placement,
+                        )
+                    } else {
+                        onPostSuccess()
+                    }
+                }
                 CreatePostEvent.SwitchToExhibit -> onNavigateToExhibit()
             }
         }
@@ -116,7 +137,11 @@ fun CreatePostRoute(
         state = state,
         mediaPreview = mediaPreview,
         onCloseClick = onCloseClick,
-        onBackClick = { viewModel.onBackClick() },
+        onBackClick = {
+            if (!viewModel.onBackClick()) {
+                onCloseClick()
+            }
+        },
         onNextClick = viewModel::onNextClick,
         onPickMediaClick = {
             mediaPicker.launch(
@@ -126,7 +151,9 @@ fun CreatePostRoute(
         onPostClick = {
             val berkas = mediaFile
             val mimeType = state.mediaMimeType
-            if (berkas != null && mimeType != null) {
+            if (state.isEditMode) {
+                viewModel.submitPost(berkas, mimeType)
+            } else if (berkas != null && mimeType != null) {
                 viewModel.submitPost(berkas, mimeType)
             } else {
                 viewModel.onMediaDitolak(R.string.create_post_media_required)
@@ -135,7 +162,9 @@ fun CreatePostRoute(
         onContentTypeSelected = viewModel::onContentTypeSelected,
         onTitleChange = viewModel::onTitleChange,
         onCategoryChange = viewModel::onCategoryChange,
+        onExhibitionChange = viewModel::onExhibitionChange,
         onDescriptionChange = viewModel::onDescriptionChange,
+        onCreateExhibitClick = onNavigateToExhibit,
         modifier = modifier,
     )
 }
