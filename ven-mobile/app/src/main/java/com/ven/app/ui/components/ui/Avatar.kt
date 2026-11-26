@@ -3,6 +3,7 @@ package com.ven.app.ui.components.ui
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -18,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexTheme
@@ -51,7 +53,8 @@ fun Avatar(
     Box(
         modifier = modifier
             .size(size.dp)
-            .clip(CircleShape),
+            .clip(CircleShape)
+            .border(1.dp, colors.borderInput, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         if (resolvedImageBitmap != null) {

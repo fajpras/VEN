@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -35,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +45,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.ven.app.R
 import com.ven.app.data.cache.ImageCacheManager
 import kotlinx.coroutines.delay
 import java.io.File
@@ -311,21 +315,25 @@ fun AutoPlayVideoPlayer(
             )
         }
 
-        // Tombol mute/unmute bergaya Instagram di sudut kanan bawah
+        // Tombol mute/unmute bergaya Instagram di sudut kanan bawah (ikon vektor bersih)
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(10.dp)
-                .size(30.dp)
+                .size(32.dp)
                 .clip(CircleShape)
-                .background(Color.Black.copy(alpha = 0.6f))
+                .background(Color.Black.copy(alpha = 0.58f))
+                .border(0.8.dp, Color.White.copy(alpha = 0.22f), CircleShape)
                 .clickable { isMuted = !isMuted },
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = if (isMuted) "🔇" else "🔊",
-                fontSize = 13.sp,
-                color = Color.White,
+            Icon(
+                painter = painterResource(
+                    id = if (isMuted) R.drawable.ic_sound_off else R.drawable.ic_sound_on,
+                ),
+                contentDescription = if (isMuted) "Unmute" else "Mute",
+                tint = Color.White,
+                modifier = Modifier.size(16.dp),
             )
         }
     }
