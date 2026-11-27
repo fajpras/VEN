@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,12 +10,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Pameran extends Model
 {
-    use SoftDeletes;
+    use HasUuids, SoftDeletes;
 
     public $timestamps = false;
 
     protected $table = 'pameran';
     protected $primaryKey = 'id_pameran';
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $fillable = ['id_pengguna', 'id_model', 'judul', 'warna', 'banner', 'tipe'];
 

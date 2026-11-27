@@ -52,6 +52,10 @@ class PameranController extends Controller
         $query = Pameran::query()
             ->with(['model3d', self::PENGGUNA_PUBLIK, 'karya.kategori']);
 
+        if ($user) {
+            $query->orderByRaw('CASE WHEN pameran.id_pengguna = ? THEN 1 ELSE 0 END ASC', [$user->id_pengguna]);
+        }
+
         if ($user && $user->kategori()->exists() && ! $hasOthers) {
             $subqueryBobot = DB::table('karya')
                 ->join('pengguna_kategori', function ($join) use ($user) {
@@ -167,7 +171,11 @@ class PameranController extends Controller
 
         $validated = $request->validate(['jenis' => ['required', Rule::in(['privat', 'umum'])]]);
 
-        return $this->created($pameran->ruangan()->create($validated), 'Ruangan dibuat.');
+        $ruangan = $pameran->ruangan()->firstOrCreate($validated);
+
+        return $ruangan->wasRecentlyCreated
+            ? $this->created($ruangan, 'Ruangan dibuat.')
+            : $this->ok($ruangan, 'Ruangan sudah ada.');
     }
 
     public function templates(Request $request)

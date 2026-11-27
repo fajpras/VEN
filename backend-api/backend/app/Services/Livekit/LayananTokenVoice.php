@@ -70,9 +70,15 @@ final class LayananTokenVoice
             ->latest('waktu');
 
         // Penyelenggara boleh bergabung pada sesi mana pun di ruangannya;
-        // pengundang hanya pada sesi undangannya sendiri.
+        // pengundang asli atau tamu waiting room yang sudah di-ACC hanya pada sesi terkait.
         if (! $penyelenggara) {
-            $kueri->where('id_pengguna', $pengguna->id_pengguna);
+            $kueri->where(function ($sub) use ($pengguna) {
+                $sub->where('id_pengguna', $pengguna->id_pengguna)
+                    ->orWhereHas('permintaanGabung', function ($q) use ($pengguna) {
+                        $q->where('id_pengguna', $pengguna->id_pengguna)
+                            ->where('status', 'disetujui');
+                    });
+            });
         }
 
         $undangan = $kueri->first();

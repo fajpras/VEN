@@ -3,6 +3,7 @@
 use App\Console\Commands\BackupDatabase;
 use App\Console\Commands\EnkripsiGoogleId;
 use App\Console\Commands\InitializeDatabase;
+use App\Console\Commands\KirimPengingatUndanganCommand;
 use App\Console\Commands\RestoreDatabase;
 use App\Console\Commands\SetupDatabase;
 use App\Console\Commands\UjiTransaksiPameran;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         SetupDatabase::class,
         InitializeDatabase::class,
         EnkripsiGoogleId::class,
+        KirimPengingatUndanganCommand::class,
         UjiTransaksiPameran::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {

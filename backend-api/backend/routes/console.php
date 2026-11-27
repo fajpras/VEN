@@ -9,6 +9,17 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // -----------------------------------------------------------------
+// Pengingat H-1 otomatis untuk undangan diskusi privat (cek tiap jam)
+// -----------------------------------------------------------------
+Schedule::command('undangan:kirim-pengingat')
+    ->hourly()
+    ->withoutOverlapping();
+
+Schedule::command('ven:kedaluwarsakan-undangan')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
+
+// -----------------------------------------------------------------
 // Automatic daily backup at 00:00 (Midnight)
 // -----------------------------------------------------------------
 Schedule::command('ven:backup-db')

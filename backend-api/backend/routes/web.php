@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Web\AdminExhibitionController;
 use App\Http\Controllers\Admin\Web\AdminLogController;
 use App\Http\Controllers\Admin\Web\AdminPostController;
 use App\Http\Controllers\Admin\Web\AdminSettingsController;
+use App\Http\Controllers\Pengguna\UndanganTautanWebController;
 use App\Http\Middleware\HanyaAdminWeb;
 use App\Http\Middleware\SinkronBahasaAdmin;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,13 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     abort(404);
 });
+
+// Tanggapan undangan diskusi privat langsung dari tombol Signed URL di Email
+Route::get('/undangan/{undangan}/tanggapi/{aksi}', [UndanganTautanWebController::class, 'tanggapi'])
+    ->whereNumber('undangan')
+    ->whereIn('aksi', ['setujui', 'tolak'])
+    ->middleware('signed')
+    ->name('undangan.web.tanggapi');
 
 // Admin Authentication Routes
 Route::prefix('admin')->middleware([SinkronBahasaAdmin::class])->group(function () {

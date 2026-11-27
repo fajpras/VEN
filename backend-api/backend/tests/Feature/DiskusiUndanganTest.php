@@ -146,6 +146,7 @@ class DiskusiUndanganTest extends TestCase
         $response = $this->actingAs($this->pengundang)->postJson('/api/undangan', [
             'id_pameran' => $this->pameran->id_pameran,
             'waktu' => now()->addDays(3)->format('Y-m-d H:i:s'),
+            'catatan' => 'Ingin mengajukan diskusi kedua',
         ]);
 
         $response->assertStatus(409);
@@ -202,12 +203,14 @@ class DiskusiUndanganTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('data.status', 'ditolak');
-        $response->assertJsonPath('data.catatan', 'Mohon maaf jadwal penuh');
+        $response->assertJsonPath('data.alasan', 'Mohon maaf jadwal penuh');
+        $response->assertJsonPath('data.catatan', 'Permohonan diskusi');
 
         $this->assertDatabaseHas('undangan', [
             'id_undangan' => $undangan->id_undangan,
             'status' => 'ditolak',
-            'catatan' => 'Mohon maaf jadwal penuh',
+            'alasan' => 'Mohon maaf jadwal penuh',
+            'catatan' => 'Permohonan diskusi',
         ]);
     }
 

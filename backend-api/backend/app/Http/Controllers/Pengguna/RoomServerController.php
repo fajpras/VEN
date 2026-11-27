@@ -30,11 +30,11 @@ class RoomServerController extends Controller
             return $this->provision($request, 'ruangan-'.$ruangan->id_ruangan, $edgegap);
         }
 
-        if (! ctype_digit($roomKey)) {
+        if (! \Illuminate\Support\Str::isUuid($roomKey)) {
             return $this->notFound('Pameran tidak ditemukan.');
         }
 
-        $pameran = Pameran::find((int) $roomKey);
+        $pameran = Pameran::find($roomKey);
         if (! $pameran) {
             return $this->notFound('Pameran tidak ditemukan.');
         }

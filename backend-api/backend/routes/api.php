@@ -49,13 +49,13 @@ Route::middleware(CatatKeamanan::class)->group(function () {
             Route::post('pameran', 'store');
             Route::post('pameran/banner', 'uploadBanner');
             Route::post('exhibitions', 'storeFromUnity');
-            Route::put('exhibitions/{pameran}', 'updateFromUnity')->whereNumber('pameran');
-            Route::get('exhibitions/{pameran}/room-dto', 'roomDto')->whereNumber('pameran');
-            Route::get('pameran/{pameran}', 'show')->whereNumber('pameran');
-            Route::get('pameran/{pameran}/room-dto', 'roomDto')->whereNumber('pameran');
-            Route::match(['put', 'patch', 'post'], 'pameran/{pameran}', 'update')->whereNumber('pameran');
-            Route::delete('pameran/{pameran}', 'destroy')->whereNumber('pameran');
-            Route::post('pameran/{pameran}/ruangan', 'storeRuangan')->whereNumber('pameran');
+            Route::put('exhibitions/{pameran}', 'updateFromUnity')->whereUuid('pameran');
+            Route::get('exhibitions/{pameran}/room-dto', 'roomDto')->whereUuid('pameran');
+            Route::get('pameran/{pameran}', 'show')->whereUuid('pameran');
+            Route::get('pameran/{pameran}/room-dto', 'roomDto')->whereUuid('pameran');
+            Route::match(['put', 'patch', 'post'], 'pameran/{pameran}', 'update')->whereUuid('pameran');
+            Route::delete('pameran/{pameran}', 'destroy')->whereUuid('pameran');
+            Route::post('pameran/{pameran}/ruangan', 'storeRuangan')->whereUuid('pameran');
         });
 
         Route::controller(Pengguna\KaryaController::class)->group(function () {
@@ -73,16 +73,19 @@ Route::middleware(CatatKeamanan::class)->group(function () {
         Route::controller(Pengguna\DiskusiController::class)->group(function () {
             Route::get('undangan', 'index');
             Route::post('undangan', 'store');
-            Route::get('undangan/{undangan}', 'show');
-            Route::get('undangan/{undangan}/status', 'status');
-            Route::patch('undangan/{undangan}', 'tanggapi');
-            Route::get('ruangan/{ruangan}/voice', 'voiceToken')->middleware('throttle:30,1');
+            Route::get('undangan/tautan/{token}', 'aksesTautan')->where('token', '[A-Za-z0-9_-]+');
+            Route::get('undangan/{undangan}', 'show')->whereNumber('undangan');
+            Route::get('undangan/{undangan}/status', 'status')->whereNumber('undangan');
+            Route::patch('undangan/{undangan}', 'tanggapi')->whereNumber('undangan');
+            Route::get('ruangan/{ruangan}/antrean', 'antrean')->whereNumber('ruangan');
+            Route::patch('ruangan/{ruangan}/antrean/{permintaan}', 'tanggapiAntrean')->whereNumber('ruangan')->whereNumber('permintaan');
+            Route::get('ruangan/{ruangan}/voice', 'voiceToken')->whereNumber('ruangan')->middleware('throttle:30,1');
             Route::get('ruangan/{ruangan}/room-dto', 'roomDto')->whereNumber('ruangan');
         });
 
         Route::controller(Pengguna\RoomServerController::class)->middleware('throttle:30,1')->group(function () {
             Route::post('room-server/{roomKey}', 'byRoomKey')->where('roomKey', '[A-Za-z0-9_-]+');
-            Route::post('pameran/{pameran}/server', 'pameran')->whereNumber('pameran');
+            Route::post('pameran/{pameran}/server', 'pameran')->whereUuid('pameran');
             Route::post('ruangan/{ruangan}/server', 'ruangan')->whereNumber('ruangan');
         });
 
@@ -107,9 +110,9 @@ Route::middleware(CatatKeamanan::class)->group(function () {
                 Route::delete('karya/{karya}', 'karyaDestroy')->whereUuid('karya');
                 Route::post('karya/{karya}/pulihkan', 'karyaRestore')->whereUuid('karya')->withTrashed();
                 Route::get('pameran', 'pameranIndex');
-                Route::get('pameran/{pameran}', 'pameranShow')->whereNumber('pameran')->withTrashed();
-                Route::delete('pameran/{pameran}', 'pameranDestroy')->whereNumber('pameran');
-                Route::post('pameran/{pameran}/pulihkan', 'pameranRestore')->whereNumber('pameran')->withTrashed();
+                Route::get('pameran/{pameran}', 'pameranShow')->whereUuid('pameran')->withTrashed();
+                Route::delete('pameran/{pameran}', 'pameranDestroy')->whereUuid('pameran');
+                Route::post('pameran/{pameran}/pulihkan', 'pameranRestore')->whereUuid('pameran')->withTrashed();
             });
 
             Route::controller(Admin\LogController::class)->prefix('log')->group(function () {
