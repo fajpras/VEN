@@ -15,7 +15,9 @@ import kotlinx.coroutines.launch
  * hidup ketika pengguna masuk ke proses Unity.
  */
 class VoiceChatViewModel(
-    private val penyediaToken: PenyediaTokenVoice = PenyediaTokenVoice { ApiUndangan.voiceToken(it) },
+    private val penyediaToken: PenyediaTokenVoice = PenyediaTokenVoice { idRuangan, idUndangan ->
+        ApiUndangan.voiceToken(idRuangan, idUndangan)
+    },
 ) : ViewModel() {
 
     private val _acara = MutableSharedFlow<VoiceAcara>(extraBufferCapacity = 1)
@@ -24,11 +26,11 @@ class VoiceChatViewModel(
     /** Status koneksi yang diperbarui oleh VoiceChatService. */
     val uiState: StateFlow<VoiceUiState> = VoiceSesiStatus.state
 
-    fun mulaiSesi(idRuangan: Int, exhibitId: String? = null) {
+    fun mulaiSesi(idRuangan: Int, exhibitId: String? = null, idUndangan: Int? = null) {
         VoiceSesiStatus.menyiapkan()
 
         viewModelScope.launch {
-            val hasil = penyediaToken.token(idRuangan)
+            val hasil = penyediaToken.token(idRuangan, idUndangan)
 
             val peristiwa = hasil.fold(
                 onSuccess = { VoiceAcara.SiapGabung(it, idRuangan, exhibitId) },

@@ -892,11 +892,20 @@ Bottom sheet modal yang dibungkus oleh `VexBottomSheet`:
       > "Your request which is scheduled in **Thursday, 24th September 2026** at **02.00 PM** has been approved. The room will be available on said time, please attend the meeting as scheduled."
     - **Varian Waiting (`wireframe schedule-3.png`):**  
       > "Your request which is scheduled in **Thursday, 24th September 2026** at **02.00 PM** has been sent and is waiting for approval. Please wait patiently."
-    - Margin bawah: 32dp.
+    - **Varian Ditolak:**
+      > "Your request which was scheduled on **Thursday, 24th September 2026** at **02.00 PM** was rejected."
+    - **Varian Kedaluwarsa:**
+      > "Your request which was scheduled on **Thursday, 24th September 2026** at **02.00 PM** expired without response."
+    - **Hint Jendela Sesi:**
+      - Muncul untuk jadwal privat yang disetujui: "Room opens 15 minutes before scheduled time." (sebelum), "Session is active. You can join now." (aktif), atau "Session has ended." (setelah).
+    - **Alasan & Kode Sesi:**
+      - Jika ada alasan penolakan/kedaluwarsa, ditampilkan di bawah teks status dengan warna aksen bahaya (`colors.danger`).
+      - Jika berstatus disetujui dan memiliki tautan/kode sesi, kotak kartu kode sesi ditampilkan lengkap dengan aksi salin ke clipboard dengan satu ketukan.
+    - Margin bawah: 24dp.
   - **Tombol Aksi Utama ("Join Room"):**
     - Bentuk: `Pill` (`RoundedCornerShape(VexRadius.full)`), lebar penuh (`fillMaxWidth`), tinggi 48dp (`VexSize.button`).
-    - **Kondisi Approved:** Background ungu neon `Primary` (`#B800FF`), teks putih bold 16sp, aktif/clickable (menampilkan snackbar/feedback masuk ruang virtual).
-    - **Kondisi Waiting:** Background ungu gelap padam (`#3D154D` / `containerDisabled`), teks ungu redup (`#7A588A` / `onDisabled`), **disabled (`enabled = false`)**.
+    - **Kondisi Aktif (Joinable):** Background ungu neon `Primary` (`#B800FF`), teks putih bold 16sp, aktif/clickable (hanya jika `isApproved = true` dan waktu saat ini berada di dalam jendela sesi [-15 menit, +15 menit] dari jadwal).
+    - **Kondisi Nonaktif:** Background ungu gelap padam (`#3D154D` / `containerDisabled`), teks ungu redup (`#7A588A` / `onDisabled`), **disabled (`enabled = false`)** saat di luar jendela waktu atau belum disetujui.
 
 ---
 

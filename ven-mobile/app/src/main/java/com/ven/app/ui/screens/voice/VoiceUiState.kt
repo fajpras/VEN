@@ -44,7 +44,7 @@ sealed interface VoiceAcara {
 
 /** Penyedia token voice; diabstraksi agar ViewModel dapat diuji tanpa Retrofit. */
 fun interface PenyediaTokenVoice {
-    suspend fun token(idRuangan: Int): Result<VoiceTokenModel>
+    suspend fun token(idRuangan: Int, idUndangan: Int?): Result<VoiceTokenModel>
 }
 
 /**

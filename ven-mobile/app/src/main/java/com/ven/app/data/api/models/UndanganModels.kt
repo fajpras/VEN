@@ -27,6 +27,9 @@ data class UndanganItemModel(
     @SerializedName("catatan")
     val catatan: String? = null,
 
+    @SerializedName("alasan")
+    val alasan: String? = null,
+
     @SerializedName("tautan")
     val tautan: String? = null,
 
@@ -108,6 +111,9 @@ data class TanggapiUndanganRequest(
 
     @SerializedName("catatan")
     val catatan: String? = null,
+
+    @SerializedName("alasan")
+    val alasan: String? = null,
 )
 
 data class VoiceTokenModel(

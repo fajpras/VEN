@@ -33,7 +33,7 @@ class VoiceChatViewModelTest {
     }
 
     private fun viewModelDengan(hasil: Result<VoiceTokenModel>) = VoiceChatViewModel(
-        penyediaToken = { hasil },
+        penyediaToken = { _, _ -> hasil },
     )
 
     @Test

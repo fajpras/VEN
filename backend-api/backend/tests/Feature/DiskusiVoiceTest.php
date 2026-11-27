@@ -146,6 +146,47 @@ class DiskusiVoiceTest extends TestCase
         $response->assertStatus(403);
     }
 
+    public function test_voice_diterima_10_menit_setelah_jadwal(): void
+    {
+        $this->buatUndanganDisetujui(now()->subMinutes(10));
+
+        $this->actingAs($this->pengundang)
+            ->getJson("/api/ruangan/{$this->ruanganPrivat->id_ruangan}/voice")
+            ->assertOk();
+    }
+
+    public function test_voice_ditolak_20_menit_setelah_jadwal(): void
+    {
+        $this->buatUndanganDisetujui(now()->subMinutes(20));
+
+        $this->actingAs($this->pengundang)
+            ->getJson("/api/ruangan/{$this->ruanganPrivat->id_ruangan}/voice")
+            ->assertStatus(403);
+    }
+
+    public function test_penyelenggara_memilih_undangan_sesuai_parameter(): void
+    {
+        $this->buatUndanganDisetujui();
+
+        $undanganKedua = Undangan::forceCreate([
+            'id_pengguna' => $this->orangLain->id_pengguna,
+            'id_ruangan' => $this->ruanganPrivat->id_ruangan,
+            'waktu' => now()->addMinutes(5),
+            'catatan' => 'Diskusi lain',
+            'status' => 'disetujui',
+            'tautan' => 'tautan-uji-'.uniqid(),
+        ]);
+
+        $response = $this->actingAs($this->penyelenggara)
+            ->getJson("/api/ruangan/{$this->ruanganPrivat->id_ruangan}/voice?undangan={$undanganKedua->id_undangan}");
+
+        $response->assertOk();
+        $this->assertSame(
+            'diskusi-'.$this->ruanganPrivat->id_ruangan.'-'.$undanganKedua->id_undangan,
+            $response->json('data.room')
+        );
+    }
+
     public function test_voice_mengembalikan_503_tanpa_konfigurasi_livekit(): void
     {
         $this->buatUndanganDisetujui();
