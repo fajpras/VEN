@@ -71,6 +71,9 @@ class VenUnityActivity : UnityPlayerGameActivity() {
     private var isArtworkDetailVisible by mutableStateOf(false)
     private var artworkDetailState by mutableStateOf(UnityArtworkDetailState())
 
+    private var isScheduleSheetVisible by mutableStateOf(false)
+    private var scheduleSheetState by mutableStateOf(UnityScheduleSheetState())
+
     private lateinit var mediaPickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>
 
     private val fallbackDismissRunnable = Runnable {
@@ -78,7 +81,7 @@ class VenUnityActivity : UnityPlayerGameActivity() {
     }
 
     private val hideComposeOverlayRunnable = Runnable {
-        if (!isArtworkFormVisible && !isArtworkDetailVisible) {
+        if (!isArtworkFormVisible && !isArtworkDetailVisible && !isScheduleSheetVisible) {
             composeOverlayView?.visibility = View.GONE
         }
     }
@@ -110,6 +113,10 @@ class VenUnityActivity : UnityPlayerGameActivity() {
             }
             if (isArtworkDetailVisible) {
                 dismissArtworkDetail()
+                return true
+            }
+            if (isScheduleSheetVisible) {
+                dismissScheduleSheet()
                 return true
             }
         }
@@ -151,7 +158,7 @@ class VenUnityActivity : UnityPlayerGameActivity() {
 
     private fun scheduleHideComposeOverlayIfIdle() {
         mainHandler.removeCallbacks(hideComposeOverlayRunnable)
-        if (!isArtworkFormVisible && !isArtworkDetailVisible) {
+        if (!isArtworkFormVisible && !isArtworkDetailVisible && !isScheduleSheetVisible) {
             mainHandler.postDelayed(hideComposeOverlayRunnable, 280L)
         }
     }
@@ -196,9 +203,12 @@ class VenUnityActivity : UnityPlayerGameActivity() {
                             artworkFormState = artworkFormState.copy(description = it, errorMessage = null)
                         },
                         onPickMediaClick = {
-                            mediaPickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo),
-                            )
+                            val pickerType = if (artworkFormState.isVideo) {
+                                ActivityResultContracts.PickVisualMedia.VideoOnly
+                            } else {
+                                ActivityResultContracts.PickVisualMedia.ImageOnly
+                            }
+                            mediaPickerLauncher.launch(PickVisualMediaRequest(pickerType))
                         },
                         onSaveClick = { submitArtworkFormToUnity() },
                         onDismiss = { cancelArtworkForm() },
@@ -209,6 +219,25 @@ class VenUnityActivity : UnityPlayerGameActivity() {
                         detail = artworkDetailState,
                         isIndonesian = isIndonesian,
                         onDismiss = { dismissArtworkDetail() },
+                    )
+
+                    UnityScheduleSheet(
+                        visible = isScheduleSheetVisible,
+                        state = scheduleSheetState,
+                        isIndonesian = isIndonesian,
+                        onCopyLink = { link -> copyLinkToClipboard(link) },
+                        onApproveGuest = { permintaanId ->
+                            respondToWaitingGuest(scheduleSheetState.roomId, permintaanId, "disetujui")
+                        },
+                        onRejectGuest = { permintaanId ->
+                            respondToWaitingGuest(scheduleSheetState.roomId, permintaanId, "ditolak")
+                        },
+                        onRefresh = {
+                            if (scheduleSheetState.roomId > 0) {
+                                loadScheduleAntrean(scheduleSheetState.roomId)
+                            }
+                        },
+                        onDismiss = { dismissScheduleSheet() },
                     )
                 }
             }
@@ -380,11 +409,37 @@ class VenUnityActivity : UnityPlayerGameActivity() {
     }
 
     private fun handlePickedArtworkMedia(uri: Uri) {
-        val mime = (contentResolver.getType(uri) ?: "image/jpeg").lowercase()
-        val isVideo = mime.startsWith("video/")
+        val expectsVideo = artworkFormState.isVideo
+        val rawMime = (contentResolver.getType(uri) ?: "").lowercase()
+        val mime = rawMime.ifBlank { if (expectsVideo) "video/mp4" else "image/jpeg" }
+
+        // Validasi ketat MIME agar panel video hanya menerima video/* dan panel poster hanya menerima image/*
+        if (expectsVideo && !mime.startsWith("video/")) {
+            artworkFormState = artworkFormState.copy(
+                isUploading = false,
+                errorMessage = if (isIndonesian) {
+                    "Panel video hanya menerima berkas video (MP4, WebM, MOV)."
+                } else {
+                    "Video panels only accept video files (MP4, WebM, MOV)."
+                },
+            )
+            return
+        }
+        if (!expectsVideo && !mime.startsWith("image/")) {
+            artworkFormState = artworkFormState.copy(
+                isUploading = false,
+                errorMessage = if (isIndonesian) {
+                    "Panel poster hanya menerima berkas gambar (JPG, PNG, WebP)."
+                } else {
+                    "Poster panels only accept image files (JPG, PNG, WebP)."
+                },
+            )
+            return
+        }
+
         artworkFormState = artworkFormState.copy(
             isUploading = true,
-            isVideo = isVideo,
+            isVideo = expectsVideo,
             errorMessage = null,
         )
 
@@ -393,17 +448,19 @@ class VenUnityActivity : UnityPlayerGameActivity() {
                 val ext = when (mime) {
                     "image/png" -> "png"
                     "image/webp" -> "webp"
+                    "image/jpeg", "image/jpg" -> "jpg"
                     "video/mp4" -> "mp4"
                     "video/webm" -> "webm"
                     "video/quicktime" -> "mov"
-                    else -> "jpg"
+                    "video/x-matroska" -> "mkv"
+                    else -> if (expectsVideo) "mp4" else "jpg"
                 }
                 val tempFile = File(cacheDir, "unity_panel_${System.currentTimeMillis()}.$ext")
                 contentResolver.openInputStream(uri)?.use { input ->
                     tempFile.outputStream().use { output -> input.copyTo(output) }
                 }
 
-                val localThumb = if (!isVideo) {
+                val localThumb = if (!expectsVideo) {
                     runCatching { BitmapFactory.decodeFile(tempFile.absolutePath)?.asImageBitmap() }.getOrNull()
                 } else {
                     null
@@ -414,7 +471,7 @@ class VenUnityActivity : UnityPlayerGameActivity() {
                 runOnUiThread {
                     artworkFormState = artworkFormState.copy(
                         contentUrl = uploadedUrl,
-                        isVideo = isVideo,
+                        isVideo = expectsVideo,
                         localPreview = localThumb,
                         isUploading = false,
                         errorMessage = null,
@@ -490,7 +547,12 @@ class VenUnityActivity : UnityPlayerGameActivity() {
         }
         if (state.contentUrl.isBlank()) {
             artworkFormState = state.copy(
-                errorMessage = if (isIndonesian) "Pilih foto atau video terlebih dahulu." else "Please choose a photo or video first.",
+                errorMessage = when {
+                    state.isVideo && isIndonesian -> "Pilih berkas video terlebih dahulu."
+                    state.isVideo -> "Please choose a video file first."
+                    isIndonesian -> "Pilih berkas gambar poster terlebih dahulu."
+                    else -> "Please choose a poster image first."
+                },
             )
             return
         }
@@ -537,6 +599,184 @@ class VenUnityActivity : UnityPlayerGameActivity() {
         scheduleHideComposeOverlayIfIdle()
     }
 
+    // ---------- PlayScene Private Room Schedule Bottom Sheet ----------
+
+    private fun openScheduleSheetInternal(roomIdStr: String) {
+        val parsedRoomId = roomIdStr.removePrefix("ruangan-").trim().toIntOrNull()
+            ?: intent?.getStringExtra("roomId")?.toIntOrNull()
+            ?: 0
+
+        scheduleSheetState = UnityScheduleSheetState(
+            roomId = parsedRoomId,
+            isLoading = parsedRoomId > 0,
+            errorMessage = if (parsedRoomId <= 0) {
+                if (isIndonesian) "Ruang privat tidak ditemukan." else "Private room not found."
+            } else null,
+        )
+        showComposeOverlay()
+        isScheduleSheetVisible = true
+        if (parsedRoomId > 0) {
+            loadScheduleAntrean(parsedRoomId)
+        }
+    }
+
+    private fun dismissScheduleSheet() {
+        isScheduleSheetVisible = false
+        scheduleHideComposeOverlayIfIdle()
+    }
+
+    private fun copyLinkToClipboard(link: String) {
+        val clipboard = getSystemService(CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+        clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("VEN Private Room", link))
+        android.widget.Toast.makeText(
+            this,
+            if (isIndonesian) "Link ruang privat disalin" else "Private room link copied",
+            android.widget.Toast.LENGTH_SHORT,
+        ).show()
+    }
+
+    private fun loadScheduleAntrean(roomId: Int) {
+        scheduleSheetState = scheduleSheetState.copy(isLoading = true, errorMessage = null)
+        Thread {
+            try {
+                val baseUrl = intent?.getStringExtra("apiBaseUrl")?.takeIf { it.isNotBlank() }
+                    ?: AppConfig.baseUrl
+                val token = intent?.getStringExtra("authToken").orEmpty()
+                val endpoint = baseUrl.trimEnd('/') + "/ruangan/$roomId/antrean"
+
+                val conn = (URL(endpoint).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 8000
+                    readTimeout = 8000
+                    setRequestProperty("Accept", "application/json")
+                    if (token.isNotBlank()) setRequestProperty("Authorization", "Bearer $token")
+                }
+
+                val code = conn.responseCode
+                val body = runCatching {
+                    (if (code in 200..299) conn.inputStream else conn.errorStream)
+                        ?.bufferedReader()?.use { it.readText() }.orEmpty()
+                }.getOrDefault("")
+
+                if (code in 200..299) {
+                    val data = JSONObject(body).optJSONObject("data") ?: JSONObject()
+                    val title = data.optString("judul_pameran", "")
+                    val deepLink = data.optString("deep_link", "").takeIf { it.isNotBlank() }
+
+                    val waiting = mutableListOf<UnityWaitingGuestItem>()
+                    val waitingArr = data.optJSONArray("menunggu")
+                    if (waitingArr != null) {
+                        for (i in 0 until waitingArr.length()) {
+                            val item = waitingArr.optJSONObject(i) ?: continue
+                            val user = item.optJSONObject("pengguna")
+                            val name = user?.optString("nama_panggilan")?.takeIf { it.isNotBlank() }
+                                ?: user?.optString("nama")?.takeIf { it.isNotBlank() }
+                                ?: "Tamu"
+                            waiting.add(
+                                UnityWaitingGuestItem(
+                                    idPermintaan = item.optInt("id_permintaan"),
+                                    name = name,
+                                    status = item.optString("status", "menunggu"),
+                                )
+                            )
+                        }
+                    }
+
+                    val approved = mutableListOf<UnityWaitingGuestItem>()
+                    val approvedArr = data.optJSONArray("disetujui")
+                    if (approvedArr != null) {
+                        for (i in 0 until approvedArr.length()) {
+                            val item = approvedArr.optJSONObject(i) ?: continue
+                            val user = item.optJSONObject("pengguna")
+                            val name = user?.optString("nama_panggilan")?.takeIf { it.isNotBlank() }
+                                ?: user?.optString("nama")?.takeIf { it.isNotBlank() }
+                                ?: "Peserta"
+                            approved.add(
+                                UnityWaitingGuestItem(
+                                    idPermintaan = item.optInt("id_permintaan"),
+                                    name = name,
+                                    status = item.optString("status", "disetujui"),
+                                )
+                            )
+                        }
+                    }
+
+                    runOnUiThread {
+                        scheduleSheetState = scheduleSheetState.copy(
+                            roomId = roomId,
+                            exhibitionTitle = title,
+                            deepLink = deepLink,
+                            isLoading = false,
+                            errorMessage = null,
+                            waitingGuests = waiting,
+                            approvedGuests = approved,
+                        )
+                    }
+                } else {
+                    val msg = runCatching { JSONObject(body).optString("message") }.getOrNull()
+                        ?.takeIf { it.isNotBlank() }
+                        ?: if (isIndonesian) "Hanya pemilik pameran yang dapat mengelola akses ruang privat."
+                        else "Only the exhibition host can manage room access."
+                    runOnUiThread {
+                        scheduleSheetState = scheduleSheetState.copy(
+                            isLoading = false,
+                            errorMessage = msg,
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "loadScheduleAntrean failed: ${e.message}")
+                runOnUiThread {
+                    scheduleSheetState = scheduleSheetState.copy(
+                        isLoading = false,
+                        errorMessage = if (isIndonesian) "Gagal memuat data ruang privat." else "Failed to load private room access.",
+                    )
+                }
+            }
+        }.start()
+    }
+
+    private fun respondToWaitingGuest(roomId: Int, permintaanId: Int, status: String) {
+        if (roomId <= 0 || permintaanId <= 0) return
+        Thread {
+            try {
+                val baseUrl = intent?.getStringExtra("apiBaseUrl")?.takeIf { it.isNotBlank() }
+                    ?: AppConfig.baseUrl
+                val token = intent?.getStringExtra("authToken").orEmpty()
+                val endpoint = baseUrl.trimEnd('/') + "/ruangan/$roomId/antrean/$permintaanId"
+
+                val conn = (URL(endpoint).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    setRequestProperty("X-HTTP-Method-Override", "PATCH")
+                    doOutput = true
+                    connectTimeout = 8000
+                    readTimeout = 8000
+                    setRequestProperty("Accept", "application/json")
+                    setRequestProperty("Content-Type", "application/json")
+                    if (token.isNotBlank()) setRequestProperty("Authorization", "Bearer $token")
+                }
+
+                val payload = JSONObject().apply { put("status", status) }.toString()
+                conn.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+
+                val code = conn.responseCode
+                runOnUiThread {
+                    if (code in 200..299) {
+                        loadScheduleAntrean(roomId)
+                    } else {
+                        android.widget.Toast.makeText(
+                            this,
+                            if (isIndonesian) "Gagal memproses permintaan." else "Failed to process request.",
+                            android.widget.Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "respondToWaitingGuest failed: ${e.message}")
+            }
+        }.start()
+    }
+
     private fun dp(value: Int): Int =
         TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
@@ -576,6 +816,14 @@ class VenUnityActivity : UnityPlayerGameActivity() {
             val activity = activeInstance?.get() ?: return
             activity.runOnUiThread {
                 activity.showArtworkDetailInternal(title, description, contentType, contentUrl)
+            }
+        }
+
+        @JvmStatic
+        fun openScheduleSheet(roomId: String) {
+            val activity = activeInstance?.get() ?: return
+            activity.runOnUiThread {
+                activity.openScheduleSheetInternal(roomId)
             }
         }
     }

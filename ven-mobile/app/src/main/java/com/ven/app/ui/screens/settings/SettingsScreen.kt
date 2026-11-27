@@ -90,11 +90,6 @@ fun SettingsScreen(
                 label = stringResource(R.string.settings_item_account_status),
                 onClick = onNavigateToAccountStatus,
             )
-            VexListRow(
-                icon = R.drawable.ic_settings_history,
-                label = stringResource(R.string.settings_item_history),
-                onClick = onNavigateToHistory,
-            )
 
             VexSectionLabel(title = stringResource(R.string.settings_section_interface))
 

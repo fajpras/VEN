@@ -23,7 +23,7 @@ class BulkFeedStabilityTest {
             KaryaItemModel(
                 idKarya = "01a21286-0000-0000-0000-${idx.toString().padStart(12, '0')}",
                 idPengguna = "user-${idx % 8}",
-                idPameran = (idx % 10) + 1,
+                idPameran = "01a21286-0000-7000-8000-${((idx % 10) + 1).toString().padStart(12, '0')}",
                 idKategori = (idx % 14) + 1,
                 judul = "Karya Bulk #$idx",
                 deskripsi = "Sinopsis pendek karya #$idx.\n\nNarasi lengkap untuk pengujian bulk data.",

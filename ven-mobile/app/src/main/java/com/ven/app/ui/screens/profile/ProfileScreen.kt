@@ -83,9 +83,9 @@ fun ProfileScreen(
     onMediaClick: (MediaGridItem) -> Unit,
     modifier: Modifier = Modifier,
     onRetryClick: () -> Unit = {},
-    onEditExhibitInfoClick: ((Int) -> Unit)? = null,
-    onEditExhibit3dClick: ((Int, String) -> Unit)? = null,
-    onDeleteExhibitClick: ((Int) -> Unit)? = null,
+    onEditExhibitInfoClick: ((String) -> Unit)? = null,
+    onEditExhibit3dClick: ((String, String) -> Unit)? = null,
+    onDeleteExhibitClick: ((String) -> Unit)? = null,
 ) {
     val colors = VexTheme.colors
     val uriHandler = LocalUriHandler.current
@@ -467,7 +467,7 @@ fun ProfileScreen(
         }
 
         actionTargetExhibit?.let { exhibit ->
-            val exhibitId = exhibit.id.toIntOrNull()
+            val exhibitId = exhibit.id.takeIf { it.isNotBlank() }
             VexBottomSheet(
                 onDismissRequest = { actionTargetExhibit = null },
             ) {
@@ -542,7 +542,7 @@ fun ProfileScreen(
         }
 
         deleteConfirmExhibit?.let { exhibit ->
-            val exhibitId = exhibit.id.toIntOrNull()
+            val exhibitId = exhibit.id.takeIf { it.isNotBlank() }
             AlertDialog(
                 onDismissRequest = { deleteConfirmExhibit = null },
                 containerColor = colors.surface,

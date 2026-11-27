@@ -28,10 +28,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ven.app.R
-import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.components.ui.VexBottomSheet
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonVariant
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.screens.schedule.ScheduleEventItem
 import com.ven.app.ui.screens.voice.VoiceChatPanel
 import com.ven.app.ui.screens.voice.VoiceSesi
@@ -40,27 +40,18 @@ import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Bottom Sheet modal untuk detail jadwal pertemuan pameran (Tab Approved & Waiting).
- * Sesuai DESIGN.md §8.4.5 & Wireframe schedule-1 & schedule-3:
- * - Banner pameran besar rasio 16:9 di bagian atas.
- * - Teks penjelasan dengan tanggal & jam dicetak tebal via [AnnotatedString].
- * - Tombol "Join Room":
- *   - Aktif (Primary ungu) jika [ScheduleEventItem.isApproved] = true.
- *   - Nonaktif (Disabled) jika [ScheduleEventItem.isApproved] = false.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailSheet(
     event: ScheduleEventItem,
     onDismissRequest: () -> Unit,
     onJoinRoom: () -> Unit,
+    onCopyLink: (String) -> Unit = {},
     modifier: Modifier = Modifier,
-
-    /** Status voice chat saat ini; ditampilkan hanya untuk ruangan privat. */
     voiceStatus: VoiceSesi = VoiceSesi.Jeda,
 ) {
     val colors = VexTheme.colors
+    val canJoin = event.isApproved && !event.isExpired
 
     VexBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -73,7 +64,6 @@ fun EventDetailSheet(
                 .padding(bottom = VexSpace.s6)
                 .navigationBarsPadding(),
         ) {
-            // Banner Pameran 16:9
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -100,7 +90,14 @@ fun EventDetailSheet(
 
             Spacer(modifier = Modifier.height(VexSpace.s5))
 
-            // Teks Pesan Status (AnnotatedString dengan tanggal/jam bold)
+            Text(
+                text = event.title,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = colors.text,
+            )
+
+            Spacer(modifier = Modifier.height(VexSpace.s2))
+
             val prefix = if (event.isApproved) {
                 stringResource(R.string.schedule_approved_detail_prefix)
             } else {
@@ -113,10 +110,11 @@ fun EventDetailSheet(
                 stringResource(R.string.schedule_waiting_detail_suffix)
             }
 
+            val durationLabel = stringResource(R.string.schedule_duration_minutes, event.durationMinutes)
             val annotatedMessage = buildAnnotatedString {
                 append(prefix)
-                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = colors.text)) {
-                    append(event.fullDateFormatted)
+                withStyle(style = SpanStyle(fontWeight = FontWeight.SemiBold, color = colors.text)) {
+                    append("${event.fullDateFormatted} ($durationLabel)")
                 }
                 append(suffix)
             }
@@ -124,26 +122,48 @@ fun EventDetailSheet(
             Text(
                 text = annotatedMessage,
                 style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 22.sp),
-                color = colors.text,
+                color = colors.textMuted,
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            if (!event.note.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(VexSpace.s3))
+                Text(
+                    text = event.note,
+                    style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
+                    color = colors.text,
+                )
+            }
 
-            // Kartu voice chat: hanya ruangan privat yang mendukung voice.
-            if (event.isApproved && event.roomId != null) {
+            Spacer(modifier = Modifier.height(VexSpace.s5))
+
+            if (canJoin && event.roomId != null) {
                 VoiceChatPanel(status = voiceStatus)
-
                 Spacer(modifier = Modifier.height(VexSpace.s4))
             }
 
-            // Tombol Utama "Join Room"
+            val primaryButtonText = when {
+                event.isExpired -> stringResource(R.string.schedule_session_expired)
+                event.isApproved -> stringResource(R.string.schedule_join_room)
+                else -> stringResource(R.string.schedule_waiting_approval)
+            }
+
             VexButton(
-                text = stringResource(R.string.schedule_join_room),
+                text = primaryButtonText,
                 onClick = onJoinRoom,
-                enabled = event.isApproved,
+                enabled = canJoin,
                 variant = VexButtonVariant.Primary,
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            if (canJoin && !event.deepLink.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(VexSpace.s3))
+                VexButton(
+                    text = stringResource(R.string.schedule_copy_link),
+                    onClick = { onCopyLink(event.deepLink) },
+                    variant = VexButtonVariant.Outline,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }
@@ -156,31 +176,13 @@ private fun EventDetailSheetApprovedPreview() {
             event = ScheduleEventItem(
                 id = "1",
                 title = "Open Source Competition",
-                dateText = "24th Sep 2026",
-                timeText = "02.00 PM",
-                fullDateFormatted = "Thursday, 24th September 2026 at 02.00 PM",
+                dateText = "24 Sep 2026",
+                timeText = "02:00 PM",
+                fullDateFormatted = "Thursday, 24 September 2026 at 02:00 PM",
                 bannerRes = R.drawable.poster_3,
                 isApproved = true,
-            ),
-            onDismissRequest = {},
-            onJoinRoom = {},
-        )
-    }
-}
-
-@Preview(name = "EventDetailSheet Waiting - Dark Mode")
-@Composable
-private fun EventDetailSheetWaitingPreview() {
-    VexTheme(mode = ThemeMode.Dark) {
-        EventDetailSheet(
-            event = ScheduleEventItem(
-                id = "2",
-                title = "Virtual Exhibition",
-                dateText = "24th Sep 2026",
-                timeText = "02.00 PM",
-                fullDateFormatted = "Thursday, 24th September 2026 at 02.00 PM",
-                bannerRes = R.drawable.poster_3,
-                isApproved = false,
+                durationMinutes = 45,
+                deepLink = "ven://diskusi/sampletoken",
             ),
             onDismissRequest = {},
             onJoinRoom = {},

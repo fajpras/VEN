@@ -117,7 +117,7 @@ class ProfileViewModel : ViewModel() {
         _uiState.update { it.copy(isSkillSheetOpen = buka) }
     }
 
-    fun hapusPameran(exhibitId: Int) {
+    fun hapusPameran(exhibitId: String) {
         viewModelScope.launch {
             ApiPameran.deletePameran(exhibitId).onSuccess {
                 muat()

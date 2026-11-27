@@ -82,37 +82,36 @@ class ScheduleViewModel(
 
             // Undangan yang diajukan user (sebagai pengundang)
             for (u in pengundangList) {
-                val isPast = DateFormatter.isPastDateTime(u.waktu)
+                val isExpired = DateFormatter.isExpiredAtMidnight(u.waktu, u.kadaluarsaPada)
                 val status = u.status.lowercase()
 
-                if (isPast || status == "ditolak") {
-                    history.add(mapToEventItem(u))
+                if (isExpired || status == "ditolak") {
+                    history.add(mapToEventItem(u, isExpired = isExpired))
                 } else if (status == "disetujui") {
-                    approved.add(mapToEventItem(u))
+                    approved.add(mapToEventItem(u, isExpired = false))
                 } else if (status == "diproses") {
-                    waiting.add(mapToEventItem(u))
+                    waiting.add(mapToEventItem(u, isExpired = false))
                 }
             }
 
             // Undangan masuk untuk pameran user (sebagai penyelenggara)
             for (u in penyelenggaraList) {
-                val isPast = DateFormatter.isPastDateTime(u.waktu)
+                val isExpired = DateFormatter.isExpiredAtMidnight(u.waktu, u.kadaluarsaPada)
                 val status = u.status.lowercase()
 
-                if (isPast || status == "ditolak") {
-                    history.add(mapToEventItem(u))
+                if (isExpired || status == "ditolak") {
+                    if (history.none { it.id == u.idUndangan.toString() }) {
+                        history.add(mapToEventItem(u, isExpired = isExpired))
+                    }
                 } else if (status == "disetujui") {
-                    // Hindari duplikasi jika user adalah pengundang sekaligus penyelenggara
                     if (approved.none { it.id == u.idUndangan.toString() }) {
-                        approved.add(mapToEventItem(u))
+                        approved.add(mapToEventItem(u, isExpired = false))
                     }
                 } else if (status == "diproses") {
                     requests.add(mapToRequestItem(u))
                 }
             }
 
-            // Data dummy tidak lagi digunakan: API gagal/kosong tetap
-            // menampilkan empty state asli agar tidak menipu pengguna.
             _uiState.update {
                 it.copy(
                     isLoading = false,
@@ -134,20 +133,26 @@ class ScheduleViewModel(
             )
 
             if (result.isSuccess) {
+                val updatedModel = result.getOrNull()
                 val updatedRequests = _uiState.value.requestItems.filterNot { it.id == request.id }
-                val approvedEvent = ScheduleEventItem(
-                    id = request.id,
-                    title = request.exhibitTitle ?: request.requesterName,
-                    dateText = request.dateText,
-                    timeText = request.timeText,
-                    fullDateFormatted = request.fullDateFormatted,
-                    bannerRes = request.bannerRes,
-                    bannerUrl = request.bannerUrl,
-                    exhibitId = request.exhibitId,
-                    isApproved = true,
-                    status = "disetujui",
-                    note = request.note,
-                )
+                val approvedEvent = if (updatedModel != null) {
+                    mapToEventItem(updatedModel, isExpired = false)
+                } else {
+                    ScheduleEventItem(
+                        id = request.id,
+                        title = request.exhibitTitle ?: request.requesterName,
+                        dateText = request.dateText,
+                        timeText = request.timeText,
+                        fullDateFormatted = request.fullDateFormatted,
+                        bannerRes = request.bannerRes,
+                        bannerUrl = request.bannerUrl,
+                        exhibitId = request.exhibitId,
+                        isApproved = true,
+                        status = "disetujui",
+                        note = request.note,
+                        durationMinutes = request.durationMinutes,
+                    )
+                }
                 val updatedApproved = listOf(approvedEvent) + _uiState.value.approvedItems
 
                 _uiState.update {
@@ -155,7 +160,7 @@ class ScheduleViewModel(
                         requestItems = updatedRequests,
                         approvedItems = updatedApproved,
                         activeRequestDetail = null,
-                        userFeedbackMessage = "Permintaan berhasil disetujui",
+                        userFeedbackMessage = "Undangan disetujui & link ruang privat dikirim",
                     )
                 }
             } else {
@@ -189,6 +194,7 @@ class ScheduleViewModel(
                     isApproved = false,
                     status = "ditolak",
                     note = note ?: request.note,
+                    durationMinutes = request.durationMinutes,
                 )
                 val updatedHistory = listOf(rejectedEvent) + _uiState.value.historyItems
 
@@ -214,7 +220,7 @@ class ScheduleViewModel(
         _uiState.update { it.copy(userFeedbackMessage = null) }
     }
 
-    private fun mapToEventItem(u: UndanganItemModel): ScheduleEventItem {
+    private fun mapToEventItem(u: UndanganItemModel, isExpired: Boolean): ScheduleEventItem {
         val bannerUrl = u.ruangan?.pameran?.banner
         val exhibitTitle = u.ruangan?.pameran?.judul ?: "Diskusi Pameran"
         val exhibitId = u.ruangan?.pameran?.idPameran?.toString()
@@ -229,10 +235,14 @@ class ScheduleViewModel(
             bannerRes = R.drawable.poster_1,
             bannerUrl = bannerUrl,
             exhibitId = exhibitId,
-            roomId = u.ruangan?.idRuangan,
+            roomId = u.ruangan?.idRuangan ?: u.idRuangan,
             isApproved = isApproved,
             status = u.status,
             note = u.catatan,
+            durationMinutes = u.durasiMenit,
+            deepLink = u.deepLink,
+            isExpired = isExpired,
+            isReminderDue = isApproved && DateFormatter.isReminderDue(u.waktu, u.kadaluarsaPada),
         )
     }
 
@@ -251,6 +261,7 @@ class ScheduleViewModel(
             timeText = DateFormatter.formatScheduleTime(u.waktu),
             fullDateFormatted = DateFormatter.formatScheduleFull(u.waktu),
             note = u.catatan ?: "",
+            durationMinutes = u.durasiMenit,
             bannerRes = R.drawable.poster_1,
             bannerUrl = bannerUrl,
             exhibitId = exhibitId,

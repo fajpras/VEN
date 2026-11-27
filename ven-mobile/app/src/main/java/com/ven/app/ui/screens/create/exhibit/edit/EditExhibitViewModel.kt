@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class PembaruanPameran(
-    val id: Int,
+    val id: String,
     val judul: String,
     val tipe: String,
     val warna: String,
@@ -28,7 +28,7 @@ sealed interface EditExhibitEvent {
 }
 
 class EditExhibitViewModel(
-    private val muatDetailApi: suspend (Int) -> Result<PameranItemModel> = { id -> ApiPameran.getPameran(id) },
+    private val muatDetailApi: suspend (String) -> Result<PameranItemModel> = { id -> ApiPameran.getPameran(id) },
     private val perbaruiPameranApi: suspend (PembaruanPameran) -> Result<PameranItemModel> = { data ->
         ApiPameran.updatePameran(
             id = data.id,
@@ -47,8 +47,8 @@ class EditExhibitViewModel(
     private val _events = Channel<EditExhibitEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    fun muat(exhibitId: Int) {
-        if (exhibitId <= 0) return
+    fun muat(exhibitId: String) {
+        if (exhibitId.isBlank()) return
         if (_uiState.value.exhibitId == exhibitId && !_uiState.value.isLoading) return
 
         viewModelScope.launch {

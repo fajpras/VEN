@@ -73,6 +73,7 @@ fun RequestMeetingScreen(
     onHourChange: (String) -> Unit,
     onMinuteChange: (String) -> Unit,
     onPeriodChange: (Boolean) -> Unit,
+    onDurationSelected: (Int) -> Unit = {},
     onMessageChange: (String) -> Unit,
     onSendRequestClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -331,7 +332,7 @@ fun RequestMeetingScreen(
                                         val isSelected = day.isSelected && day.isCurrentMonth
                                         val textColor = when {
                                             isSelected -> colors.onPrimary
-                                            !day.isCurrentMonth -> colors.textDisabled
+                                            !day.isEnabled -> colors.textDisabled
                                             else -> colors.text
                                         }
 
@@ -343,7 +344,7 @@ fun RequestMeetingScreen(
                                                     if (isSelected) colors.primary else Color.Transparent
                                                 )
                                                 .clickable(
-                                                    enabled = day.isCurrentMonth,
+                                                    enabled = day.isEnabled,
                                                     role = Role.Button,
                                                     interactionSource = remember { MutableInteractionSource() },
                                                     indication = ripple(bounded = true),
@@ -436,6 +437,49 @@ fun RequestMeetingScreen(
                     }
 
                     Spacer(modifier = Modifier.height(VexSpace.s5))
+
+                    Text(
+                        text = stringResource(R.string.request_meeting_duration_label),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                        ),
+                        color = colors.text,
+                    )
+
+                    Spacer(modifier = Modifier.height(VexSpace.s3))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(VexSpace.s2),
+                    ) {
+                        listOf(30, 45, 60).forEach { minutes ->
+                            val isSelected = state.selectedDurationMinutes == minutes
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isSelected) colors.primary else colors.surfaceInput)
+                                    .clickable(
+                                        role = Role.RadioButton,
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = ripple(bounded = true),
+                                        onClick = { onDurationSelected(minutes) },
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.schedule_duration_minutes, minutes),
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    ),
+                                    color = if (isSelected) colors.onPrimary else colors.textMuted,
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(VexSpace.s5))
                 }
 
                 HorizontalDivider(
@@ -451,6 +495,16 @@ fun RequestMeetingScreen(
                         .padding(horizontal = VexSpace.s6),
                 ) {
                     Spacer(modifier = Modifier.height(VexSpace.s5))
+
+                    Text(
+                        text = stringResource(R.string.request_meeting_topic_label),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                        ),
+                        color = colors.text,
+                    )
+
+                    Spacer(modifier = Modifier.height(VexSpace.s3))
 
                     VexTextArea(
                         value = state.message,

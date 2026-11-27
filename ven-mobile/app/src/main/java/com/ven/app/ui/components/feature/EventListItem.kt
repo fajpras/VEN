@@ -101,16 +101,25 @@ fun EventListItem(
                 .fillMaxHeight(),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = entry.dateText,
+                    text = entry.title,
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = colors.text,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = entry.timeText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.text,
+                    text = "${entry.dateText} · ${entry.timeText}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textMuted,
+                    maxLines = 1,
+                )
+                Text(
+                    text = stringResource(R.string.schedule_duration_minutes, entry.durationMinutes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textMuted,
+                    maxLines = 1,
                 )
             }
 

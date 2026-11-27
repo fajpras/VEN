@@ -29,9 +29,6 @@ class ScheduleViewModelTest {
         vm.selectTab(ScheduleTab.Request)
         assertEquals(ScheduleTab.Request, vm.uiState.value.selectedTab)
 
-        vm.selectTab(ScheduleTab.History)
-        assertEquals(ScheduleTab.History, vm.uiState.value.selectedTab)
-
         vm.selectTab(ScheduleTab.Approved)
         assertEquals(ScheduleTab.Approved, vm.uiState.value.selectedTab)
     }

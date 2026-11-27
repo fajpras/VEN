@@ -93,7 +93,7 @@ fun CreatePostScreen(
     onCategoryChange: (Int) -> Unit,
     onDescriptionChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    onExhibitionChange: (Int?) -> Unit = {},
+    onExhibitionChange: (String?) -> Unit = {},
     onCreateExhibitClick: () -> Unit = {},
 ) {
     val colors = VexTheme.colors
@@ -546,7 +546,7 @@ private fun CreatePostDetailsStep(
     onPickMediaClick: () -> Unit,
     onTitleChange: (String) -> Unit,
     onCategoryChange: (Int) -> Unit,
-    onExhibitionChange: (Int?) -> Unit,
+    onExhibitionChange: (String?) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onCreateExhibitClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -879,8 +879,8 @@ private val previewCategories = listOf(
 )
 
 private val previewExhibitions = listOf(
-    PameranItemModel(idPameran = 1, judul = "Pameran Digital 2026", tipe = "kecil"),
-    PameranItemModel(idPameran = 2, judul = "Expo Animasi Kampus", tipe = "acara"),
+    PameranItemModel(idPameran = "01a21286-0001-7000-8000-000000000001", judul = "Pameran Digital 2026", tipe = "kecil"),
+    PameranItemModel(idPameran = "01a21286-0002-7000-8000-000000000002", judul = "Expo Animasi Kampus", tipe = "acara"),
 )
 
 @Preview(name = "Step 1: Media Picker - Light", showBackground = true, backgroundColor = 0xFFFFFFFF)
@@ -934,7 +934,7 @@ private fun CreatePostDetailsLightPreview() {
                 categories = previewCategories,
                 categoryId = 1,
                 exhibitions = previewExhibitions,
-                selectedExhibitionId = 1,
+                selectedExhibitionId = "01a21286-0001-7000-8000-000000000001",
                 title = "Poster Karya",
                 description = "Deskripsi karya.",
             ),
@@ -963,7 +963,7 @@ private fun CreatePostDetailsDarkPreview() {
                 categories = previewCategories,
                 categoryId = 1,
                 exhibitions = previewExhibitions,
-                selectedExhibitionId = 2,
+                selectedExhibitionId = "01a21286-0002-7000-8000-000000000002",
                 title = "Poster Karya",
                 description = "Deskripsi karya.",
             ),

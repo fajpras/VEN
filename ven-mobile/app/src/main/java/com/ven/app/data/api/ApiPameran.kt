@@ -37,7 +37,7 @@ interface ApiPameranService {
 
     @GET("pameran/{id}")
     suspend fun getPameran(
-        @Path("id") id: Int,
+        @Path("id") id: String,
     ): Response<ApiResponse<PameranItemModel>>
 
     @GET("pameran")
@@ -53,7 +53,7 @@ interface ApiPameranService {
     @Multipart
     @POST("pameran/{id}")
     suspend fun updatePameran(
-        @Path("id") id: Int,
+        @Path("id") id: String,
         @Part("judul") judul: RequestBody,
         @Part("tipe") tipe: RequestBody?,
         @Part("warna") warna: RequestBody?,
@@ -62,7 +62,7 @@ interface ApiPameranService {
 
     @DELETE("pameran/{id}")
     suspend fun deletePameran(
-        @Path("id") id: Int,
+        @Path("id") id: String,
     ): Response<ApiResponse<Any>>
 
     @GET("karya/{id}")
@@ -94,7 +94,7 @@ object ApiPameran {
         }
     }
 
-    suspend fun getPameran(id: Int): Result<PameranItemModel> {
+    suspend fun getPameran(id: String): Result<PameranItemModel> {
         return try {
             val response = service.getPameran(id)
             val data = response.body()?.data
@@ -137,7 +137,7 @@ object ApiPameran {
     }
 
     suspend fun updatePameran(
-        id: Int,
+        id: String,
         judul: String,
         tipe: String? = null,
         warna: String? = null,
@@ -171,7 +171,7 @@ object ApiPameran {
         }
     }
 
-    suspend fun deletePameran(id: Int): Result<Unit> {
+    suspend fun deletePameran(id: String): Result<Unit> {
         return try {
             val response = service.deletePameran(id)
             if (response.isSuccessful) {

@@ -105,10 +105,11 @@ fun RequestDetailSheet(
             Spacer(modifier = Modifier.height(VexSpace.s5))
 
             // Label Jadwal Target (Requested for ...)
+            val durationLabel = stringResource(R.string.schedule_duration_minutes, request.durationMinutes)
             val annotatedSchedule = buildAnnotatedString {
                 append(stringResource(R.string.schedule_requested_for_prefix))
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = colors.text)) {
-                    append(request.fullDateFormatted)
+                    append("${request.fullDateFormatted} ($durationLabel)")
                 }
                 append(".")
             }

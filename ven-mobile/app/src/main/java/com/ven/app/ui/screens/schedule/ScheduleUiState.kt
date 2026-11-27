@@ -6,9 +6,8 @@ import com.ven.app.R
 
 enum class ScheduleTab {
     Approved,
-    Waiting,
     Request,
-    History,
+    Waiting,
 }
 
 @Immutable
@@ -21,12 +20,14 @@ data class ScheduleEventItem(
     @param:DrawableRes val bannerRes: Int = R.drawable.poster_1,
     val bannerUrl: String? = null,
     val exhibitId: String? = null,
-
-    /** Id ruangan privat (null untuk ruangan umum); kunci voice chat & room-dto privat. */
     val roomId: Int? = null,
     val isApproved: Boolean = true,
     val status: String = "disetujui",
     val note: String? = null,
+    val durationMinutes: Int = 30,
+    val deepLink: String? = null,
+    val isExpired: Boolean = false,
+    val isReminderDue: Boolean = false,
 )
 
 @Immutable
@@ -37,6 +38,7 @@ data class ScheduleRequestItem(
     val timeText: String,
     val fullDateFormatted: String,
     val note: String,
+    val durationMinutes: Int = 30,
     @param:DrawableRes val bannerRes: Int = R.drawable.poster_1,
     val bannerUrl: String? = null,
     val exhibitId: String? = null,
@@ -59,6 +61,9 @@ data class ScheduleUiState(
     val activeRequestDetail: ScheduleRequestItem? = null,
     val userFeedbackMessage: String? = null,
 ) {
+    val hasUpcomingReminder: Boolean
+        get() = approvedItems.any { it.isReminderDue && !it.isExpired }
+
     val filteredApprovedItems: List<ScheduleEventItem>
         get() = if (searchQuery.isBlank()) {
             approvedItems
@@ -67,7 +72,8 @@ data class ScheduleUiState(
             approvedItems.filter {
                 it.title.lowercase().contains(q) ||
                     it.dateText.lowercase().contains(q) ||
-                    it.timeText.lowercase().contains(q)
+                    it.timeText.lowercase().contains(q) ||
+                    (it.note != null && it.note.lowercase().contains(q))
             }
         }
 

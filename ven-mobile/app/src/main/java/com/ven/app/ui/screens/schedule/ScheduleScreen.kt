@@ -1,23 +1,29 @@
 package com.ven.app.ui.screens.schedule
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -30,7 +36,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -53,11 +61,13 @@ import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 import com.ven.app.util.UnityLauncher
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
     onTabSelected: (BottomNavTab) -> Unit,
+    onHistoryClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ScheduleViewModel = viewModel(),
     voiceViewModel: VoiceChatViewModel = viewModel(),
@@ -67,7 +77,6 @@ fun ScheduleScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val voiceState by voiceViewModel.uiState.collectAsStateWithLifecycle()
 
-    // Ruangan privat yang menunggu persetujuan izin mikrofon sebelum token diambil.
     var ruanganMenungguIzin by remember { mutableStateOf<Pair<Int, String?>?>(null) }
 
     val izinMicLauncher = rememberLauncherForActivityResult(
@@ -90,7 +99,14 @@ fun ScheduleScreen(
         }
     }
 
-    // Peristiwa voice: nyalakan service (koneksi bertahan selama di Unity) lalu buka ruangan 3D privat.
+    // Auto-refresh jadwal setiap 60 detik agar status undangan selalu mutakhir
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(60_000L)
+            viewModel.refresh()
+        }
+    }
+
     LaunchedEffect(Unit) {
         voiceViewModel.acara.collect { peristiwa ->
             when (peristiwa) {
@@ -118,14 +134,20 @@ fun ScheduleScreen(
             uiState = uiState,
             isRefreshing = uiState.isRefreshing,
             onRefresh = viewModel::refresh,
+            onHistoryClick = onHistoryClick,
             onTabSelected = viewModel::selectTab,
             onSearchQueryChange = viewModel::setSearchQuery,
             onEventClick = viewModel::selectEventDetail,
             onRequestClick = viewModel::selectRequestDetail,
             onDismissDetail = viewModel::dismissDetail,
+            onCopyLink = { link ->
+                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                clipboard?.setPrimaryClip(ClipData.newPlainText("VEN Private Room", link))
+                Toast.makeText(context, context.getString(R.string.schedule_link_copied), Toast.LENGTH_SHORT).show()
+            },
             voiceStatus = voiceState.sesi,
             onJoinRoom = { event ->
-                val roomId = event.roomId?.takeIf { event.isApproved }
+                val roomId = event.roomId?.takeIf { event.isApproved && !event.isExpired }
 
                 if (roomId != null) {
                     val sudahDiizinkan = ContextCompat.checkSelfPermission(
@@ -172,6 +194,8 @@ fun ScheduleContent(
     onApproveRequest: (ScheduleRequestItem) -> Unit,
     onRejectRequest: (ScheduleRequestItem) -> Unit,
     modifier: Modifier = Modifier,
+    onHistoryClick: () -> Unit = {},
+    onCopyLink: (String) -> Unit = {},
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
     voiceStatus: VoiceSesi = VoiceSesi.Jeda,
@@ -184,11 +208,37 @@ fun ScheduleContent(
             .background(colors.bg)
             .statusBarsPadding(),
     ) {
+        // Minimalist Header: Title + History Icon di kanan atas
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = VexSpace.s5, end = VexSpace.s3, top = VexSpace.s4, bottom = VexSpace.s2),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.schedule_title),
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = colors.text,
+            )
+
+            IconButton(
+                onClick = onHistoryClick,
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_settings_history),
+                    contentDescription = stringResource(R.string.schedule_history_desc),
+                    tint = colors.text,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = VexSpace.s5)
-                .padding(top = VexSpace.s4, bottom = VexSpace.s4),
+                .padding(bottom = VexSpace.s3),
         ) {
             SearchBar(
                 query = uiState.searchQuery,
@@ -203,9 +253,8 @@ fun ScheduleContent(
             labelFor = { tab ->
                 when (tab) {
                     ScheduleTab.Approved -> stringResource(R.string.schedule_tab_approved)
-                    ScheduleTab.Waiting -> stringResource(R.string.schedule_tab_waiting)
                     ScheduleTab.Request -> stringResource(R.string.schedule_tab_request)
-                    ScheduleTab.History -> stringResource(R.string.schedule_tab_history)
+                    ScheduleTab.Waiting -> stringResource(R.string.schedule_tab_waiting)
                 }
             },
         )
@@ -214,6 +263,22 @@ fun ScheduleContent(
             thickness = 1.dp,
             color = colors.border,
         )
+
+        if (uiState.selectedTab == ScheduleTab.Approved && uiState.hasUpcomingReminder) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.surface)
+                    .padding(horizontal = VexSpace.s5, vertical = VexSpace.s2),
+            ) {
+                Text(
+                    text = stringResource(R.string.schedule_reminder_banner),
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                    color = colors.textMuted,
+                )
+            }
+            HorizontalDivider(thickness = 1.dp, color = colors.border)
+        }
 
         PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -246,24 +311,6 @@ fun ScheduleContent(
                         }
                     }
 
-                    ScheduleTab.Waiting -> {
-                        val items = uiState.filteredWaitingItems
-                        if (items.isEmpty()) {
-                            item {
-                                EmptyScheduleView(
-                                    message = stringResource(R.string.schedule_empty_waiting),
-                                )
-                            }
-                        } else {
-                            items(items, key = { it.id }) { item ->
-                                EventListItem(
-                                    entry = item,
-                                    onClick = { onEventClick(item) },
-                                )
-                            }
-                        }
-                    }
-
                     ScheduleTab.Request -> {
                         val items = uiState.filteredRequestItems
                         if (items.isEmpty()) {
@@ -282,12 +329,12 @@ fun ScheduleContent(
                         }
                     }
 
-                    ScheduleTab.History -> {
-                        val items = uiState.filteredHistoryItems
+                    ScheduleTab.Waiting -> {
+                        val items = uiState.filteredWaitingItems
                         if (items.isEmpty()) {
                             item {
                                 EmptyScheduleView(
-                                    message = stringResource(R.string.schedule_empty_history),
+                                    message = stringResource(R.string.schedule_empty_waiting),
                                 )
                             }
                         } else {
@@ -309,6 +356,7 @@ fun ScheduleContent(
             event = event,
             onDismissRequest = onDismissDetail,
             onJoinRoom = { onJoinRoom(event) },
+            onCopyLink = onCopyLink,
             voiceStatus = voiceStatus,
         )
     }
@@ -344,34 +392,12 @@ private fun EmptyScheduleView(
     }
 }
 
-// ---------------------------------------------------------
-// Previews
-// ---------------------------------------------------------
-
-@Preview(name = "ScheduleScreen Approved - Dark Mode", showBackground = true, backgroundColor = 0xFF1F1F1F)
+@Preview(name = "ScheduleScreen - Dark Mode", showBackground = true, backgroundColor = 0xFF1F1F1F)
 @Composable
 private fun ScheduleScreenApprovedDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         ScheduleContent(
-            uiState = dummyScheduleUiState,
-            onTabSelected = {},
-            onSearchQueryChange = {},
-            onEventClick = {},
-            onRequestClick = {},
-            onDismissDetail = {},
-            onJoinRoom = {},
-            onApproveRequest = {},
-            onRejectRequest = {},
-        )
-    }
-}
-
-@Preview(name = "ScheduleScreen Request - Dark Mode", showBackground = true, backgroundColor = 0xFF1F1F1F)
-@Composable
-private fun ScheduleScreenRequestDarkPreview() {
-    VexTheme(mode = ThemeMode.Dark) {
-        ScheduleContent(
-            uiState = dummyScheduleUiState.copy(selectedTab = ScheduleTab.Request),
+            uiState = ScheduleUiState(),
             onTabSelected = {},
             onSearchQueryChange = {},
             onEventClick = {},

@@ -25,7 +25,7 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun EditExhibitRoute(
-    exhibitId: Int,
+    exhibitId: String,
     onBackClick: () -> Unit,
     onSaved: () -> Unit,
     onOpen3dEditor: (templateId: String, title: String, tipe: String, bannerUrl: String) -> Unit,

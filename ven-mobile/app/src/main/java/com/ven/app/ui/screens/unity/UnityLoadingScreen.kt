@@ -49,6 +49,7 @@ fun UnityLoadingScreen(
     tipe: String = "kecil",
     isEditor: Boolean = true,
     roomId: Int? = null,
+    editRoomId: String = "",
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -73,7 +74,7 @@ fun UnityLoadingScreen(
                     description = description,
                     bannerUrl = bannerUrl,
                     tipe = tipe,
-                    editRoomId = roomId?.toString().orEmpty(),
+                    editRoomId = editRoomId.ifBlank { roomId?.toString().orEmpty() },
                 )
             } else {
                 UnityLauncher.createViewerIntent(context, targetId, roomId)

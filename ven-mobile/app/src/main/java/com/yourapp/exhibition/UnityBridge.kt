@@ -21,7 +21,10 @@ object UnityBridge {
     fun requestRoom() {
         if (BuildConfig.DEBUG) Log.d(TAG, "Unity requested room data")
         Thread {
-            var json = currentRoomJson
+            var json: String? = null
+            var lastErrorCode = 0
+            var lastErrorMessage: String? = null
+            var roomType = "pameran"
             try {
                 val activity = UnityPlayer.currentActivity
                 val intent = activity?.intent
@@ -31,9 +34,12 @@ object UnityBridge {
                     ?: intent?.getStringExtra("api_base_url")?.takeIf { it.isNotBlank() }
                     ?: BuildConfig.BASE_URL
                 val authToken = intent?.getStringExtra("authToken").orEmpty()
-                val roomType = intent?.getStringExtra("roomType")?.takeIf { it.isNotBlank() } ?: "pameran"
+                roomType = intent?.getStringExtra("roomType")?.takeIf { it.isNotBlank() } ?: "pameran"
 
-                if (!roomId.isNullOrBlank() && roomId.all { it.isDigit() }) {
+                val isValidBackendId = !roomId.isNullOrBlank() &&
+                    (roomId.all { it.isDigit() } || roomId.matches(Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")))
+
+                if (isValidBackendId) {
                     val endpoint = if (roomType == "ruangan") {
                         apiBaseUrl.trimEnd('/') + "/ruangan/$roomId/room-dto"
                     } else {
@@ -49,6 +55,7 @@ object UnityBridge {
                             setRequestProperty("Authorization", "Bearer $authToken")
                         }
                     }
+                    lastErrorCode = conn.responseCode
                     if (conn.responseCode in 200..299) {
                         val body = conn.inputStream.bufferedReader().use { it.readText() }
                         if (body.contains("\"roomId\"") && body.contains("\"templateId\"")) {
@@ -57,14 +64,27 @@ object UnityBridge {
                             if (BuildConfig.DEBUG) Log.i(TAG, "Fetched room DTO from backend for room $roomId")
                         }
                     } else {
-                        if (BuildConfig.DEBUG) Log.w(TAG, "Backend room-dto returned HTTP ${conn.responseCode}")
+                        val errorStream = conn.errorStream?.bufferedReader()?.use { it.readText() }
+                        lastErrorMessage = errorStream
+                        if (BuildConfig.DEBUG) Log.w(TAG, "Backend room-dto returned HTTP ${conn.responseCode}: $errorStream")
                     }
                 }
             } catch (e: Exception) {
-                if (BuildConfig.DEBUG) Log.w(TAG, "Failed to fetch room-dto from backend, using fallback: ${e.message}")
+                lastErrorMessage = e.message
+                if (BuildConfig.DEBUG) Log.w(TAG, "Failed to fetch room-dto from backend: ${e.message}")
             }
 
             if (json.isNullOrBlank()) {
+                if (roomType == "ruangan") {
+                    val message = when (lastErrorCode) {
+                        403 -> "Akses ruangan privat ditolak. Jadwal belum tiba atau sudah berakhir."
+                        404 -> "Ruangan privat tidak ditemukan."
+                        else -> "Gagal memuat ruangan privat: ${lastErrorMessage ?: "Koneksi terputus"}"
+                    }
+                    if (BuildConfig.DEBUG) Log.w(TAG, "Sending OnRoomError to PlayBridge: $message")
+                    UnityPlayer.UnitySendMessage("PlayBridge", "OnRoomError", message)
+                    return@Thread
+                }
                 json = """{"roomId":"viewer_room","templateId":"template01","title":"Pameran 3D","description":"","wallColor":"#FFFFFF","isPublic":true,"ownerId":"owner","viewerId":"visitor","items":[
                     {"prefabId":"hpanel_01","position":{"x":0,"y":1.8,"z":5.2},"rotation":{"x":0,"y":180,"z":0}},
                     {"prefabId":"vpanel_01","position":{"x":-4.8,"y":1.8,"z":1.5},"rotation":{"x":0,"y":90,"z":0}},
@@ -82,6 +102,7 @@ object UnityBridge {
     @JvmStatic
     fun openSchedule(roomId: String) {
         if (BuildConfig.DEBUG) Log.d(TAG, "Unity requested open schedule for room: $roomId")
+        com.ven.app.ui.screens.unity.VenUnityActivity.openScheduleSheet(roomId)
         onScheduleRequested?.invoke(roomId)
     }
 

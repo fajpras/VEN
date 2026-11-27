@@ -34,6 +34,7 @@ class RequestMeetingViewModel(
     private val initialMonth = YearMonth.from(today)
     private val initialDate = today
     private var currentTargetId: String? = null
+    private var isTargetPameran: Boolean = false
 
     private val _uiState = MutableStateFlow(
         RequestMeetingUiState(
@@ -60,87 +61,83 @@ class RequestMeetingViewModel(
     private fun loadTargetDetails(targetId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val pameranIdInt = targetId.toIntOrNull()
-            if (pameranIdInt != null) {
-                val res = apiPameran.getPameran(pameranIdInt)
-                if (res.isSuccess) {
-                    val pameran = res.getOrNull()
-                    if (pameran != null) {
-                        _uiState.update { current ->
-                            current.copy(
-                                isLoading = false,
-                                pameranId = pameran.idPameran.toString(),
-                                pameranTitle = pameran.judul,
-                                bannerUrl = pameran.banner,
-                                bannerColor = pameran.warna,
-                            )
-                        }
-                        return@launch
-                    }
-                }
-            } else {
-                // targetId adalah UUID karya
-                val karyaRes = apiPameran.getKarya(targetId)
-                if (karyaRes.isSuccess) {
-                    val karya = karyaRes.getOrNull()
-                    if (karya != null) {
-                        val pameran = karya.pameran
-                        if (pameran != null) {
-                            _uiState.update { current ->
-                                current.copy(
-                                    isLoading = false,
-                                    pameranId = pameran.idPameran.toString(),
-                                    pameranTitle = pameran.judul,
-                                    bannerUrl = pameran.banner,
-                                    bannerColor = pameran.warna,
-                                )
-                            }
-                            return@launch
-                        } else if (karya.idPameran != null) {
-                            val pamRes = apiPameran.getPameran(karya.idPameran)
-                            val p = pamRes.getOrNull()
-                            if (p != null) {
-                                _uiState.update { current ->
-                                    current.copy(
-                                        isLoading = false,
-                                        pameranId = p.idPameran.toString(),
-                                        pameranTitle = p.judul,
-                                        bannerUrl = p.banner,
-                                        bannerColor = p.warna,
-                                    )
-                                }
-                                return@launch
-                            }
-                        } else if (!karya.idPengguna.isNullOrBlank()) {
-                            // Fallback jika karya belum terhubung pameran: ambil pameran terbaru milik pembuat
-                            val userPamRes = apiPameran.getPameranByUser(karya.idPengguna)
-                            val latestPameran = userPamRes.getOrNull()?.firstOrNull()
-                            if (latestPameran != null) {
-                                _uiState.update { current ->
-                                    current.copy(
-                                        isLoading = false,
-                                        pameranId = latestPameran.idPameran.toString(),
-                                        pameranTitle = latestPameran.judul,
-                                        bannerUrl = latestPameran.banner,
-                                        bannerColor = latestPameran.warna,
-                                    )
-                                }
-                                return@launch
-                            }
-                        }
+            isTargetPameran = false
 
-                        // Jika tidak ada pameran sama sekali, gunakan judul dan file karya
+            // 1. Coba muat sebagai Karya (UUID) terlebih dahulu (dipanggil dari PostCard)
+            val karyaRes = apiPameran.getKarya(targetId)
+            val karya = karyaRes.getOrNull()
+            if (karyaRes.isSuccess && karya != null) {
+                val pameran = karya.pameran
+                if (pameran != null) {
+                    _uiState.update { current ->
+                        current.copy(
+                            isLoading = false,
+                            pameranId = pameran.idPameran,
+                            pameranTitle = pameran.judul,
+                            bannerUrl = pameran.banner,
+                            bannerColor = pameran.warna,
+                        )
+                    }
+                    return@launch
+                } else if (!karya.idPameran.isNullOrBlank()) {
+                    val pamRes = apiPameran.getPameran(karya.idPameran)
+                    val p = pamRes.getOrNull()
+                    if (p != null) {
                         _uiState.update { current ->
                             current.copy(
                                 isLoading = false,
-                                pameranTitle = karya.judul,
-                                bannerUrl = karya.fileUrl ?: karya.file,
+                                pameranId = p.idPameran,
+                                pameranTitle = p.judul,
+                                bannerUrl = p.banner,
+                                bannerColor = p.warna,
+                            )
+                        }
+                        return@launch
+                    }
+                } else if (!karya.idPengguna.isNullOrBlank()) {
+                    val userPamRes = apiPameran.getPameranByUser(karya.idPengguna)
+                    val latestPameran = userPamRes.getOrNull()?.firstOrNull()
+                    if (latestPameran != null) {
+                        _uiState.update { current ->
+                            current.copy(
+                                isLoading = false,
+                                pameranId = latestPameran.idPameran,
+                                pameranTitle = latestPameran.judul,
+                                bannerUrl = latestPameran.banner,
+                                bannerColor = latestPameran.warna,
                             )
                         }
                         return@launch
                     }
                 }
+
+                _uiState.update { current ->
+                    current.copy(
+                        isLoading = false,
+                        pameranTitle = karya.judul,
+                        bannerUrl = karya.fileUrl ?: karya.file,
+                    )
+                }
+                return@launch
             }
+
+            // 2. Jika bukan Karya, coba muat sebagai Pameran (UUID)
+            val pamRes = apiPameran.getPameran(targetId)
+            val pameran = pamRes.getOrNull()
+            if (pamRes.isSuccess && pameran != null) {
+                isTargetPameran = true
+                _uiState.update { current ->
+                    current.copy(
+                        isLoading = false,
+                        pameranId = pameran.idPameran,
+                        pameranTitle = pameran.judul,
+                        bannerUrl = pameran.banner,
+                        bannerColor = pameran.warna,
+                    )
+                }
+                return@launch
+            }
+
             _uiState.update { it.copy(isLoading = false) }
         }
     }
@@ -193,8 +190,14 @@ class RequestMeetingViewModel(
         _uiState.update { it.copy(isAm = isAm) }
     }
 
+    fun onDurationSelected(minutes: Int) {
+        if (minutes in listOf(30, 45, 60)) {
+            _uiState.update { it.copy(selectedDurationMinutes = minutes) }
+        }
+    }
+
     fun onMessageChange(message: String) {
-        _uiState.update { it.copy(message = message) }
+        _uiState.update { it.copy(message = message, validationError = null) }
     }
 
     fun sendRequest(overrideTargetId: String? = null) {
@@ -222,23 +225,31 @@ class RequestMeetingViewModel(
             return
         }
 
+        val trimmedMessage = current.message.trim()
+        if (trimmedMessage.length < 5) {
+            _uiState.update { it.copy(validationError = RequestMeetingValidationError.MessageRequired) }
+            return
+        }
+
         val formattedWaktu = scheduledDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
         val target = overrideTargetId ?: currentTargetId
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSending = true, validationError = null, submitErrorText = null) }
 
-            val request = if (target?.toIntOrNull() != null) {
+            val request = if (isTargetPameran && !target.isNullOrBlank()) {
                 CreateUndanganRequest(
-                    idPameran = target.toInt(),
+                    idPameran = target,
                     waktu = formattedWaktu,
-                    catatan = current.message.ifBlank { null },
+                    durasiMenit = current.selectedDurationMinutes,
+                    catatan = trimmedMessage,
                 )
             } else {
                 CreateUndanganRequest(
                     idKarya = target?.ifBlank { null },
                     waktu = formattedWaktu,
-                    catatan = current.message.ifBlank { null },
+                    durasiMenit = current.selectedDurationMinutes,
+                    catatan = trimmedMessage,
                 )
             }
 

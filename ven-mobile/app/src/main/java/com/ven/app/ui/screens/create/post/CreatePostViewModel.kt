@@ -30,7 +30,7 @@ data class UnggahanKarya(
     val judul: String,
     val jenis: String,
     val deskripsi: String,
-    val idPameran: Int? = null,
+    val idPameran: String? = null,
 )
 
 /** Data yang dibutuhkan untuk memperbarui karya yang sudah ada. */
@@ -39,7 +39,7 @@ data class PembaruanKarya(
     val idKategori: Int,
     val judul: String,
     val deskripsi: String,
-    val idPameran: Int? = null,
+    val idPameran: String? = null,
     val jenis: String? = null,
     val file: File? = null,
     val mimeType: String? = null,
@@ -48,7 +48,7 @@ data class PembaruanKarya(
 sealed interface CreatePostEvent {
     data object PostSuccess : CreatePostEvent
     data class PlaceInExhibition(
-        val exhibitId: Int,
+        val exhibitId: String,
         val templateId: String,
         val exhibitTitle: String,
         val tipe: String,
@@ -260,7 +260,7 @@ class CreatePostViewModel(
         _uiState.update { it.copy(categoryId = idKategori, errorMessageRes = null) }
     }
 
-    fun onExhibitionChange(idPameran: Int?) {
+    fun onExhibitionChange(idPameran: String?) {
         _uiState.update { it.copy(selectedExhibitionId = idPameran, errorMessageRes = null) }
     }
 

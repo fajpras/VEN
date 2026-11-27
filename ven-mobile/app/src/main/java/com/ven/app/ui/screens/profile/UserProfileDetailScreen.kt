@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,6 +55,7 @@ import kotlinx.coroutines.withContext
  * Layar Detail Profil Pengguna Publik (Instagram Style) untuk melihat karya, pameran,
  * dan identitas kreator lain di aplikasi VEN.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun UserProfileDetailScreen(
     userId: String,
@@ -225,12 +228,13 @@ fun UserProfileDetailScreen(
                             }
                         }
 
-                        // Skill / Kategori Minat
+                        // Skill / Kategori Minat (FlowRow agar tidak terpotong di tepi layar)
                         if (userInfo.kategori.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(VexSpace.s4))
-                            Row(
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(VexSpace.s2),
-                                verticalAlignment = Alignment.CenterVertically,
+                                verticalArrangement = Arrangement.spacedBy(VexSpace.s2),
                             ) {
                                 userInfo.kategori.take(4).forEach { kat ->
                                     val catColor = CategoryColorMap[kat.nama]

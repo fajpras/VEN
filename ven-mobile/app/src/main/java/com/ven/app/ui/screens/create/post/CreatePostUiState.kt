@@ -35,7 +35,7 @@ data class CreatePostUiState(
     val categories: List<KategoriModel> = emptyList(),
     val categoryId: Int? = null,
     val exhibitions: List<PameranItemModel> = emptyList(),
-    val selectedExhibitionId: Int? = null,
+    val selectedExhibitionId: String? = null,
     val description: String = "",
     val isLoadingCategories: Boolean = false,
     val isLoadingExhibitions: Boolean = false,

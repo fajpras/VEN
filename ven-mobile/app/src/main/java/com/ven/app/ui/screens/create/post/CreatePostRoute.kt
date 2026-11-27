@@ -43,7 +43,7 @@ fun CreatePostRoute(
     onNavigateToExhibit: () -> Unit,
     modifier: Modifier = Modifier,
     editingPostId: String? = null,
-    onPlaceInExhibition: ((Int, String, String, String, com.ven.app.util.PendingArtworkPlacement) -> Unit)? = null,
+    onPlaceInExhibition: ((String, String, String, String, com.ven.app.util.PendingArtworkPlacement) -> Unit)? = null,
     viewModel: CreatePostViewModel = viewModel(),
 ) {
     val context = LocalContext.current

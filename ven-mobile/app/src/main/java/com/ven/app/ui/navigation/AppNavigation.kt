@@ -78,7 +78,11 @@ import com.ven.app.ui.screens.settings.VerifyEmailRoute
 import com.ven.app.ui.screens.splash.SplashScreen
 
 @Composable
-fun AppNavHost(showExplore: Boolean = false) {
+fun AppNavHost(
+    showExplore: Boolean = false,
+    deepLinkToken: String? = null,
+    onDeepLinkConsumed: () -> Unit = {},
+) {
     val context = LocalContext.current
     val themePreferences = remember { ThemePreferences.getInstance(context) }
     val sessionManager = remember { SessionManager.getInstance(context) }
@@ -119,6 +123,16 @@ fun AppNavHost(showExplore: Boolean = false) {
                     }
                 }
             }
+        }
+    }
+
+    LaunchedEffect(deepLinkToken, isLoggedIn) {
+        val token = deepLinkToken?.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
+        if (isLoggedIn) {
+            navController.navigate(Screen.PrivateRoomWaiting.createRoute(token)) {
+                launchSingleTop = true
+            }
+            onDeepLinkConsumed()
         }
     }
 
@@ -303,6 +317,9 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onNavigateToUserProfile = { userId ->
                     navController.navigate(Screen.UserProfile.createRoute(userId))
                 },
+                onNavigateToScheduleHistory = {
+                    navController.navigate(Screen.SettingsHistory.route)
+                },
             )
         }
 
@@ -361,12 +378,12 @@ fun AppNavHost(showExplore: Boolean = false) {
             route = Screen.EditExhibit.route,
             arguments = listOf(
                 navArgument("exhibitId") {
-                    type = NavType.IntType
-                    defaultValue = 0
+                    type = NavType.StringType
+                    defaultValue = ""
                 },
             ),
         ) { backStackEntry ->
-            val exhibitId = backStackEntry.arguments?.getInt("exhibitId") ?: 0
+            val exhibitId = backStackEntry.arguments?.getString("exhibitId").orEmpty()
             EditExhibitRoute(
                 exhibitId = exhibitId,
                 onBackClick = { navController.popBackStack() },
@@ -381,7 +398,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                             title = title,
                             bannerUrl = bannerUrl,
                             tipe = tipe,
-                            editRoomId = exhibitId.toString(),
+                            editRoomId = exhibitId,
                         ),
                     )
                 },
@@ -490,7 +507,7 @@ fun AppNavHost(showExplore: Boolean = false) {
             val description = backStackEntry.arguments?.getString("description") ?: ""
             val bannerUrl = backStackEntry.arguments?.getString("bannerUrl") ?: ""
             val tipe = backStackEntry.arguments?.getString("tipe") ?: "kecil"
-            val editRoomId = backStackEntry.arguments?.getString("editRoomId")?.toIntOrNull()
+            val editRoomId = backStackEntry.arguments?.getString("editRoomId").orEmpty()
             UnityLoadingScreen(
                 targetId = templateId,
                 title = title,
@@ -498,7 +515,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                 bannerUrl = bannerUrl,
                 tipe = tipe,
                 isEditor = true,
-                roomId = editRoomId,
+                editRoomId = editRoomId,
                 onBackClick = {
                     createExhibitViewModel.clearTemporaryData()
                     if (!navController.popBackStack(Screen.Home.route, inclusive = false)) {
@@ -662,8 +679,36 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onHourChange = requestViewModel::onHourChange,
                 onMinuteChange = requestViewModel::onMinuteChange,
                 onPeriodChange = requestViewModel::onPeriodChange,
+                onDurationSelected = requestViewModel::onDurationSelected,
                 onMessageChange = requestViewModel::onMessageChange,
                 onSendRequestClick = requestViewModel::sendRequest,
+            )
+        }
+
+        composable(
+            route = Screen.PrivateRoomWaiting.route,
+            arguments = listOf(
+                navArgument("token") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+            ),
+        ) { backStackEntry ->
+            val token = backStackEntry.arguments?.getString("token").orEmpty()
+            com.ven.app.ui.screens.schedule.PrivateRoomWaitingScreen(
+                token = token,
+                onBackClick = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                },
+                onEnterPrivateRoom = { exhibitId, roomId ->
+                    navController.navigate(Screen.ViewExhibit.createRoute(exhibitId, roomId)) {
+                        popUpTo(Screen.PrivateRoomWaiting.route) { inclusive = true }
+                    }
+                },
             )
         }
 
@@ -824,10 +869,11 @@ fun MainHomeScreen(
     onNavigateToCreatePost: () -> Unit = {},
     onNavigateToCreateExhibit: () -> Unit = {},
     onNavigateToExhibitEditor: (templateIdOrExhibitId: String) -> Unit = {},
-    onNavigateToEditExhibit: (exhibitId: Int) -> Unit = {},
-    onNavigateToEditExhibit3d: (exhibitId: Int, title: String) -> Unit = { _, _ -> },
+    onNavigateToEditExhibit: (exhibitId: String) -> Unit = {},
+    onNavigateToEditExhibit3d: (exhibitId: String, title: String) -> Unit = { _, _ -> },
     onNavigateToExhibitViewer: (exhibitId: String, roomId: Int?) -> Unit = { _, _ -> },
     onNavigateToUserProfile: (userId: String) -> Unit = {},
+    onNavigateToScheduleHistory: () -> Unit = {},
 ) {
     var currentTab by rememberSaveable { mutableStateOf(initialTab) }
     val homeListState = rememberLazyListState()
@@ -917,6 +963,7 @@ fun MainHomeScreen(
             BottomNavTab.Schedule -> {
                 ScheduleScreen(
                     onTabSelected = { currentTab = it },
+                    onHistoryClick = onNavigateToScheduleHistory,
                     onJoinRoom = { exhibitId, roomId ->
                         onNavigateToExhibitViewer(exhibitId?.ifBlank { "4" } ?: "4", roomId)
                     },

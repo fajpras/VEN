@@ -31,7 +31,7 @@ sealed class Screen(val route: String) {
         fun createRoute(postId: String) = "edit_post/$postId"
     }
     data object EditExhibit : Screen("edit_exhibit/{exhibitId}") {
-        fun createRoute(exhibitId: Int) = "edit_exhibit/$exhibitId"
+        fun createRoute(exhibitId: String) = "edit_exhibit/$exhibitId"
     }
     data object CreateExhibitInfo : Screen("create_exhibit_info")
     data object CreateExhibit : Screen("create_exhibit")
@@ -63,6 +63,9 @@ sealed class Screen(val route: String) {
     }
     data object RequestMeeting : Screen("request_meeting/{postId}") {
         fun createRoute(postId: String) = "request_meeting/$postId"
+    }
+    data object PrivateRoomWaiting : Screen("private_room_waiting/{token}") {
+        fun createRoute(token: String) = "private_room_waiting/$token"
     }
 
     data object Settings : Screen("settings")

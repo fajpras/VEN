@@ -62,7 +62,7 @@ object ApiKarya {
         judul: String,
         jenis: String,
         deskripsi: String,
-        idPameran: Int? = null,
+        idPameran: String? = null,
     ): Result<KaryaItemModel> {
         return try {
             val filePart = MultipartBody.Part.createFormData(
@@ -96,7 +96,7 @@ object ApiKarya {
         idKategori: Int,
         judul: String,
         deskripsi: String,
-        idPameran: Int? = null,
+        idPameran: String? = null,
         jenis: String? = null,
         file: File? = null,
         mimeType: String? = null,

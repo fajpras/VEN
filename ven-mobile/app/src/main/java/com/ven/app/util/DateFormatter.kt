@@ -1,4 +1,4 @@
-﻿package com.ven.app.util
+package com.ven.app.util
 
 import com.ven.app.R
 import com.ven.app.core.localization.AppStrings
@@ -191,6 +191,50 @@ object DateFormatter {
     fun isPastDateTime(dateString: String?): Boolean {
         val millis = parseIsoToMillis(dateString) ?: return false
         return millis < System.currentTimeMillis()
+    }
+
+    /**
+     * Mengecek apakah sesi ruang privat sudah melewati batas kadaluarsa 00:00 di akhir hari jadwal.
+     */
+    fun isExpiredAtMidnight(
+        waktu: String?,
+        kadaluarsaPada: String? = null,
+        nowMillis: Long = System.currentTimeMillis(),
+    ): Boolean {
+        val explicitExpiry = parseIsoToMillis(kadaluarsaPada)
+        if (explicitExpiry != null) {
+            return nowMillis > explicitExpiry
+        }
+        val waktuMillis = parseIsoToMillis(waktu) ?: return false
+        val cal = java.util.Calendar.getInstance().apply {
+            timeInMillis = waktuMillis
+            set(java.util.Calendar.HOUR_OF_DAY, 23)
+            set(java.util.Calendar.MINUTE, 59)
+            set(java.util.Calendar.SECOND, 59)
+            set(java.util.Calendar.MILLISECOND, 999)
+        }
+        return nowMillis > cal.timeInMillis
+    }
+
+    /**
+     * Mengecek apakah jadwal jatuh hari ini atau besok (H-1) dan belum kadaluarsa.
+     */
+    fun isReminderDue(
+        waktu: String?,
+        kadaluarsaPada: String? = null,
+        nowMillis: Long = System.currentTimeMillis(),
+    ): Boolean {
+        if (isExpiredAtMidnight(waktu, kadaluarsaPada, nowMillis)) return false
+        val waktuMillis = parseIsoToMillis(waktu) ?: return false
+        val nowCal = java.util.Calendar.getInstance().apply { timeInMillis = nowMillis }
+        val targetCal = java.util.Calendar.getInstance().apply { timeInMillis = waktuMillis }
+        val dayDiff = ((targetCal.timeInMillis - nowCal.timeInMillis) / (24L * 60 * 60 * 1000))
+        val sameDay = nowCal.get(java.util.Calendar.YEAR) == targetCal.get(java.util.Calendar.YEAR) &&
+            nowCal.get(java.util.Calendar.DAY_OF_YEAR) == targetCal.get(java.util.Calendar.DAY_OF_YEAR)
+        val tomorrowCal = (nowCal.clone() as java.util.Calendar).apply { add(java.util.Calendar.DAY_OF_YEAR, 1) }
+        val isTomorrow = tomorrowCal.get(java.util.Calendar.YEAR) == targetCal.get(java.util.Calendar.YEAR) &&
+            tomorrowCal.get(java.util.Calendar.DAY_OF_YEAR) == targetCal.get(java.util.Calendar.DAY_OF_YEAR)
+        return sameDay || isTomorrow || dayDiff == 0L
     }
 
     /**

@@ -17,8 +17,8 @@ class CreatePostAndEditExhibitUiStateTest {
     )
 
     private val sampleExhibitions = listOf(
-        PameranItemModel(idPameran = 10, judul = "Pameran Digital 2026", tipe = "kecil"),
-        PameranItemModel(idPameran = 20, judul = "Galeri Animasi", tipe = "sedang"),
+        PameranItemModel(idPameran = "01a21286-0010-7000-8000-000000000010", judul = "Pameran Digital 2026", tipe = "kecil"),
+        PameranItemModel(idPameran = "01a21286-0020-7000-8000-000000000020", judul = "Galeri Animasi", tipe = "sedang"),
     )
 
     @Test
@@ -36,7 +36,7 @@ class CreatePostAndEditExhibitUiStateTest {
         assertNull(withoutExhibit.selectedExhibitionName)
         assertFalse(withoutExhibit.isPostEnabled)
 
-        val linked = withoutExhibit.copy(selectedExhibitionId = 20)
+        val linked = withoutExhibit.copy(selectedExhibitionId = "01a21286-0020-7000-8000-000000000020")
         assertEquals("Galeri Animasi", linked.selectedExhibitionName)
         assertTrue(linked.isPostEnabled)
     }
@@ -63,10 +63,10 @@ class CreatePostAndEditExhibitUiStateTest {
 
     @Test
     fun `edit exhibit validasi judul dan pemetaan template Unity`() {
-        val emptyTitle = EditExhibitUiState(exhibitId = 5, title = "   ", tipe = "sedang", isLoading = false)
+        val emptyTitle = EditExhibitUiState(exhibitId = "01a21286-0005-7000-8000-000000000005", title = "   ", tipe = "sedang", isLoading = false)
         assertFalse(emptyTitle.canSave)
 
-        val valid = EditExhibitUiState(exhibitId = 5, title = "Pameran Utama", tipe = "besar", isLoading = false)
+        val valid = EditExhibitUiState(exhibitId = "01a21286-0005-7000-8000-000000000005", title = "Pameran Utama", tipe = "besar", isLoading = false)
         assertTrue(valid.canSave)
         assertEquals("template03", valid.unityTemplateId)
     }

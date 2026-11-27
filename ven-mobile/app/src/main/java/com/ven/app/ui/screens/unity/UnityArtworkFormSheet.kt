@@ -112,16 +112,41 @@ fun UnityArtworkFormSheet(
     val selectedCategoryIndex = (state.categoryId - 1).coerceIn(0, UNITY_ARTWORK_CATEGORIES.lastIndex)
     val selectedCategoryName = UNITY_ARTWORK_CATEGORIES[selectedCategoryIndex]
 
-    val titleHeader = if (isIndonesian) "Detail Karya" else "Artwork Details"
+    val titleHeader = when {
+        state.isVideo && isIndonesian -> "Detail Karya Video"
+        state.isVideo -> "Video Artwork Details"
+        isIndonesian -> "Detail Karya Poster"
+        else -> "Poster Artwork Details"
+    }
     val labelTitle = if (isIndonesian) "Judul" else "Title"
     val placeholderTitle = if (isIndonesian) "Masukkan judul karya..." else "Enter artwork title..."
     val labelCategory = if (isIndonesian) "Kategori" else "Category"
     val labelDesc = if (isIndonesian) "Deskripsi" else "Description"
     val placeholderDesc = if (isIndonesian) "Tulis deskripsi singkat karya..." else "Write a short description..."
-    val labelPickMedia = if (isIndonesian) "Pilih Foto / Video" else "Choose Photo or Video"
-    val labelChangeMedia = if (isIndonesian) "Ganti Media" else "Change Media"
-    val labelUploading = if (isIndonesian) "Mengunggah media..." else "Uploading media..."
-    val labelMediaAttached = if (isIndonesian) "Media terpasang" else "Media attached"
+    val labelPickMedia = when {
+        state.isVideo && isIndonesian -> "Pilih Video (MP4 / WebM / MOV)"
+        state.isVideo -> "Choose Video (MP4 / WebM / MOV)"
+        isIndonesian -> "Pilih Gambar Poster (JPG / PNG / WebP)"
+        else -> "Choose Poster Image (JPG / PNG / WebP)"
+    }
+    val labelChangeMedia = when {
+        state.isVideo && isIndonesian -> "Ganti Video"
+        state.isVideo -> "Change Video"
+        isIndonesian -> "Ganti Gambar"
+        else -> "Change Image"
+    }
+    val labelUploading = when {
+        state.isVideo && isIndonesian -> "Mengunggah video..."
+        state.isVideo -> "Uploading video..."
+        isIndonesian -> "Mengunggah gambar..."
+        else -> "Uploading image..."
+    }
+    val labelMediaAttached = when {
+        state.isVideo && isIndonesian -> "Video terpasang"
+        state.isVideo -> "Video attached"
+        isIndonesian -> "Gambar poster terpasang"
+        else -> "Poster image attached"
+    }
     val labelSave = if (isIndonesian) "Simpan" else "Save"
 
     Box(modifier = Modifier.fillMaxSize()) {

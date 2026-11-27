@@ -12,6 +12,7 @@ import java.time.YearMonth
 enum class RequestMeetingValidationError(@param:StringRes val messageRes: Int) {
     TimeNotSet(R.string.request_meeting_error_time_required),
     InvalidSchedule(R.string.request_meeting_error_invalid_schedule),
+    MessageRequired(R.string.request_meeting_error_message_required),
 }
 
 @Immutable
@@ -19,6 +20,7 @@ data class CalendarDay(
     val date: LocalDate,
     val isCurrentMonth: Boolean,
     val isSelected: Boolean = false,
+    val isEnabled: Boolean = isCurrentMonth,
 ) {
     val dayNumber: Int get() = date.dayOfMonth
 }
@@ -37,6 +39,7 @@ data class RequestMeetingUiState(
     val hourText: String = "02",
     val minuteText: String = "30",
     val isAm: Boolean = false,
+    val selectedDurationMinutes: Int = 30,
     val message: String = "",
     val isLoading: Boolean = false,
     val isSending: Boolean = false,
@@ -47,6 +50,7 @@ data class RequestMeetingUiState(
 fun buildMonthGrid(
     visibleMonth: YearMonth,
     selectedDate: LocalDate?,
+    minDate: LocalDate = LocalDate.now(),
 ): List<CalendarDay> {
     val firstDayOfMonth = visibleMonth.atDay(1)
     // DayOfWeek: MONDAY = 1 ... SUNDAY = 7
@@ -59,6 +63,7 @@ fun buildMonthGrid(
     for (i in 0 until totalDays) {
         val currentDate = startDate.plusDays(i.toLong())
         val isCurrentMonth = (currentDate.month == visibleMonth.month && currentDate.year == visibleMonth.year)
+        val isEnabled = isCurrentMonth && !currentDate.isBefore(minDate)
         val isSelected = (selectedDate != null && currentDate == selectedDate)
 
         days.add(
@@ -66,6 +71,7 @@ fun buildMonthGrid(
                 date = currentDate,
                 isCurrentMonth = isCurrentMonth,
                 isSelected = isSelected,
+                isEnabled = isEnabled,
             )
         )
     }

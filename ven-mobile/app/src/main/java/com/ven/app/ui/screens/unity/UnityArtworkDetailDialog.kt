@@ -13,14 +13,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -35,8 +35,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ven.app.ui.components.ui.AutoPlayVideoPlayer
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonVariant
 import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
@@ -54,9 +56,10 @@ data class UnityArtworkDetailState(
 )
 
 /**
- * Pop-up Detail Karya minimalis di dalam PlayScene:
- * - Tema (Light/Dark) dan label UI mengikuti pengaturan aplikasi.
- * - Isi data karya (judul & deskripsi) ditampilkan asli apa adanya tanpa diterjemahkan.
+ * Pop-up Detail Karya minimalis & responsif di dalam PlayScene:
+ * - Portrait: kartu vertikal rapi dengan preview proporsional (ContentScale.Fit).
+ * - Landscape: layout 2 kolom berdampingan (kiri: media penuh tanpa terpotong, kanan: judul, deskripsi scrollable & tombol Tutup).
+ * - Tema (Light/Dark) dan label UI mengikuti pengaturan aplikasi; judul & deskripsi karya ditampilkan asli apa adanya.
  */
 @Composable
 fun UnityArtworkDetailDialog(
@@ -66,6 +69,9 @@ fun UnityArtworkDetailDialog(
     onDismiss: () -> Unit,
 ) {
     val colors = VexTheme.colors
+    val config = LocalConfiguration.current
+    val isLandscape = config.screenWidthDp > config.screenHeightDp
+
     val isVideo = detail.contentType.equals("video", ignoreCase = true)
     val previewBitmap = rememberAsyncImageBitmap(
         if (!isVideo && detail.contentUrl.isNotBlank()) detail.contentUrl else null,
@@ -88,7 +94,7 @@ fun UnityArtworkDetailDialog(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.55f))
+                    .background(Color.Black.copy(alpha = 0.58f))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -103,121 +109,258 @@ fun UnityArtworkDetailDialog(
             exit = fadeOut() + scaleOut(targetScale = 0.94f),
         ) {
             val cardShape = RoundedCornerShape(VexRadius.lg)
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = VexSpace.s6, vertical = VexSpace.s8)
-                    .heightIn(max = 560.dp)
-                    .clip(cardShape)
-                    .background(colors.bg)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {},
-                    ),
-            ) {
-                // Header
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = VexSpace.s5, end = VexSpace.s2, top = VexSpace.s3, bottom = VexSpace.s2),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = labelHeader,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = colors.text,
-                    )
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(36.dp),
-                    ) {
-                        VexIcon(
-                            id = VexIcons.Close,
-                            contentDescription = labelClose,
-                            tint = colors.textMuted,
-                            size = 20.dp,
-                        )
-                    }
-                }
 
-                HorizontalDivider(thickness = 1.dp, color = colors.border.copy(alpha = 0.5f))
-
-                // Konten (scrollable)
+            if (isLandscape) {
+                // ---- LANDSCAPE: 2-Column Side-by-Side Card ----
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f, fill = false)
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = VexSpace.s5, vertical = VexSpace.s4),
-                    verticalArrangement = Arrangement.spacedBy(VexSpace.s4),
+                        .fillMaxWidth(0.86f)
+                        .widthIn(max = 680.dp)
+                        .fillMaxHeight(0.84f)
+                        .heightIn(max = 360.dp)
+                        .clip(cardShape)
+                        .background(colors.bg)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {},
+                        ),
                 ) {
-                    // Media preview
-                    if (detail.contentUrl.isNotBlank()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(16f / 10f)
-                                .clip(RoundedCornerShape(VexRadius.md))
-                                .background(colors.surfaceInput),
-                            contentAlignment = Alignment.Center,
+                    // Compact Header
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = VexSpace.s5, end = VexSpace.s2, top = VexSpace.s2, bottom = VexSpace.s2),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = labelHeader,
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = colors.text,
+                        )
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.size(34.dp),
                         ) {
-                            if (previewBitmap != null) {
-                                Image(
-                                    bitmap = previewBitmap,
-                                    contentDescription = detail.title,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize(),
-                                )
-                            } else {
-                                VexIcon(
-                                    id = if (isVideo) VexIcons.Play else VexIcons.Tab.Posts.filled,
-                                    contentDescription = null,
-                                    size = 36.dp,
-                                    tint = colors.textMuted,
-                                )
-                            }
+                            VexIcon(
+                                id = VexIcons.Close,
+                                contentDescription = labelClose,
+                                tint = colors.textMuted,
+                                size = 20.dp,
+                            )
                         }
                     }
 
-                    // Judul asli karya (tidak diterjemahkan)
-                    if (detail.title.isNotBlank()) {
-                        Text(
-                            text = detail.title,
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            color = colors.text,
-                        )
-                    }
+                    HorizontalDivider(thickness = 1.dp, color = colors.border.copy(alpha = 0.5f))
 
-                    // Deskripsi asli karya (label mengikuti bahasa aplikasi, isi tetap asli)
-                    Column(verticalArrangement = Arrangement.spacedBy(VexSpace.s1)) {
-                        Text(
-                            text = labelDesc,
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
-                            color = colors.textMuted,
-                        )
-                        Text(
-                            text = detail.description.ifBlank { labelEmptyDesc },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (detail.description.isNotBlank()) colors.text else colors.textMuted,
-                        )
+                    // Body: Left = Media Preview, Right = Title + Description + Close
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(VexSpace.s4),
+                        horizontalArrangement = Arrangement.spacedBy(VexSpace.s4),
+                    ) {
+                        if (detail.contentUrl.isNotBlank()) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1.1f)
+                                    .fillMaxHeight()
+                                    .clip(RoundedCornerShape(VexRadius.md))
+                                    .background(colors.surfaceInput)
+                                    .padding(VexSpace.s2),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                if (isVideo) {
+                                    AutoPlayVideoPlayer(
+                                        videoUrl = detail.contentUrl,
+                                        isPlaying = visible,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                } else if (previewBitmap != null) {
+                                    Image(
+                                        bitmap = previewBitmap,
+                                        contentDescription = detail.title,
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                } else {
+                                    VexIcon(
+                                        id = VexIcons.Tab.Posts.filled,
+                                        contentDescription = null,
+                                        size = 36.dp,
+                                        tint = colors.textMuted,
+                                    )
+                                }
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                                    .verticalScroll(rememberScrollState()),
+                                verticalArrangement = Arrangement.spacedBy(VexSpace.s2),
+                            ) {
+                                if (detail.title.isNotBlank()) {
+                                    Text(
+                                        text = detail.title,
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = colors.text,
+                                    )
+                                }
+                                Column(verticalArrangement = Arrangement.spacedBy(VexSpace.s1)) {
+                                    Text(
+                                        text = labelDesc,
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+                                        color = colors.textMuted,
+                                    )
+                                    Text(
+                                        text = detail.description.ifBlank { labelEmptyDesc },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = if (detail.description.isNotBlank()) colors.text else colors.textMuted,
+                                    )
+                                }
+                            }
+
+                            VexButton(
+                                text = labelClose,
+                                onClick = onDismiss,
+                                variant = VexButtonVariant.Outline,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = VexSpace.s3),
+                            )
+                        }
                     }
                 }
-
-                HorizontalDivider(thickness = 1.dp, color = colors.border.copy(alpha = 0.5f))
-
-                Box(
+            } else {
+                // ---- PORTRAIT: Clean Vertical Card ----
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = VexSpace.s5, vertical = VexSpace.s3),
+                        .padding(horizontal = VexSpace.s6, vertical = VexSpace.s8)
+                        .heightIn(max = 560.dp)
+                        .clip(cardShape)
+                        .background(colors.bg)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {},
+                        ),
                 ) {
-                    VexButton(
-                        text = labelClose,
-                        onClick = onDismiss,
-                        variant = VexButtonVariant.Outline,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = VexSpace.s5, end = VexSpace.s2, top = VexSpace.s3, bottom = VexSpace.s2),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = labelHeader,
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = colors.text,
+                        )
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.size(36.dp),
+                        ) {
+                            VexIcon(
+                                id = VexIcons.Close,
+                                contentDescription = labelClose,
+                                tint = colors.textMuted,
+                                size = 20.dp,
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(thickness = 1.dp, color = colors.border.copy(alpha = 0.5f))
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = VexSpace.s5, vertical = VexSpace.s4),
+                        verticalArrangement = Arrangement.spacedBy(VexSpace.s4),
+                    ) {
+                        if (detail.contentUrl.isNotBlank()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(16f / 10f)
+                                    .clip(RoundedCornerShape(VexRadius.md))
+                                    .background(colors.surfaceInput)
+                                    .padding(VexSpace.s2),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                if (isVideo) {
+                                    AutoPlayVideoPlayer(
+                                        videoUrl = detail.contentUrl,
+                                        isPlaying = visible,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                } else if (previewBitmap != null) {
+                                    Image(
+                                        bitmap = previewBitmap,
+                                        contentDescription = detail.title,
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                } else {
+                                    VexIcon(
+                                        id = VexIcons.Tab.Posts.filled,
+                                        contentDescription = null,
+                                        size = 36.dp,
+                                        tint = colors.textMuted,
+                                    )
+                                }
+                            }
+                        }
+
+                        if (detail.title.isNotBlank()) {
+                            Text(
+                                text = detail.title,
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                color = colors.text,
+                            )
+                        }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(VexSpace.s1)) {
+                            Text(
+                                text = labelDesc,
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+                                color = colors.textMuted,
+                            )
+                            Text(
+                                text = detail.description.ifBlank { labelEmptyDesc },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (detail.description.isNotBlank()) colors.text else colors.textMuted,
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(thickness = 1.dp, color = colors.border.copy(alpha = 0.5f))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = VexSpace.s5, vertical = VexSpace.s3),
+                    ) {
+                        VexButton(
+                            text = labelClose,
+                            onClick = onDismiss,
+                            variant = VexButtonVariant.Outline,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
             }
         }

@@ -8,7 +8,7 @@ import androidx.compose.runtime.Immutable
  */
 @Immutable
 data class EditExhibitUiState(
-    val exhibitId: Int = 0,
+    val exhibitId: String = "",
     val title: String = "",
     val tipe: String = "kecil",
     val wallColorHex: String = "#FFFFFF",

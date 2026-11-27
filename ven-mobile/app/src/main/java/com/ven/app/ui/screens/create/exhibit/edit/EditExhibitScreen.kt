@@ -217,7 +217,7 @@ private fun EditExhibitScreenLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
         EditExhibitScreen(
             state = EditExhibitUiState(
-                exhibitId = 1,
+                exhibitId = "01a21286-0001-7000-8000-000000000001",
                 title = "Galeri Digital 2026",
                 tipe = "sedang",
                 wallColorHex = "#E8DFCA",
@@ -239,7 +239,7 @@ private fun EditExhibitScreenDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         EditExhibitScreen(
             state = EditExhibitUiState(
-                exhibitId = 1,
+                exhibitId = "01a21286-0001-7000-8000-000000000001",
                 title = "Galeri Digital 2026",
                 tipe = "sedang",
                 wallColorHex = "#2D3142",

@@ -30,7 +30,7 @@ data class KaryaItemModel(
     val idPengguna: String? = null,
 
     @SerializedName("id_pameran")
-    val idPameran: Int? = null,
+    val idPameran: String? = null,
 
     @SerializedName("id_kategori")
     val idKategori: Int? = null,
@@ -68,7 +68,7 @@ data class KaryaItemModel(
  */
 data class PameranItemModel(
     @SerializedName("id_pameran")
-    val idPameran: Int,
+    val idPameran: String,
 
     @SerializedName("id_pengguna")
     val idPengguna: String? = null,

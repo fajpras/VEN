@@ -47,7 +47,7 @@ class ScreenRouteTest {
     @Test
     fun screenRoutes_editPostAndExhibit_areCorrect() {
         assertEquals("edit_post/uuid-1", Screen.EditPost.createRoute("uuid-1"))
-        assertEquals("edit_exhibit/42", Screen.EditExhibit.createRoute(42))
+        assertEquals("edit_exhibit/uuid-42", Screen.EditExhibit.createRoute("uuid-42"))
         assertEquals(
             "create_exhibit_editor/template01?title=&description=&bannerUrl=&tipe=kecil&editRoomId=42",
             Screen.CreateExhibitEditor.createRoute("template01", editRoomId = "42"),
