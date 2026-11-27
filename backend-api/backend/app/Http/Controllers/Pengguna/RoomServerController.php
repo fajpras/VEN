@@ -5,14 +5,14 @@ namespace App\Http\Controllers\Pengguna;
 use App\Http\Controllers\Controller;
 use App\Models\Pameran;
 use App\Models\Ruangan;
-use App\Models\Undangan;
+use App\Services\Diskusi\PenjagaAksesRuangan;
 use App\Services\Edgegap\LayananEdgegapServer;
 use Illuminate\Http\Request;
 use RuntimeException;
 
 class RoomServerController extends Controller
 {
-    public function byRoomKey(Request $request, string $roomKey, LayananEdgegapServer $edgegap)
+    public function byRoomKey(Request $request, string $roomKey, LayananEdgegapServer $edgegap, PenjagaAksesRuangan $penjaga)
     {
         if (str_starts_with($roomKey, 'ruangan-')) {
             $idRuangan = substr($roomKey, strlen('ruangan-'));
@@ -25,7 +25,7 @@ class RoomServerController extends Controller
                 return $this->notFound('Ruangan tidak ditemukan.');
             }
 
-            $this->pastikanAksesRuangan($request, $ruangan);
+            $penjaga->pastikan($ruangan, $request->user());
 
             return $this->provision($request, 'ruangan-'.$ruangan->id_ruangan, $edgegap);
         }
@@ -47,12 +47,12 @@ class RoomServerController extends Controller
         return $this->provision($request, (string) $pameran->id_pameran, $edgegap);
     }
 
-    public function ruangan(Request $request, Ruangan $ruangan, LayananEdgegapServer $edgegap)
+    public function ruangan(Request $request, Ruangan $ruangan, LayananEdgegapServer $edgegap, PenjagaAksesRuangan $penjaga)
     {
         $ruangan->loadMissing('pameran');
         abort_unless($ruangan->pameran, 404);
 
-        $this->pastikanAksesRuangan($request, $ruangan);
+        $penjaga->pastikan($ruangan, $request->user());
 
         return $this->provision($request, 'ruangan-'.$ruangan->id_ruangan, $edgegap);
     }
@@ -70,22 +70,5 @@ class RoomServerController extends Controller
         } catch (RuntimeException $e) {
             return $this->error($e->getMessage(), 502);
         }
-    }
-
-    private function pastikanAksesRuangan(Request $request, Ruangan $ruangan): void
-    {
-        $user = $request->user();
-
-        $peserta = Undangan::query()
-            ->where('id_ruangan', $ruangan->id_ruangan)
-            ->where('id_pengguna', $user->id_pengguna)
-            ->where('status', 'disetujui')
-            ->exists();
-
-        $boleh = $peserta
-            || hash_equals((string) $ruangan->pameran->id_pengguna, (string) $user->id_pengguna)
-            || $user->isAdmin();
-
-        abort_unless($boleh, 403, 'Anda tidak berhak mengakses ruangan ini.');
     }
 }

@@ -89,4 +89,61 @@ class DateFormatterTest {
         }.format(java.util.Date(now - 3 * 24 * 3600 * 1000L))
         assertEquals("3 days ago", DateFormatter.formatRelativeTime(date3DaysAgo, now))
     }
+
+    @Test
+    fun parseIsoToMillis_handlesUtcAndExplicitOffsetEquivalently() {
+        // 2026-11-27T10:00:00Z should have same epoch millis as 2026-11-27T17:00:00+07:00
+        val utcString = "2026-11-27T10:00:00Z"
+        val offsetString = "2026-11-27T17:00:00+07:00"
+
+        val utcMillis = DateFormatter.parseIsoToMillis(utcString)
+        val offsetMillis = DateFormatter.parseIsoToMillis(offsetString)
+
+        org.junit.Assert.assertNotNull(utcMillis)
+        org.junit.Assert.assertNotNull(offsetMillis)
+        assertEquals(utcMillis, offsetMillis)
+    }
+
+    @Test
+    fun isPastWithGrace_withinGracePeriod_returnsFalse() {
+        val now = 1_700_000_000_000L
+        // 10 minutes ago, grace = 15m -> not past yet
+        val date10MinAgo = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.ENGLISH).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date(now - 10 * 60_000L))
+
+        org.junit.Assert.assertFalse(DateFormatter.isPastWithGrace(date10MinAgo, graceMinutes = 15, nowMillis = now))
+    }
+
+    @Test
+    fun isPastWithGrace_exceedingGracePeriod_returnsTrue() {
+        val now = 1_700_000_000_000L
+        // 20 minutes ago, grace = 15m -> past
+        val date20MinAgo = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.ENGLISH).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date(now - 20 * 60_000L))
+
+        org.junit.Assert.assertTrue(DateFormatter.isPastWithGrace(date20MinAgo, graceMinutes = 15, nowMillis = now))
+    }
+
+    @Test
+    fun isWithinSessionWindow_exactBoundaries_worksCorrectly() {
+        val now = 1_700_000_000_000L
+
+        // 10 minutes in the future (within -15m start window)
+        val future10m = now + 10 * 60_000L
+        org.junit.Assert.assertTrue(DateFormatter.isWithinSessionWindow(future10m, beforeMinutes = 15, afterMinutes = 15, nowMillis = now))
+
+        // 10 minutes in the past (within +15m end window)
+        val past10m = now - 10 * 60_000L
+        org.junit.Assert.assertTrue(DateFormatter.isWithinSessionWindow(past10m, beforeMinutes = 15, afterMinutes = 15, nowMillis = now))
+
+        // 20 minutes in the future (outside window)
+        val future20m = now + 20 * 60_000L
+        org.junit.Assert.assertFalse(DateFormatter.isWithinSessionWindow(future20m, beforeMinutes = 15, afterMinutes = 15, nowMillis = now))
+
+        // 20 minutes in the past (outside window)
+        val past20m = now - 20 * 60_000L
+        org.junit.Assert.assertFalse(DateFormatter.isWithinSessionWindow(past20m, beforeMinutes = 15, afterMinutes = 15, nowMillis = now))
+    }
 }

@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Pengguna;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Pengguna\AjukanUndanganRequest;
+use App\Http\Requests\Pengguna\TanggapiUndanganRequest;
 use App\Models\Karya;
 use App\Models\Pameran;
 use App\Models\Ruangan;
 use App\Models\Undangan;
+use App\Services\Diskusi\JendelaSesi;
+use App\Services\Diskusi\PenjagaAksesRuangan;
 use App\Services\Pameran\PenyusunRoomDto;
 use App\Services\Livekit\LayananTokenVoice;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -20,9 +25,11 @@ class DiskusiController extends Controller
         $request->validate([
             'status' => ['nullable', Rule::in(['diproses', 'disetujui', 'ditolak'])],
             'sebagai' => ['nullable', Rule::in(['pengundang', 'penyelenggara'])],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
         $id = $request->user()->id_pengguna;
+        $perPage = (int) $request->query('per_page', 24);
 
         $undangan = Undangan::with([
             'ruangan.pameran:id_pameran,judul,id_pengguna,banner',
@@ -34,21 +41,15 @@ class DiskusiController extends Controller
                 fn ($q) => $q->where('id_pengguna', $id),
             )
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))
-            ->latest('id_undangan')
-            ->paginate(24);
+            ->orderBy('waktu')
+            ->paginate($perPage);
 
         return $this->ok($undangan);
     }
 
-    public function store(Request $request)
+    public function store(AjukanUndanganRequest $request)
     {
-        $validated = $request->validate([
-            'id_ruangan' => ['nullable', 'integer', Rule::exists('ruangan', 'id_ruangan')->where('jenis', 'privat')],
-            'id_pameran' => ['nullable', 'integer', 'exists:pameran,id_pameran'],
-            'id_karya'   => ['nullable', 'string', 'exists:karya,id_karya'],
-            'waktu'      => ['required', 'date', 'after:now'],
-            'catatan'    => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         if (empty($validated['id_ruangan']) && empty($validated['id_pameran']) && empty($validated['id_karya'])) {
             return $this->error('Target pameran atau ruangan harus disertakan.', 422);
@@ -86,7 +87,13 @@ class DiskusiController extends Controller
 
         $sudahAda = Undangan::where('id_pengguna', $user->id_pengguna)
             ->where('id_ruangan', $ruangan->id_ruangan)
-            ->whereIn('status', ['diproses', 'disetujui'])
+            ->where(function ($q) {
+                $q->where('status', 'diproses')
+                    ->orWhere(function ($q) {
+                        $q->where('status', 'disetujui')
+                            ->where('waktu', '>=', now()->subMinutes(JendelaSesi::MENIT_SESUDAH));
+                    });
+            })
             ->exists();
 
         if ($sudahAda) {
@@ -96,7 +103,7 @@ class DiskusiController extends Controller
         $undangan = Undangan::forceCreate([
             'id_pengguna' => $user->id_pengguna,
             'id_ruangan' => $ruangan->id_ruangan,
-            'waktu' => $validated['waktu'],
+            'waktu' => CarbonImmutable::parse($validated['waktu'])->utc(),
             'catatan' => $validated['catatan'] ?? null,
             'status' => 'diproses',
         ]);
@@ -126,31 +133,56 @@ class DiskusiController extends Controller
         ]);
     }
 
-    public function tanggapi(Request $request, Undangan $undangan)
+    public function tanggapi(TanggapiUndanganRequest $request, Undangan $undangan)
     {
         $this->pastikanPenyelenggara($request, $undangan);
 
-        $validated = $request->validate([
-            'status' => ['required', Rule::in(['disetujui', 'ditolak'])],
-            'catatan' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         if ($undangan->status !== 'diproses') {
             return $this->error('Undangan ini sudah ditanggapi.', 409);
         }
 
-        if ($validated['status'] === 'disetujui') {
-            $undangan->forceFill(['status' => 'disetujui', 'tautan' => Str::random(32)])->save();
+        if ($undangan->waktu->lte(now())) {
+            return $this->error('Jadwal undangan sudah lewat.', 409);
+        }
 
-            return $this->ok($undangan->fresh(), 'Undangan disetujui.');
+        if ($validated['status'] === 'disetujui') {
+            $bentrok = Undangan::query()
+                ->where('id_ruangan', $undangan->id_ruangan)
+                ->where('id_undangan', '!=', $undangan->id_undangan)
+                ->where('status', 'disetujui')
+                ->whereBetween('waktu', [
+                    $undangan->waktu->copy()->subMinutes(JendelaSesi::DURASI_SLOT_MENIT),
+                    $undangan->waktu->copy()->addMinutes(JendelaSesi::DURASI_SLOT_MENIT),
+                ])
+                ->exists();
+
+            if ($bentrok) {
+                return $this->error('Slot jadwal pada ruangan ini sudah terisi.', 409);
+            }
+
+            $undangan->forceFill([
+                'status' => 'disetujui',
+                'tautan' => Str::random(32),
+                'alasan' => null,
+            ])->save();
+
+            return $this->ok(
+                $undangan->fresh()->load(['ruangan.pameran:id_pameran,judul,id_pengguna,banner', 'pengguna:id_pengguna,nama,nama_panggilan,foto_profil']),
+                'Undangan disetujui.'
+            );
         }
 
         $undangan->forceFill([
             'status' => 'ditolak',
-            'catatan' => $validated['catatan'] ?? $undangan->catatan,
+            'alasan' => $validated['alasan'] ?? $validated['catatan'] ?? null,
         ])->save();
 
-        return $this->ok($undangan->fresh(), 'Undangan ditolak.');
+        return $this->ok(
+            $undangan->fresh()->load(['ruangan.pameran:id_pameran,judul,id_pengguna,banner', 'pengguna:id_pengguna,nama,nama_panggilan,foto_profil']),
+            'Undangan ditolak.'
+        );
     }
 
     public function voiceToken(Request $request, Ruangan $ruangan, LayananTokenVoice $voice)
@@ -159,20 +191,24 @@ class DiskusiController extends Controller
 
         abort_unless($ruangan->pameran, 404);
 
+        $validated = $request->validate([
+            'undangan' => ['nullable', 'integer', 'exists:undangan,id_undangan'],
+        ]);
+
         if (! $voice->terkonfigurasi()) {
             return $this->error('Layanan voice chat belum dikonfigurasi.', 503);
         }
 
-        return $this->ok($voice->sesiDiskusi($ruangan, $request->user()));
+        return $this->ok($voice->sesiDiskusi($ruangan, $request->user(), $validated['undangan'] ?? null));
     }
 
-    public function roomDto(Request $request, Ruangan $ruangan, PenyusunRoomDto $penyusun)
+    public function roomDto(Request $request, Ruangan $ruangan, PenyusunRoomDto $penyusun, PenjagaAksesRuangan $penjaga)
     {
         $ruangan->loadMissing('pameran');
 
         abort_unless($ruangan->pameran, 404);
 
-        $this->pastikanAksesRuangan($request, $ruangan);
+        $penjaga->pastikan($ruangan, $request->user());
 
         $dto = $penyusun->susun(
             $ruangan->pameran,
@@ -182,23 +218,6 @@ class DiskusiController extends Controller
         );
 
         return response()->json($dto);
-    }
-
-    private function pastikanAksesRuangan(Request $request, Ruangan $ruangan): void
-    {
-        $user = $request->user();
-
-        $peserta = Undangan::query()
-            ->where('id_ruangan', $ruangan->id_ruangan)
-            ->where('id_pengguna', $user->id_pengguna)
-            ->where('status', 'disetujui')
-            ->exists();
-
-        $boleh = $peserta
-            || hash_equals((string) $ruangan->pameran->id_pengguna, (string) $user->id_pengguna)
-            || $user->isAdmin();
-
-        abort_unless($boleh, 403, 'Anda tidak berhak mengakses ruangan ini.');
     }
 
     private function pemilikPameran(Undangan $undangan): ?string

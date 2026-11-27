@@ -7,6 +7,8 @@ import com.ven.app.data.api.ApiUndangan
 import com.ven.app.data.api.models.TanggapiUndanganRequest
 import com.ven.app.data.api.models.UndanganItemModel
 import com.ven.app.util.DateFormatter
+import java.time.Clock
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,12 +19,24 @@ import kotlinx.coroutines.launch
 class ScheduleViewModel(
     private val apiUndangan: ApiUndangan = ApiUndangan,
     autoLoad: Boolean = true,
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
-        ScheduleUiState(isLoading = autoLoad)
+        ScheduleUiState(
+            isLoading = autoLoad,
+            nowMillis = clock.millis(),
+        )
     )
     val uiState: StateFlow<ScheduleUiState> = _uiState.asStateFlow()
+
+    private val pengundangItems = mutableListOf<UndanganItemModel>()
+    private val penyelenggaraItems = mutableListOf<UndanganItemModel>()
+    private var pengundangPage = 0
+    private var penyelenggaraPage = 0
+    private var pengundangLastPage = 1
+    private var penyelenggaraLastPage = 1
+    private var loadJob: Job? = null
 
     init {
         if (autoLoad) {
@@ -60,69 +74,168 @@ class ScheduleViewModel(
         loadSchedules(isRefresh = true)
     }
 
+    fun refreshSilently() {
+        loadSchedules(isRefresh = true)
+    }
+
+    fun tick(nowMillis: Long = clock.millis()) {
+        _uiState.update { it.copy(nowMillis = nowMillis) }
+    }
+
     fun loadSchedules(isRefresh: Boolean = false) {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             if (!isRefresh) {
-                _uiState.update { it.copy(isLoading = true) }
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            } else {
+                _uiState.update { it.copy(errorMessage = null) }
             }
 
-            val pengundangDeferred = async { apiUndangan.getUndangan(sebagai = "pengundang") }
-            val penyelenggaraDeferred = async { apiUndangan.getUndangan(sebagai = "penyelenggara") }
+            val pengundangDeferred = async { apiUndangan.getUndangan(sebagai = "pengundang", page = 1) }
+            val penyelenggaraDeferred = async { apiUndangan.getUndangan(sebagai = "penyelenggara", page = 1) }
 
             val pengundangResult = pengundangDeferred.await()
             val penyelenggaraResult = penyelenggaraDeferred.await()
 
-            val pengundangList = pengundangResult.getOrNull()?.data ?: emptyList()
-            val penyelenggaraList = penyelenggaraResult.getOrNull()?.data ?: emptyList()
+            var errorMessage: String? = null
+            if (pengundangResult.isFailure && penyelenggaraResult.isFailure) {
+                errorMessage = pengundangResult.exceptionOrNull()?.message
+                    ?: penyelenggaraResult.exceptionOrNull()?.message
+                    ?: "Gagal memuat jadwal"
+            }
 
-            val approved = mutableListOf<ScheduleEventItem>()
-            val waiting = mutableListOf<ScheduleEventItem>()
-            val requests = mutableListOf<ScheduleRequestItem>()
-            val history = mutableListOf<ScheduleEventItem>()
+            val pengundangData = pengundangResult.getOrNull()
+            val penyelenggaraData = penyelenggaraResult.getOrNull()
 
-            // Undangan yang diajukan user (sebagai pengundang)
-            for (u in pengundangList) {
-                val isPast = DateFormatter.isPastDateTime(u.waktu)
-                val status = u.status.lowercase()
+            pengundangItems.clear()
+            pengundangData?.data?.let { pengundangItems.addAll(it) }
+            pengundangPage = pengundangData?.currentPage ?: 1
+            pengundangLastPage = pengundangData?.lastPage ?: 1
 
-                if (isPast || status == "ditolak") {
+            penyelenggaraItems.clear()
+            penyelenggaraData?.data?.let { penyelenggaraItems.addAll(it) }
+            penyelenggaraPage = penyelenggaraData?.currentPage ?: 1
+            penyelenggaraLastPage = penyelenggaraData?.lastPage ?: 1
+
+            rebuildState(
+                isLoading = false,
+                isRefreshing = false,
+                isLoadingMore = false,
+                errorMessage = errorMessage,
+            )
+        }
+    }
+
+    fun loadMore() {
+        val hasMorePengundang = pengundangPage < pengundangLastPage
+        val hasMorePenyelenggara = penyelenggaraPage < penyelenggaraLastPage
+        if (!hasMorePengundang && !hasMorePenyelenggara) return
+        if (loadJob?.isActive == true) return
+
+        loadJob = viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingMore = true) }
+
+            val nextPagePengundang = if (hasMorePengundang) pengundangPage + 1 else null
+            val nextPagePenyelenggara = if (hasMorePenyelenggara) penyelenggaraPage + 1 else null
+
+            val pDeferred = nextPagePengundang?.let { p ->
+                async { apiUndangan.getUndangan(sebagai = "pengundang", page = p) }
+            }
+            val sDeferred = nextPagePenyelenggara?.let { p ->
+                async { apiUndangan.getUndangan(sebagai = "penyelenggara", page = p) }
+            }
+
+            pDeferred?.await()?.getOrNull()?.let { data ->
+                val newItems = data.data.filter { item -> pengundangItems.none { it.idUndangan == item.idUndangan } }
+                pengundangItems.addAll(newItems)
+                pengundangPage = data.currentPage
+                pengundangLastPage = data.lastPage
+            }
+
+            sDeferred?.await()?.getOrNull()?.let { data ->
+                val newItems = data.data.filter { item -> penyelenggaraItems.none { it.idUndangan == item.idUndangan } }
+                penyelenggaraItems.addAll(newItems)
+                penyelenggaraPage = data.currentPage
+                penyelenggaraLastPage = data.lastPage
+            }
+
+            rebuildState(isLoadingMore = false)
+        }
+    }
+
+    private fun rebuildState(
+        isLoading: Boolean = _uiState.value.isLoading,
+        isRefreshing: Boolean = _uiState.value.isRefreshing,
+        isLoadingMore: Boolean = _uiState.value.isLoadingMore,
+        errorMessage: String? = _uiState.value.errorMessage,
+    ) {
+        val now = clock.millis()
+        val approved = mutableListOf<ScheduleEventItem>()
+        val waiting = mutableListOf<ScheduleEventItem>()
+        val requests = mutableListOf<ScheduleRequestItem>()
+        val history = mutableListOf<ScheduleEventItem>()
+
+        // Undangan yang diajukan user (sebagai pengundang)
+        for (u in pengundangItems) {
+            val isPast = DateFormatter.isPastWithGrace(u.waktu, graceMinutes = 15, nowMillis = now)
+            val status = u.status.lowercase()
+
+            if (isPast || status == "ditolak") {
+                if (history.none { it.id == u.idUndangan.toString() }) {
                     history.add(mapToEventItem(u))
-                } else if (status == "disetujui") {
+                }
+            } else if (status == "disetujui") {
+                if (approved.none { it.id == u.idUndangan.toString() }) {
                     approved.add(mapToEventItem(u))
-                } else if (status == "diproses") {
+                }
+            } else if (status == "diproses") {
+                if (waiting.none { it.id == u.idUndangan.toString() }) {
                     waiting.add(mapToEventItem(u))
                 }
             }
+        }
 
-            // Undangan masuk untuk pameran user (sebagai penyelenggara)
-            for (u in penyelenggaraList) {
-                val isPast = DateFormatter.isPastDateTime(u.waktu)
-                val status = u.status.lowercase()
+        // Undangan masuk untuk pameran user (sebagai penyelenggara)
+        for (u in penyelenggaraItems) {
+            val isPast = DateFormatter.isPastWithGrace(u.waktu, graceMinutes = 15, nowMillis = now)
+            val status = u.status.lowercase()
 
-                if (isPast || status == "ditolak") {
+            if (isPast || status == "ditolak") {
+                if (history.none { it.id == u.idUndangan.toString() }) {
                     history.add(mapToEventItem(u))
-                } else if (status == "disetujui") {
-                    // Hindari duplikasi jika user adalah pengundang sekaligus penyelenggara
-                    if (approved.none { it.id == u.idUndangan.toString() }) {
-                        approved.add(mapToEventItem(u))
-                    }
-                } else if (status == "diproses") {
+                }
+            } else if (status == "disetujui") {
+                if (approved.none { it.id == u.idUndangan.toString() }) {
+                    approved.add(mapToEventItem(u))
+                }
+            } else if (status == "diproses") {
+                if (requests.none { it.id == u.idUndangan.toString() }) {
                     requests.add(mapToRequestItem(u))
                 }
             }
+        }
 
-            // Data dummy tidak lagi digunakan: API gagal/kosong tetap
-            // menampilkan empty state asli agar tidak menipu pengguna.
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    isRefreshing = false,
-                    approvedItems = approved,
-                    waitingItems = waiting,
-                    requestItems = requests,
-                    historyItems = history,
-                )
-            }
+        // Sorting: Approved, Waiting, Request urut naik (terdekat duluan); History urut turun (terbaru duluan)
+        approved.sortBy { it.waktuMillis ?: Long.MAX_VALUE }
+        waiting.sortBy { it.waktuMillis ?: Long.MAX_VALUE }
+        requests.sortBy { it.waktuMillis ?: Long.MAX_VALUE }
+        history.sortByDescending { it.waktuMillis ?: Long.MIN_VALUE }
+
+        val hasMore = pengundangPage < pengundangLastPage || penyelenggaraPage < penyelenggaraLastPage
+
+        _uiState.update {
+            it.copy(
+                isLoading = isLoading,
+                isRefreshing = isRefreshing,
+                isLoadingMore = isLoadingMore,
+                hasMore = hasMore,
+                errorMessage = errorMessage,
+                nowMillis = now,
+                approvedItems = approved,
+                waitingItems = waiting,
+                requestItems = requests,
+                historyItems = history,
+            )
         }
     }
 
@@ -134,30 +247,13 @@ class ScheduleViewModel(
             )
 
             if (result.isSuccess) {
-                val updatedRequests = _uiState.value.requestItems.filterNot { it.id == request.id }
-                val approvedEvent = ScheduleEventItem(
-                    id = request.id,
-                    title = request.exhibitTitle ?: request.requesterName,
-                    dateText = request.dateText,
-                    timeText = request.timeText,
-                    fullDateFormatted = request.fullDateFormatted,
-                    bannerRes = request.bannerRes,
-                    bannerUrl = request.bannerUrl,
-                    exhibitId = request.exhibitId,
-                    isApproved = true,
-                    status = "disetujui",
-                    note = request.note,
-                )
-                val updatedApproved = listOf(approvedEvent) + _uiState.value.approvedItems
-
                 _uiState.update {
                     it.copy(
-                        requestItems = updatedRequests,
-                        approvedItems = updatedApproved,
                         activeRequestDetail = null,
                         userFeedbackMessage = "Permintaan berhasil disetujui",
                     )
                 }
+                refreshSilently()
             } else {
                 _uiState.update {
                     it.copy(
@@ -172,34 +268,17 @@ class ScheduleViewModel(
         viewModelScope.launch {
             val result = apiUndangan.tanggapiUndangan(
                 id = request.id,
-                request = TanggapiUndanganRequest(status = "ditolak", catatan = note)
+                request = TanggapiUndanganRequest(status = "ditolak", alasan = note)
             )
 
             if (result.isSuccess) {
-                val updatedRequests = _uiState.value.requestItems.filterNot { it.id == request.id }
-                val rejectedEvent = ScheduleEventItem(
-                    id = request.id,
-                    title = request.exhibitTitle ?: request.requesterName,
-                    dateText = request.dateText,
-                    timeText = request.timeText,
-                    fullDateFormatted = request.fullDateFormatted,
-                    bannerRes = request.bannerRes,
-                    bannerUrl = request.bannerUrl,
-                    exhibitId = request.exhibitId,
-                    isApproved = false,
-                    status = "ditolak",
-                    note = note ?: request.note,
-                )
-                val updatedHistory = listOf(rejectedEvent) + _uiState.value.historyItems
-
                 _uiState.update {
                     it.copy(
-                        requestItems = updatedRequests,
-                        historyItems = updatedHistory,
                         activeRequestDetail = null,
                         userFeedbackMessage = "Permintaan ditolak",
                     )
                 }
+                refreshSilently()
             } else {
                 _uiState.update {
                     it.copy(
@@ -219,6 +298,7 @@ class ScheduleViewModel(
         val exhibitTitle = u.ruangan?.pameran?.judul ?: "Diskusi Pameran"
         val exhibitId = u.ruangan?.pameran?.idPameran?.toString()
         val isApproved = u.status.equals("disetujui", ignoreCase = true)
+        val millis = DateFormatter.parseIsoToMillis(u.waktu)
 
         return ScheduleEventItem(
             id = u.idUndangan.toString(),
@@ -233,6 +313,9 @@ class ScheduleViewModel(
             isApproved = isApproved,
             status = u.status,
             note = u.catatan,
+            waktuMillis = millis,
+            alasan = u.alasan,
+            tautan = u.tautan,
         )
     }
 
@@ -243,6 +326,7 @@ class ScheduleViewModel(
         val bannerUrl = u.ruangan?.pameran?.banner
         val exhibitTitle = u.ruangan?.pameran?.judul ?: "Pameran"
         val exhibitId = u.ruangan?.pameran?.idPameran?.toString()
+        val millis = DateFormatter.parseIsoToMillis(u.waktu)
 
         return ScheduleRequestItem(
             id = u.idUndangan.toString(),
@@ -256,6 +340,8 @@ class ScheduleViewModel(
             exhibitId = exhibitId,
             exhibitTitle = exhibitTitle,
             requesterAvatarUrl = u.pengguna?.fotoProfil,
+            roomId = u.ruangan?.idRuangan,
+            waktuMillis = millis,
         )
     }
 }

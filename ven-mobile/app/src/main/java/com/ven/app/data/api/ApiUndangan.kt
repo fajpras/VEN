@@ -42,6 +42,7 @@ interface ApiUndanganService {
     @GET("ruangan/{id}/voice")
     suspend fun getVoiceToken(
         @Path("id") id: Int,
+        @Query("undangan") undangan: Int? = null,
     ): Response<ApiResponse<VoiceTokenModel>>
 }
 
@@ -111,9 +112,9 @@ object ApiUndangan {
         }
     }
 
-    suspend fun voiceToken(idRuangan: Int): Result<VoiceTokenModel> {
+    suspend fun voiceToken(idRuangan: Int, idUndangan: Int? = null): Result<VoiceTokenModel> {
         return try {
-            val response = service.getVoiceToken(idRuangan)
+            val response = service.getVoiceToken(idRuangan, idUndangan)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 Result.success(data)

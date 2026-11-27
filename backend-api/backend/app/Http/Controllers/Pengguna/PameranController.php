@@ -167,7 +167,11 @@ class PameranController extends Controller
 
         $validated = $request->validate(['jenis' => ['required', Rule::in(['privat', 'umum'])]]);
 
-        return $this->created($pameran->ruangan()->create($validated), 'Ruangan dibuat.');
+        $ruangan = $pameran->ruangan()->firstOrCreate($validated);
+
+        return $ruangan->wasRecentlyCreated
+            ? $this->created($ruangan, 'Ruangan dibuat.')
+            : $this->ok($ruangan, 'Ruangan sudah ada.');
     }
 
     public function templates(Request $request)

@@ -331,7 +331,7 @@ fun RequestMeetingScreen(
                                         val isSelected = day.isSelected && day.isCurrentMonth
                                         val textColor = when {
                                             isSelected -> colors.onPrimary
-                                            !day.isCurrentMonth -> colors.textDisabled
+                                            !day.isEnabled -> colors.textDisabled
                                             else -> colors.text
                                         }
 
@@ -343,7 +343,7 @@ fun RequestMeetingScreen(
                                                     if (isSelected) colors.primary else Color.Transparent
                                                 )
                                                 .clickable(
-                                                    enabled = day.isCurrentMonth,
+                                                    enabled = day.isEnabled,
                                                     role = Role.Button,
                                                     interactionSource = remember { MutableInteractionSource() },
                                                     indication = ripple(bounded = true),
@@ -550,7 +550,7 @@ private fun RequestMeetingDarkPreview() {
                 selectedDate = date,
                 selectedDateText = DateFormatter.formatRequestMeetingDate(date),
                 monthTitleText = DateFormatter.formatMonthYear(month),
-                calendarDays = buildMonthGrid(month, date),
+                calendarDays = buildMonthGrid(month, date, date),
                 hourText = "02",
                 minuteText = "30",
                 isAm = false,
@@ -581,7 +581,7 @@ private fun RequestMeetingLightPreview() {
                 selectedDate = date,
                 selectedDateText = DateFormatter.formatRequestMeetingDate(date),
                 monthTitleText = DateFormatter.formatMonthYear(month),
-                calendarDays = buildMonthGrid(month, date),
+                calendarDays = buildMonthGrid(month, date, date),
                 hourText = "02",
                 minuteText = "30",
                 isAm = false,

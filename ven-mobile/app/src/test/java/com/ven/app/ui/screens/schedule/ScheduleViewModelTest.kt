@@ -89,4 +89,71 @@ class ScheduleViewModelTest {
         vm.dismissDetail()
         assertNull(vm.uiState.value.activeRequestDetail)
     }
+
+    @Test
+    fun isJoinable_publicRoom_alwaysTrueWhenApproved() {
+        val item = ScheduleEventItem(
+            id = "pub_1",
+            title = "Pameran Umum",
+            dateText = "20 Nov 2026",
+            timeText = "10:00 AM",
+            fullDateFormatted = "20 Nov 2026",
+            roomId = null,
+            isApproved = true,
+            waktuMillis = 1_000_000_000L,
+        )
+
+        assertTrue(item.isJoinable(nowMillis = 2_000_000_000L))
+    }
+
+    @Test
+    fun isJoinable_privateRoom_onlyTrueInside15MinuteWindow() {
+        val scheduleMillis = 1_700_000_000_000L
+        val item = ScheduleEventItem(
+            id = "priv_1",
+            title = "Diskusi Privat",
+            dateText = "20 Nov 2026",
+            timeText = "10:00 AM",
+            fullDateFormatted = "20 Nov 2026",
+            roomId = 10,
+            isApproved = true,
+            waktuMillis = scheduleMillis,
+        )
+
+        // 10 minutes before -> joinable
+        assertTrue(item.isJoinable(nowMillis = scheduleMillis - 10 * 60_000L))
+
+        // 10 minutes after -> joinable
+        assertTrue(item.isJoinable(nowMillis = scheduleMillis + 10 * 60_000L))
+
+        // 20 minutes before -> NOT joinable
+        org.junit.Assert.assertFalse(item.isJoinable(nowMillis = scheduleMillis - 20 * 60_000L))
+
+        // 20 minutes after -> NOT joinable
+        org.junit.Assert.assertFalse(item.isJoinable(nowMillis = scheduleMillis + 20 * 60_000L))
+    }
+
+    @Test
+    fun isJoinable_notApproved_alwaysFalse() {
+        val item = ScheduleEventItem(
+            id = "pending_1",
+            title = "Diskusi Pending",
+            dateText = "20 Nov 2026",
+            timeText = "10:00 AM",
+            fullDateFormatted = "20 Nov 2026",
+            roomId = 10,
+            isApproved = false,
+            waktuMillis = 1_700_000_000_000L,
+        )
+
+        org.junit.Assert.assertFalse(item.isJoinable(nowMillis = 1_700_000_000_000L))
+    }
+
+    @Test
+    fun tick_updatesNowMillisInState() {
+        val vm = ScheduleViewModel(autoLoad = false)
+        vm.tick(nowMillis = 1_750_000_000_000L)
+
+        assertEquals(1_750_000_000_000L, vm.uiState.value.nowMillis)
+    }
 }

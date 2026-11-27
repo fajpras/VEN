@@ -114,7 +114,7 @@ class EdgegapServerTest extends TestCase
         Undangan::forceCreate([
             'id_pengguna' => $peserta->id_pengguna,
             'id_ruangan' => $ruangan->id_ruangan,
-            'waktu' => now()->addHour(),
+            'waktu' => now()->addMinutes(10),
             'status' => 'disetujui',
         ]);
 
@@ -141,5 +141,28 @@ class EdgegapServerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.request_id', 'req_priv_99')
             ->assertJsonPath('data.ready', false);
+    }
+
+    public function test_ruangan_privat_di_luar_jendela_ditolak(): void
+    {
+        $pemilik = Pengguna::factory()->create(['role' => 'pengguna', 'status' => 'aktif']);
+        $peserta = Pengguna::factory()->create(['role' => 'pengguna', 'status' => 'aktif']);
+        $pameran = $this->buatPameran($pemilik);
+
+        $ruangan = Ruangan::create([
+            'id_pameran' => $pameran->id_pameran,
+            'jenis' => 'privat',
+        ]);
+
+        Undangan::forceCreate([
+            'id_pengguna' => $peserta->id_pengguna,
+            'id_ruangan' => $ruangan->id_ruangan,
+            'waktu' => now()->addHours(2),
+            'status' => 'disetujui',
+        ]);
+
+        $this->actingAs($peserta, 'sanctum')
+            ->postJson('/api/room-server/ruangan-'.$ruangan->id_ruangan)
+            ->assertForbidden();
     }
 }

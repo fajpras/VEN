@@ -6,20 +6,25 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -53,6 +59,13 @@ import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 import com.ven.app.util.UnityLauncher
+import kotlinx.coroutines.delay
+
+private data class RuanganIzinMenunggu(
+    val roomId: Int,
+    val exhibitId: String?,
+    val idUndangan: Int?,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,7 +81,7 @@ fun ScheduleScreen(
     val voiceState by voiceViewModel.uiState.collectAsStateWithLifecycle()
 
     // Ruangan privat yang menunggu persetujuan izin mikrofon sebelum token diambil.
-    var ruanganMenungguIzin by remember { mutableStateOf<Pair<Int, String?>?>(null) }
+    var ruanganMenungguIzin by remember { mutableStateOf<RuanganIzinMenunggu?>(null) }
 
     val izinMicLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -77,7 +90,7 @@ fun ScheduleScreen(
         ruanganMenungguIzin = null
 
         if (hasil[Manifest.permission.RECORD_AUDIO] == true && target != null) {
-            voiceViewModel.mulaiSesi(target.first, target.second)
+            voiceViewModel.mulaiSesi(target.roomId, target.exhibitId, target.idUndangan)
         } else if (hasil[Manifest.permission.RECORD_AUDIO] == false) {
             Toast.makeText(context, context.getString(R.string.voice_izin_ditolak), Toast.LENGTH_SHORT).show()
         }
@@ -87,6 +100,21 @@ fun ScheduleScreen(
         uiState.userFeedbackMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             viewModel.clearFeedbackMessage()
+        }
+    }
+
+    // Auto-refresh jadwal setiap 60 detik & tick waktu setiap 30 detik untuk memperbarui status join
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(60_000L)
+            viewModel.refreshSilently()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(30_000L)
+            viewModel.tick()
         }
     }
 
@@ -118,6 +146,7 @@ fun ScheduleScreen(
             uiState = uiState,
             isRefreshing = uiState.isRefreshing,
             onRefresh = viewModel::refresh,
+            onLoadMore = viewModel::loadMore,
             onTabSelected = viewModel::selectTab,
             onSearchQueryChange = viewModel::setSearchQuery,
             onEventClick = viewModel::selectEventDetail,
@@ -125,18 +154,29 @@ fun ScheduleScreen(
             onDismissDetail = viewModel::dismissDetail,
             voiceStatus = voiceState.sesi,
             onJoinRoom = { event ->
-                val roomId = event.roomId?.takeIf { event.isApproved }
+                val roomId = event.roomId
+                val idUndangan = event.id.toIntOrNull()
 
                 if (roomId != null) {
+                    // Validasi gating waktu: hanya izinkan dalam jendela [-15 menit, +15 menit]
+                    if (!event.isJoinable(uiState.nowMillis)) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.schedule_join_window_warning),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                        return@ScheduleContent
+                    }
+
                     val sudahDiizinkan = ContextCompat.checkSelfPermission(
                         context,
                         Manifest.permission.RECORD_AUDIO,
                     ) == PackageManager.PERMISSION_GRANTED
 
                     if (sudahDiizinkan) {
-                        voiceViewModel.mulaiSesi(roomId, event.exhibitId)
+                        voiceViewModel.mulaiSesi(roomId, event.exhibitId, idUndangan)
                     } else {
-                        ruanganMenungguIzin = roomId to event.exhibitId
+                        ruanganMenungguIzin = RuanganIzinMenunggu(roomId, event.exhibitId, idUndangan)
                         izinMicLauncher.launch(
                             arrayOf(
                                 Manifest.permission.RECORD_AUDIO,
@@ -174,6 +214,7 @@ fun ScheduleContent(
     modifier: Modifier = Modifier,
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
+    onLoadMore: () -> Unit = {},
     voiceStatus: VoiceSesi = VoiceSesi.Jeda,
 ) {
     val colors = VexTheme.colors
@@ -214,6 +255,32 @@ fun ScheduleContent(
             thickness = 1.dp,
             color = colors.border,
         )
+
+        // Banner Kesalahan bila pemanggilan API gagal
+        if (!uiState.errorMessage.isNullOrBlank()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.danger.copy(alpha = 0.15f))
+                    .padding(horizontal = VexSpace.s5, vertical = VexSpace.s2),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = uiState.errorMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.danger,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = onRefresh) {
+                    Text(
+                        text = stringResource(R.string.schedule_retry),
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                        color = colors.danger,
+                    )
+                }
+            }
+        }
 
         PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -300,6 +367,34 @@ fun ScheduleContent(
                         }
                     }
                 }
+
+                // Indikator "Muat Lebih Banyak" jika masih ada halaman berikutnya
+                if (uiState.hasMore) {
+                    item(key = "load_more_footer") {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = VexSpace.s4),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (uiState.isLoadingMore) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = colors.primary,
+                                    strokeWidth = 2.dp,
+                                )
+                            } else {
+                                TextButton(onClick = onLoadMore) {
+                                    Text(
+                                        text = stringResource(R.string.schedule_load_more),
+                                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                        color = colors.primary,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -309,6 +404,7 @@ fun ScheduleContent(
             event = event,
             onDismissRequest = onDismissDetail,
             onJoinRoom = { onJoinRoom(event) },
+            nowMillis = uiState.nowMillis,
             voiceStatus = voiceStatus,
         )
     }

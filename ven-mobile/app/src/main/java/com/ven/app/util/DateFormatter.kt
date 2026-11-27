@@ -21,11 +21,18 @@ object DateFormatter {
         "yyyy-MM-dd'T'HH:mm:ss'Z'",
     )
 
+    private val offsetDatePatterns = listOf(
+        "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "yyyy-MM-dd'T'HH:mm:ssXXX",
+    )
+
     private val localDatePatterns = listOf(
         "yyyy-MM-dd'T'HH:mm:ss",
         "yyyy-MM-dd HH:mm:ss",
         "yyyy-MM-dd",
     )
+
+    private val offsetSuffixRegex = Regex("[+-]\\d{2}:?\\d{2}$")
 
     /**
      * Memformat tanggal menjadi format "Sat, 26 September 2026".
@@ -159,6 +166,7 @@ object DateFormatter {
 
     /**
      * Mem-parsing string tanggal ISO / SQL datetime ke epoch millis.
+     * Mendukung akhiran `Z`, offset eksplisit (`+07:00`), dan datetime tanpa zona.
      */
     fun parseIsoToMillis(dateString: String?): Long? {
         if (dateString.isNullOrBlank()) return null
@@ -168,6 +176,16 @@ object DateFormatter {
                     val sdf = SimpleDateFormat(pattern, Locale.ENGLISH).apply {
                         timeZone = TimeZone.getTimeZone("UTC")
                     }
+                    val date = sdf.parse(dateString)
+                    if (date != null) return date.time
+                } catch (_: Exception) {
+                }
+            }
+        }
+        if (offsetSuffixRegex.containsMatchIn(dateString)) {
+            for (pattern in offsetDatePatterns) {
+                try {
+                    val sdf = SimpleDateFormat(pattern, Locale.ENGLISH)
                     val date = sdf.parse(dateString)
                     if (date != null) return date.time
                 } catch (_: Exception) {
@@ -191,6 +209,50 @@ object DateFormatter {
     fun isPastDateTime(dateString: String?): Boolean {
         val millis = parseIsoToMillis(dateString) ?: return false
         return millis < System.currentTimeMillis()
+    }
+
+    /**
+     * Mengecek apakah waktu sudah lewat melewati toleransi (grace) tertentu.
+     * Dipakai untuk memindahkan jadwal yang sudah lampau ke tab riwayat.
+     */
+    fun isPastWithGrace(
+        dateString: String?,
+        graceMinutes: Long = 15,
+        nowMillis: Long = System.currentTimeMillis(),
+    ): Boolean {
+        val millis = parseIsoToMillis(dateString) ?: return false
+        return millis + graceMinutes * 60_000L < nowMillis
+    }
+
+    /**
+     * Mengecek apakah waktu saat ini berada di dalam jendela sesi
+     * (default 15 menit sebelum s.d. 15 menit sesudah jadwal).
+     */
+    fun isWithinSessionWindow(
+        dateString: String?,
+        beforeMinutes: Long = 15,
+        afterMinutes: Long = 15,
+        nowMillis: Long = System.currentTimeMillis(),
+    ): Boolean {
+        return isWithinSessionWindow(
+            waktuMillis = parseIsoToMillis(dateString),
+            beforeMinutes = beforeMinutes,
+            afterMinutes = afterMinutes,
+            nowMillis = nowMillis,
+        )
+    }
+
+    /**
+     * Overload berbasis epoch millis untuk data jadwal yang sudah diparsing.
+     */
+    fun isWithinSessionWindow(
+        waktuMillis: Long?,
+        beforeMinutes: Long = 15,
+        afterMinutes: Long = 15,
+        nowMillis: Long = System.currentTimeMillis(),
+    ): Boolean {
+        if (waktuMillis == null) return false
+        return nowMillis in (waktuMillis - beforeMinutes * 60_000L)..(waktuMillis + afterMinutes * 60_000L)
     }
 
     /**

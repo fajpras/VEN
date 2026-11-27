@@ -12,7 +12,7 @@ class Undangan extends Model
     protected $table = 'undangan';
     protected $primaryKey = 'id_undangan';
 
-    protected $fillable = ['id_pengguna', 'id_ruangan', 'status', 'waktu', 'catatan', 'tautan'];
+    protected $fillable = ['id_pengguna', 'id_ruangan', 'status', 'waktu', 'catatan', 'alasan', 'tautan'];
 
     protected function casts(): array
     {

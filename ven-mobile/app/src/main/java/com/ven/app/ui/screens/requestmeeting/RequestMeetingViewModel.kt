@@ -8,6 +8,7 @@ import com.ven.app.data.api.ApiPameran
 import com.ven.app.data.api.ApiUndangan
 import com.ven.app.data.api.models.CreateUndanganRequest
 import com.ven.app.util.DateFormatter
+import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
@@ -28,7 +29,8 @@ sealed interface RequestMeetingEvent {
 class RequestMeetingViewModel(
     private val apiUndangan: ApiUndangan = ApiUndangan,
     private val apiPameran: ApiPameran = ApiPameran,
-    today: LocalDate = LocalDate.now(),
+    private val today: LocalDate = LocalDate.now(),
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
 
     private val initialMonth = YearMonth.from(today)
@@ -41,7 +43,7 @@ class RequestMeetingViewModel(
             selectedDate = initialDate,
             selectedDateText = DateFormatter.formatRequestMeetingDate(initialDate),
             monthTitleText = DateFormatter.formatMonthYear(initialMonth),
-            calendarDays = buildMonthGrid(initialMonth, initialDate),
+            calendarDays = buildMonthGrid(initialMonth, initialDate, today),
         )
     )
     val uiState: StateFlow<RequestMeetingUiState> = _uiState.asStateFlow()
@@ -146,13 +148,13 @@ class RequestMeetingViewModel(
     }
 
     fun onDaySelected(day: CalendarDay) {
-        if (!day.isCurrentMonth) return
+        if (!day.isCurrentMonth || !day.isEnabled) return
         _uiState.update { current ->
             val newSelectedDate = day.date
             current.copy(
                 selectedDate = newSelectedDate,
                 selectedDateText = DateFormatter.formatRequestMeetingDate(newSelectedDate),
-                calendarDays = buildMonthGrid(current.visibleMonth, newSelectedDate),
+                calendarDays = buildMonthGrid(current.visibleMonth, newSelectedDate, today),
             )
         }
     }
@@ -163,7 +165,7 @@ class RequestMeetingViewModel(
             current.copy(
                 visibleMonth = prevMonth,
                 monthTitleText = DateFormatter.formatMonthYear(prevMonth),
-                calendarDays = buildMonthGrid(prevMonth, current.selectedDate),
+                calendarDays = buildMonthGrid(prevMonth, current.selectedDate, today),
             )
         }
     }
@@ -174,7 +176,7 @@ class RequestMeetingViewModel(
             current.copy(
                 visibleMonth = nextMonth,
                 monthTitleText = DateFormatter.formatMonthYear(nextMonth),
-                calendarDays = buildMonthGrid(nextMonth, current.selectedDate),
+                calendarDays = buildMonthGrid(nextMonth, current.selectedDate, today),
             )
         }
     }
@@ -217,12 +219,14 @@ class RequestMeetingViewModel(
 
         val scheduledDateTime = current.selectedDate.atTime(hour24, minuteVal)
 
-        if (scheduledDateTime.isBefore(LocalDateTime.now())) {
+        if (scheduledDateTime.isBefore(LocalDateTime.now(clock))) {
             _uiState.update { it.copy(validationError = RequestMeetingValidationError.InvalidSchedule) }
             return
         }
 
-        val formattedWaktu = scheduledDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        val formattedWaktu = scheduledDateTime
+            .atZone(clock.zone)
+            .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         val target = overrideTargetId ?: currentTargetId
 
         viewModelScope.launch {

@@ -6,19 +6,18 @@ use App\Exceptions\KesalahanVoice;
 use App\Models\Pengguna;
 use App\Models\Ruangan;
 use App\Models\Undangan;
+use App\Services\Diskusi\JendelaSesi;
 
 /**
  * Penyedia sesi voice chat LiveKit untuk ruangan privat.
  *
  * Voice chat hanya tersedia di ruangan privat: peserta wajib memiliki
  * undangan diskusi yang disetujui dan berada di dalam jendela sesi
- * (mulai 3 jam sebelum jadwal hingga 15 menit setelah jadwal).
+ * (mulai 15 menit sebelum jadwal hingga 15 menit setelah jadwal).
  */
 final class LayananTokenVoice
 {
     private const MASA_BERLAKU_TOKEN_DETIK = 3600;
-    private const JENDELA_SESI_MULAI_JAM = 3;
-    private const JENDELA_SESI_LEBIH_MENIT = 15;
 
     public function __construct(
         private readonly ?string $url,
@@ -38,13 +37,13 @@ final class LayananTokenVoice
      *
      * @return array{url: ?string, room: string, token: string}
      */
-    public function sesiDiskusi(Ruangan $ruangan, Pengguna $pengguna): array
+    public function sesiDiskusi(Ruangan $ruangan, Pengguna $pengguna, ?int $idUndangan = null): array
     {
         if ($ruangan->jenis !== 'privat') {
             throw KesalahanVoice::hanyaPrivat();
         }
 
-        $undangan = $this->undanganAktif($ruangan, $pengguna);
+        $undangan = $this->undanganAktif($ruangan, $pengguna, $idUndangan);
         $namaRoom = sprintf('diskusi-%d-%d', $ruangan->id_ruangan, $undangan->id_undangan);
 
         return [
@@ -54,7 +53,7 @@ final class LayananTokenVoice
         ];
     }
 
-    private function undanganAktif(Ruangan $ruangan, Pengguna $pengguna): Undangan
+    private function undanganAktif(Ruangan $ruangan, Pengguna $pengguna, ?int $idUndangan): Undangan
     {
         $ruangan->loadMissing('pameran');
 
@@ -63,11 +62,12 @@ final class LayananTokenVoice
         $kueri = Undangan::query()
             ->where('id_ruangan', $ruangan->id_ruangan)
             ->where('status', 'disetujui')
-            ->whereBetween('waktu', [
-                now()->subHours(self::JENDELA_SESI_MULAI_JAM),
-                now()->addMinutes(self::JENDELA_SESI_LEBIH_MENIT),
-            ])
+            ->whereBetween('waktu', [JendelaSesi::mulai(), JendelaSesi::selesai()])
             ->latest('waktu');
+
+        if ($idUndangan !== null) {
+            $kueri->where('id_undangan', $idUndangan);
+        }
 
         // Penyelenggara boleh bergabung pada sesi mana pun di ruangannya;
         // pengundang hanya pada sesi undangannya sendiri.

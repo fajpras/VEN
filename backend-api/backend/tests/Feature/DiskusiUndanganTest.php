@@ -11,6 +11,7 @@ use App\Models\Pengguna;
 use App\Models\Ruangan;
 use App\Models\Undangan;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class DiskusiUndanganTest extends TestCase
@@ -197,17 +198,19 @@ class DiskusiUndanganTest extends TestCase
 
         $response = $this->actingAs($this->penyelenggara)->patchJson("/api/undangan/{$undangan->id_undangan}", [
             'status' => 'ditolak',
-            'catatan' => 'Mohon maaf jadwal penuh',
+            'alasan' => 'Mohon maaf jadwal penuh',
         ]);
 
         $response->assertOk();
         $response->assertJsonPath('data.status', 'ditolak');
-        $response->assertJsonPath('data.catatan', 'Mohon maaf jadwal penuh');
+        $response->assertJsonPath('data.alasan', 'Mohon maaf jadwal penuh');
+        $response->assertJsonPath('data.catatan', 'Permohonan diskusi');
 
         $this->assertDatabaseHas('undangan', [
             'id_undangan' => $undangan->id_undangan,
             'status' => 'ditolak',
-            'catatan' => 'Mohon maaf jadwal penuh',
+            'catatan' => 'Permohonan diskusi',
+            'alasan' => 'Mohon maaf jadwal penuh',
         ]);
     }
 
@@ -242,5 +245,129 @@ class DiskusiUndanganTest extends TestCase
         $this->assertNotEmpty($responsePenyelenggara->json('data.data'));
         $itemPenyelenggara = $responsePenyelenggara->json('data.data.0');
         $this->assertEquals($this->pengundang->id_pengguna, $itemPenyelenggara['pengguna']['id_pengguna']);
+    }
+
+    public function test_waktu_dengan_offset_disimpan_sebagai_utc(): void
+    {
+        $waktuLokal = now()->addDays(2)->setTimezone('Asia/Jakarta');
+
+        $response = $this->actingAs($this->pengundang)->postJson('/api/undangan', [
+            'id_pameran' => $this->pameran->id_pameran,
+            'waktu' => $waktuLokal->format('Y-m-d\TH:i:sP'),
+        ]);
+
+        $response->assertCreated();
+
+        $tersimpan = Undangan::query()->latest('id_undangan')->firstOrFail();
+
+        $this->assertSame(
+            $waktuLokal->copy()->utc()->format('Y-m-d H:i:s'),
+            $tersimpan->waktu->format('Y-m-d H:i:s')
+        );
+        $this->assertSame('+00:00', $tersimpan->waktu->format('P'));
+    }
+
+    public function test_dapat_mengajukan_ulang_setelah_undangan_disetujui_lewat(): void
+    {
+        $ruangan = Ruangan::firstOrCreate([
+            'id_pameran' => $this->pameran->id_pameran,
+            'jenis' => 'privat',
+        ]);
+
+        Undangan::forceCreate([
+            'id_pengguna' => $this->pengundang->id_pengguna,
+            'id_ruangan' => $ruangan->id_ruangan,
+            'waktu' => now()->subMinutes(30),
+            'status' => 'disetujui',
+        ]);
+
+        $response = $this->actingAs($this->pengundang)->postJson('/api/undangan', [
+            'id_pameran' => $this->pameran->id_pameran,
+            'waktu' => now()->addDays(2)->format('Y-m-d H:i:s'),
+        ]);
+
+        $response->assertCreated();
+    }
+
+    public function test_tidak_dapat_menyetujui_undangan_yang_sudah_lewat(): void
+    {
+        $ruangan = Ruangan::firstOrCreate([
+            'id_pameran' => $this->pameran->id_pameran,
+            'jenis' => 'privat',
+        ]);
+
+        $undangan = Undangan::forceCreate([
+            'id_pengguna' => $this->pengundang->id_pengguna,
+            'id_ruangan' => $ruangan->id_ruangan,
+            'waktu' => now()->subMinute(),
+            'status' => 'diproses',
+        ]);
+
+        $response = $this->actingAs($this->penyelenggara)->patchJson("/api/undangan/{$undangan->id_undangan}", [
+            'status' => 'disetujui',
+        ]);
+
+        $response->assertStatus(409);
+        $response->assertJsonPath('message', 'Jadwal undangan sudah lewat.');
+    }
+
+    public function test_tidak_dapat_menyetujui_slot_yang_bentrok(): void
+    {
+        $ruangan = Ruangan::firstOrCreate([
+            'id_pameran' => $this->pameran->id_pameran,
+            'jenis' => 'privat',
+        ]);
+
+        $pengundangLain = Pengguna::factory()->create(['role' => 'pengguna', 'status' => 'aktif']);
+
+        Undangan::forceCreate([
+            'id_pengguna' => $pengundangLain->id_pengguna,
+            'id_ruangan' => $ruangan->id_ruangan,
+            'waktu' => now()->addDays(2),
+            'status' => 'disetujui',
+            'tautan' => 'tautan-lain',
+        ]);
+
+        $undangan = Undangan::forceCreate([
+            'id_pengguna' => $this->pengundang->id_pengguna,
+            'id_ruangan' => $ruangan->id_ruangan,
+            'waktu' => now()->addDays(2)->addMinutes(30),
+            'status' => 'diproses',
+        ]);
+
+        $response = $this->actingAs($this->penyelenggara)->patchJson("/api/undangan/{$undangan->id_undangan}", [
+            'status' => 'disetujui',
+        ]);
+
+        $response->assertStatus(409);
+        $response->assertJsonPath('message', 'Slot jadwal pada ruangan ini sudah terisi.');
+    }
+
+    public function test_index_mendukung_per_page_dan_urutan_waktu(): void
+    {
+        $ruangan = Ruangan::firstOrCreate([
+            'id_pameran' => $this->pameran->id_pameran,
+            'jenis' => 'privat',
+        ]);
+
+        foreach ([3, 1, 2] as $hari) {
+            Undangan::forceCreate([
+                'id_pengguna' => $this->pengundang->id_pengguna,
+                'id_ruangan' => $ruangan->id_ruangan,
+                'waktu' => now()->addDays($hari),
+                'status' => 'diproses',
+            ]);
+        }
+
+        $response = $this->actingAs($this->pengundang)
+            ->getJson('/api/undangan?sebagai=pengundang&per_page=2');
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data.data');
+        $response->assertJsonPath('data.last_page', 2);
+
+        $data = $response->json('data.data');
+        $this->assertTrue(Carbon::parse($data[0]['waktu'])->lt(Carbon::parse($data[1]['waktu'])));
+        $this->assertTrue(Carbon::parse($data[0]['waktu'])->isSameDay(now()->addDay()));
     }
 }

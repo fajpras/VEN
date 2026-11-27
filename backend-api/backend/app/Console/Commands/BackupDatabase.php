@@ -22,7 +22,14 @@ class BackupDatabase extends Command
             return self::FAILURE;
         }
 
-        $dir = $this->option('path') ?? config('backup.path', storage_path('app/backups'));
+        $dir = $this->option('path') ?: config('backup.path') ?: storage_path('app/backups');
+        $dir = rtrim((string) $dir, '/\\');
+
+        if ($dir === '') {
+            $this->error('Path backup tidak valid. Periksa BACKUP_PATH di .env.');
+            return self::FAILURE;
+        }
+
         if (! is_dir($dir) && ! mkdir($dir, 0755, true) && ! is_dir($dir)) {
             $this->error("Tidak dapat membuat direktori backup: {$dir}");
             return self::FAILURE;

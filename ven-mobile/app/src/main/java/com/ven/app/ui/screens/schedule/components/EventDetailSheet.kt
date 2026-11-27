@@ -1,8 +1,16 @@
 package com.ven.app.ui.screens.schedule.components
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,9 +23,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -28,11 +38,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ven.app.R
-import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.components.ui.VexBottomSheet
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonVariant
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.screens.schedule.ScheduleEventItem
+import com.ven.app.ui.screens.schedule.isJoinable
 import com.ven.app.ui.screens.voice.VoiceChatPanel
 import com.ven.app.ui.screens.voice.VoiceSesi
 import com.ven.app.ui.theme.ThemeMode
@@ -41,13 +52,15 @@ import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
 /**
- * Bottom Sheet modal untuk detail jadwal pertemuan pameran (Tab Approved & Waiting).
+ * Bottom Sheet modal untuk detail jadwal pertemuan pameran (Tab Approved, Waiting, & History).
  * Sesuai DESIGN.md §8.4.5 & Wireframe schedule-1 & schedule-3:
  * - Banner pameran besar rasio 16:9 di bagian atas.
  * - Teks penjelasan dengan tanggal & jam dicetak tebal via [AnnotatedString].
+ * - Informasi jendela sesi (-15m s.d. +15m) & alasan penolakan/kedaluwarsa bila ada.
+ * - Kode sesi (tautan) yang dapat disalin dengan satu ketukan.
  * - Tombol "Join Room":
- *   - Aktif (Primary ungu) jika [ScheduleEventItem.isApproved] = true.
- *   - Nonaktif (Disabled) jika [ScheduleEventItem.isApproved] = false.
+ *   - Aktif jika [ScheduleEventItem.isJoinable] = true (dalam jendela waktu dan disetujui).
+ *   - Nonaktif jika di luar jendela sesi atau belum disetujui.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,11 +69,17 @@ fun EventDetailSheet(
     onDismissRequest: () -> Unit,
     onJoinRoom: () -> Unit,
     modifier: Modifier = Modifier,
+    nowMillis: Long = System.currentTimeMillis(),
 
     /** Status voice chat saat ini; ditampilkan hanya untuk ruangan privat. */
     voiceStatus: VoiceSesi = VoiceSesi.Jeda,
 ) {
     val colors = VexTheme.colors
+    val context = LocalContext.current
+
+    val isRejected = event.status.equals("ditolak", ignoreCase = true)
+    val isExpired = !event.isApproved && !isRejected &&
+        event.waktuMillis != null && (event.waktuMillis + 15 * 60_000L < nowMillis)
 
     VexBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -101,16 +120,18 @@ fun EventDetailSheet(
             Spacer(modifier = Modifier.height(VexSpace.s5))
 
             // Teks Pesan Status (AnnotatedString dengan tanggal/jam bold)
-            val prefix = if (event.isApproved) {
-                stringResource(R.string.schedule_approved_detail_prefix)
-            } else {
-                stringResource(R.string.schedule_waiting_detail_prefix)
+            val prefix = when {
+                event.isApproved -> stringResource(R.string.schedule_approved_detail_prefix)
+                isRejected -> stringResource(R.string.schedule_rejected_detail_prefix)
+                isExpired -> stringResource(R.string.schedule_expired_detail_prefix)
+                else -> stringResource(R.string.schedule_waiting_detail_prefix)
             }
 
-            val suffix = if (event.isApproved) {
-                stringResource(R.string.schedule_approved_detail_suffix)
-            } else {
-                stringResource(R.string.schedule_waiting_detail_suffix)
+            val suffix = when {
+                event.isApproved -> stringResource(R.string.schedule_approved_detail_suffix)
+                isRejected -> stringResource(R.string.schedule_rejected_detail_suffix)
+                isExpired -> stringResource(R.string.schedule_expired_detail_suffix)
+                else -> stringResource(R.string.schedule_waiting_detail_suffix)
             }
 
             val annotatedMessage = buildAnnotatedString {
@@ -127,7 +148,70 @@ fun EventDetailSheet(
                 color = colors.text,
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            // Hint Jendela Waktu untuk Ruangan Privat yang Disetujui
+            if (event.isApproved && event.roomId != null && event.waktuMillis != null) {
+                Spacer(modifier = Modifier.height(VexSpace.s3))
+                val hint = when {
+                    nowMillis < event.waktuMillis - 15 * 60_000L ->
+                        stringResource(R.string.schedule_window_hint_before)
+                    nowMillis > event.waktuMillis + 15 * 60_000L ->
+                        stringResource(R.string.schedule_window_hint_after)
+                    else ->
+                        stringResource(R.string.schedule_window_hint_active)
+                }
+                val hintColor = if (event.isJoinable(nowMillis)) colors.primary else colors.textMuted
+                Text(
+                    text = hint,
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                    color = hintColor,
+                )
+            }
+
+            // Tampilkan Alasan jika ada (Ditolak / Kedaluwarsa)
+            if (!event.alasan.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(VexSpace.s3))
+                Text(
+                    text = stringResource(R.string.schedule_reason_label) + event.alasan,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.danger,
+                )
+            }
+
+            // Tampilkan Kode Sesi (tautan) dengan aksi salin bila tersedia
+            if (!event.tautan.isNullOrBlank() && event.isApproved) {
+                Spacer(modifier = Modifier.height(VexSpace.s3))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(colors.surfaceInput)
+                        .clickable {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                            clipboard?.setPrimaryClip(ClipData.newPlainText("session_code", event.tautan))
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.schedule_session_code_copied),
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                        .padding(horizontal = VexSpace.s4, vertical = VexSpace.s3),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = stringResource(R.string.schedule_session_code_label) + event.tautan,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                        color = colors.text,
+                    )
+                    Text(
+                        text = "Salin",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                        color = colors.primary,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Kartu voice chat: hanya ruangan privat yang mendukung voice.
             if (event.isApproved && event.roomId != null) {
@@ -136,11 +220,12 @@ fun EventDetailSheet(
                 Spacer(modifier = Modifier.height(VexSpace.s4))
             }
 
-            // Tombol Utama "Join Room"
+            // Tombol Utama "Join Room" (hanya aktif jika dalam jendela sesi)
+            val canJoin = event.isJoinable(nowMillis)
             VexButton(
                 text = stringResource(R.string.schedule_join_room),
                 onClick = onJoinRoom,
-                enabled = event.isApproved,
+                enabled = canJoin,
                 variant = VexButtonVariant.Primary,
                 modifier = Modifier.fillMaxWidth(),
             )

@@ -19,6 +19,7 @@ data class CalendarDay(
     val date: LocalDate,
     val isCurrentMonth: Boolean,
     val isSelected: Boolean = false,
+    val isEnabled: Boolean = true,
 ) {
     val dayNumber: Int get() = date.dayOfMonth
 }
@@ -47,6 +48,7 @@ data class RequestMeetingUiState(
 fun buildMonthGrid(
     visibleMonth: YearMonth,
     selectedDate: LocalDate?,
+    today: LocalDate = LocalDate.now(),
 ): List<CalendarDay> {
     val firstDayOfMonth = visibleMonth.atDay(1)
     // DayOfWeek: MONDAY = 1 ... SUNDAY = 7
@@ -60,12 +62,14 @@ fun buildMonthGrid(
         val currentDate = startDate.plusDays(i.toLong())
         val isCurrentMonth = (currentDate.month == visibleMonth.month && currentDate.year == visibleMonth.year)
         val isSelected = (selectedDate != null && currentDate == selectedDate)
+        val isEnabled = isCurrentMonth && !currentDate.isBefore(today)
 
         days.add(
             CalendarDay(
                 date = currentDate,
                 isCurrentMonth = isCurrentMonth,
                 isSelected = isSelected,
+                isEnabled = isEnabled,
             )
         )
     }

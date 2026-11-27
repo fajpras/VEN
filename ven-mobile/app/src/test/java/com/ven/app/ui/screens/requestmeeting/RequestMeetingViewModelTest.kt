@@ -66,6 +66,34 @@ class RequestMeetingViewModelTest {
     }
 
     @Test
+    fun initialState_daysBeforeToday_areDisabled() {
+        val vm = RequestMeetingViewModel(today = fixedDate)
+        val state = vm.uiState.value
+
+        val pastDay = state.calendarDays.first { it.date == LocalDate.of(2026, 9, 15) }
+        assertFalse(pastDay.isEnabled)
+
+        val todayCell = state.calendarDays.first { it.date == fixedDate }
+        assertTrue(todayCell.isEnabled)
+    }
+
+    @Test
+    fun onDaySelected_disabledDay_stateRemainsUnchanged() {
+        val vm = RequestMeetingViewModel(today = fixedDate)
+        val disabledDay = CalendarDay(
+            date = LocalDate.of(2026, 9, 15),
+            isCurrentMonth = true,
+            isEnabled = false,
+        )
+
+        vm.onDaySelected(disabledDay)
+
+        val state = vm.uiState.value
+        assertEquals(fixedDate, state.selectedDate)
+        assertEquals("Wed, 30 September 2026", state.selectedDateText)
+    }
+
+    @Test
     fun onNextMonth_incrementsVisibleMonthAndRecomputesGrid() {
         val vm = RequestMeetingViewModel(today = fixedDate)
 

@@ -177,6 +177,19 @@
     <string name="schedule_action_approved_success">Permintaan disetujui</string>
     <string name="schedule_action_rejected_success">Permintaan ditolak</string>
     <string name="schedule_action_join_room_sim">Memasuki ruang pertemuan...</string>
+    <string name="schedule_window_hint_before">Ruangan terbuka 15 menit sebelum jadwal.</string>
+    <string name="schedule_window_hint_active">Sesi aktif. Anda dapat masuk sekarang.</string>
+    <string name="schedule_window_hint_after">Sesi pertemuan telah berakhir.</string>
+    <string name="schedule_rejected_detail_prefix">Permintaan Anda yang dijadwalkan pada </string>
+    <string name="schedule_rejected_detail_suffix"> telah ditolak.</string>
+    <string name="schedule_expired_detail_prefix">Permintaan Anda yang dijadwalkan pada </string>
+    <string name="schedule_expired_detail_suffix"> telah kedaluwarsa tanpa tanggapan.</string>
+    <string name="schedule_reason_label">Alasan: </string>
+    <string name="schedule_session_code_label">Kode sesi: </string>
+    <string name="schedule_session_code_copied">Kode sesi berhasil disalin</string>
+    <string name="schedule_join_window_warning">Ruangan hanya dapat diakses 15 menit sebelum hingga 15 menit setelah jadwal.</string>
+    <string name="schedule_load_more">Muat lebih banyak</string>
+    <string name="schedule_retry">Coba lagi</string>
 
     <!-- Voice Chat (khusus ruangan privat) Strings -->
     <string name="voice_panel_judul">Voice chat privat</string>

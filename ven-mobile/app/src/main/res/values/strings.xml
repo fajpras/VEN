@@ -186,6 +186,19 @@
     <string name="schedule_action_approved_success">Request approved</string>
     <string name="schedule_action_rejected_success">Request rejected</string>
     <string name="schedule_action_join_room_sim">Entering meeting room...</string>
+    <string name="schedule_window_hint_before">Room opens 15 minutes before scheduled time.</string>
+    <string name="schedule_window_hint_active">Session is active. You can join now.</string>
+    <string name="schedule_window_hint_after">Session has ended.</string>
+    <string name="schedule_rejected_detail_prefix">Your request which was scheduled on </string>
+    <string name="schedule_rejected_detail_suffix"> was rejected.</string>
+    <string name="schedule_expired_detail_prefix">Your request which was scheduled on </string>
+    <string name="schedule_expired_detail_suffix"> expired without response.</string>
+    <string name="schedule_reason_label">Reason: </string>
+    <string name="schedule_session_code_label">Session code: </string>
+    <string name="schedule_session_code_copied">Session code copied to clipboard</string>
+    <string name="schedule_join_window_warning">Room is only accessible 15 minutes before to 15 minutes after the schedule.</string>
+    <string name="schedule_load_more">Load more</string>
+    <string name="schedule_retry">Retry</string>
 
     <!-- Voice Chat (private room only) Strings -->
     <string name="voice_panel_judul">Private voice chat</string>

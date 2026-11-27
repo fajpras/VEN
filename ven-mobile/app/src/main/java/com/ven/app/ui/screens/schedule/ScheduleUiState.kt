@@ -3,6 +3,7 @@ package com.ven.app.ui.screens.schedule
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Immutable
 import com.ven.app.R
+import com.ven.app.util.DateFormatter
 
 enum class ScheduleTab {
     Approved,
@@ -27,6 +28,9 @@ data class ScheduleEventItem(
     val isApproved: Boolean = true,
     val status: String = "disetujui",
     val note: String? = null,
+    val waktuMillis: Long? = null,
+    val alasan: String? = null,
+    val tautan: String? = null,
 )
 
 @Immutable
@@ -43,7 +47,20 @@ data class ScheduleRequestItem(
     val exhibitTitle: String? = null,
     @param:DrawableRes val requesterAvatarRes: Int? = null,
     val requesterAvatarUrl: String? = null,
+    val roomId: Int? = null,
+    val waktuMillis: Long? = null,
 )
+
+/**
+ * Mengecek apakah jadwal pertemuan dapat dimasuki pengguna saat ini.
+ * - Ruangan privat: hanya bisa dimasuki jika sudah disetujui DAN dalam jendela waktu (-15m s.d. +15m).
+ * - Ruangan umum: bisa dimasuki kapan saja selama disetujui.
+ */
+fun ScheduleEventItem.isJoinable(nowMillis: Long = System.currentTimeMillis()): Boolean {
+    if (!isApproved) return false
+    if (roomId == null) return true
+    return DateFormatter.isWithinSessionWindow(waktuMillis, nowMillis = nowMillis)
+}
 
 @Immutable
 data class ScheduleUiState(
@@ -51,6 +68,10 @@ data class ScheduleUiState(
     val searchQuery: String = "",
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
+    val isLoadingMore: Boolean = false,
+    val hasMore: Boolean = false,
+    val errorMessage: String? = null,
+    val nowMillis: Long = System.currentTimeMillis(),
     val approvedItems: List<ScheduleEventItem> = emptyList(),
     val waitingItems: List<ScheduleEventItem> = emptyList(),
     val requestItems: List<ScheduleRequestItem> = emptyList(),
@@ -105,7 +126,8 @@ data class ScheduleUiState(
                 it.title.lowercase().contains(q) ||
                     it.dateText.lowercase().contains(q) ||
                     it.timeText.lowercase().contains(q) ||
-                    (it.note != null && it.note.lowercase().contains(q))
+                    (it.note != null && it.note.lowercase().contains(q)) ||
+                    (it.alasan != null && it.alasan.lowercase().contains(q))
             }
         }
 }
