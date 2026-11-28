@@ -64,7 +64,6 @@ data class ExhibitItem(
     val title: String,
     @param:DrawableRes val bannerRes: Int? = null,
     val bannerUrl: String? = null,
-    val category: String? = null,
 )
 
 /**

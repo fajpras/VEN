@@ -18,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -32,9 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
-import com.ven.app.ui.components.ui.VexSkillChip
 import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
-import com.ven.app.ui.theme.CategoryColorMap
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
@@ -50,7 +47,6 @@ fun ExhibitBannerCard(
     modifier: Modifier = Modifier,
     imageRes: Int? = null,
     bannerUrl: String? = null,
-    category: String? = null,
 ) {
     val colors = VexTheme.colors
     val shape = RoundedCornerShape(VexRadius.md)
@@ -82,17 +78,6 @@ fun ExhibitBannerCard(
                 contentDescription = title,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
-            )
-        }
-
-        if (!category.isNullOrBlank()) {
-            val catColor = CategoryColorMap[category] ?: colors.primary
-            VexSkillChip(
-                text = category,
-                categoryColor = catColor,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(VexSpace.s3),
             )
         }
 
@@ -128,7 +113,6 @@ private fun ExhibitBannerCardDarkPreview() {
         Box(modifier = Modifier.padding(16.dp)) {
             ExhibitBannerCard(
                 title = "Open Source Competition",
-                category = "Cybersecurity",
                 imageRes = R.drawable.poster_2,
                 onClick = {},
             )

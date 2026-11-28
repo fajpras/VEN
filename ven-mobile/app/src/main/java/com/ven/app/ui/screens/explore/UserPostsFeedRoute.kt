@@ -52,8 +52,6 @@ fun UserPostsFeedRoute(
                                 id = artwork.idKarya,
                                 username = "@$author",
                                 title = artwork.judul,
-                                category = artwork.kategori?.nama
-                                    ?: AppStrings.get(R.string.common_artwork),
                                 timestampText = DateFormatter.formatRelativeTime(artwork.createdAt),
                                 description = artwork.deskripsi.orEmpty(),
                                 imageUrl = artwork.fileUrl ?: artwork.file,

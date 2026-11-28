@@ -552,8 +552,8 @@ object VexTheme {
 | **RequestListItem** | Schedule/Request | Avatar lingkaran 48dp kiri; kanan: username bold + tanggal & jam (`27/9/26 02.00 PM`) abu-abu kecil kanan atas, cuplikan pesan 1–2 baris ellipsis. Tap membuka `RequestDetailSheet` (§8.4) |
 | **EventDetailSheet** | Schedule (Approved & Waiting) | Isi `VexBottomSheet`: banner besar 16:9, teks status dengan tanggal/jam tebal via `AnnotatedString`, tombol "Join Room" (Primary aktif untuk Approved, disabled untuk Waiting) (§8.4) |
 | **RequestDetailSheet** | Schedule (Request / Inbox) | Isi `VexBottomSheet`: banner 16:9, label "Requested for {tanggal jam}", baris pemohon (avatar + username), teks pesan lengkap, dua tombol sejajar Approve (Primary) & Reject (Danger) (§8.4) |
-| **PostCard** | Home | Header `@username` kiri + ikon kalender & play kanan; chip kategori (`VexTagChip`) di bawah username/judul; gambar penuh lebar tanpa radius |
-| **MediaGrid** | Explore, Profile, picker media `[TERIMPLEMENTASI]` | Grid default 3 kolom, celah 2dp; dukung tile 2-kolom (`GridItemSpan(2)`), rasio poster `VexAspect.poster`. Parameter `columns` fleksibel: 3 kolom untuk Explore Discovery, **2 kolom** untuk Search Results tab `Posts` & seksi `Posts` tab `For you` (§8.5.3); tile menampilkan `VexTagChip` kategori di pojok kiri-atas bila tersedia |
+| **PostCard** | Home | Header `@username` kiri + ikon kalender & play kanan; gambar penuh lebar tanpa radius |
+| **MediaGrid** | Explore, Profile, picker media `[TERIMPLEMENTASI]` | Grid default 3 kolom, celah 2dp; dukung tile 2-kolom (`GridItemSpan(2)`), rasio poster `VexAspect.poster`. Parameter `columns` fleksibel: 3 kolom untuk Explore Discovery, **2 kolom** untuk Search Results tab `Posts` & seksi `Posts` tab `For you` (§8.5.3) |
 | **ExploreTopBar** | Explore (§8.5) `[BARU]` | Baris horizontal berisi `SearchBar` (weight 1f) + tombol filter (`ic_action_filter`, 24dp, `text`). Mode Search Active: leading `ic_action_back` + `SearchBar` mengisi sisa lebar. Padding horizontal 24dp |
 | **SearchHistoryItem** | Explore Search History (§8.5.2) `[BARU]` | Dua varian: **Query** = lingkaran 36dp `surfaceInput` + ikon jam `ic_action_history` + teks query + tombol hapus "✕"; **Account** = `Avatar(sm)` + `@username` SemiBold + nama lengkap `textMuted` + tombol hapus "✕" |
 | **SearchAccountRow** | Explore Search Results (§8.5.3) `[BARU]` | Baris hasil akun: `Avatar(md)` 40dp + `@username` SemiBold `text` + nama lengkap/peran `textMuted`. Tap membuka profil akun |
@@ -974,7 +974,6 @@ Halaman Schedule dirancang mandiri tanpa dependensi backend:
   - Sesekali muncul **tile rentang 2 kolom** (`GridItemSpan(2)`, rasio horizontal ~16:9), contoh poster *"Open Source Competition"* `[OBSERVED pola berulang]`.
 - **Sumber data (live API):** `ExploreViewModel` memanggil `GET /api/pencarian` (`tipe=karya`, `kategori[]`, `exclude`) untuk Discovery. Discovery hanya menampilkan karya yang kategorinya **di luar minat** pengguna; jika tidak ada hasil, backend fallback ke semua kategori. Pengguna tanpa minat atau memilih `Others` melihat semua kategori.
 - **Kontrak kategori:** `karya.kategori.kategori` adalah tag subjek karya. `pameran.tipe` adalah ukuran/template ruangan (`kecil`/`sedang`/`besar`/`acara`) dan **bukan** kategori. `pameran.kategori` adalah kategori perwakilan dari karya pertama pameran.
-- **Tag kategori:** Setiap tile `MediaGrid` dan `PostCard` menampilkan `VexTagChip` bila kategori tersedia; warna dari `CategoryColorMap` dengan fallback `colors.primary`. Chip disembunyikan jika kategori null/kosong.
 - **Filter kategori:** Filter berlaku untuk Discovery **dan** hasil pencarian keyword. Tanpa filter = semua kategori; dengan filter = hanya kategori terpilih. Menutup `CategoryFilterSheet` memicu reload Discovery atau mengulang pencarian aktif. Filter eksplisit mengalahkan aturan luar-minat; tombol Reset mengosongkan pilihan. Tombol filter tetap tampil saat mode pencarian aktif.
 - **Bottom Nav:** tab ke-4 (Explore, `ic_nav_explore_filled` aktif).
 - **Interaksi:**
@@ -1019,7 +1018,7 @@ Ditampilkan saat pengguna mengetik/menjalankan kueri (contoh wireframe: `"vex"`)
   - **`LazyColumn`** vertikal penuh — daftar dapat di-scroll bebas ke atas/bawah.
   - Posisi awal diatur via `rememberLazyListState` + `LaunchedEffect` → `scrollToItem(targetIndex)` bila `postId` diberikan, agar post yang diketuk langsung terlihat.
   - Setiap item = kartu utuh **`PostCard`**:
-    - **Header:** `@username` (SemiBold, `text`) di kiri; ikon Kalender (`Request Meeting`, §8.6.1) dan ikon Play/3D di kanan (24dp, gap 16dp). Di bawah username/judul tampil `VexTagChip` kategori bila tersedia.
+    - **Header:** `@username` (SemiBold, `text`) di kiri; ikon Kalender (`Request Meeting`, §8.6.1) dan ikon Play/3D di kanan (24dp, gap 16dp).
     - **Media:** Gambar karya **edge-to-edge** selebar layar, sudut 0dp (tajam), rasio mengikuti karya (mis. 4:5 / 16:9).
     - **Caption & Waktu:** `@username` tebal + deskripsi karya dengan tautan URL yang dapat diklik + aksi `More`/`Less` (lihat `PostCaption`), lalu timestamp relatif (mis. *"17 hours ago"*, `bodySmall`, `textMuted`).
 - **Interaksi:** Ikon kalender → `RequestMeetingScreen`; ikon play → 3D Virtual Exhibition Room; tap `@username` → profil; tap tautan → peramban eksternal (`UriHandler`).

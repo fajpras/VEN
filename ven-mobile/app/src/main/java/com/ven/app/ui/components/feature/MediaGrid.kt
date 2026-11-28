@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -48,9 +47,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
-import com.ven.app.ui.components.ui.VexTagChip
 import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
-import com.ven.app.ui.theme.CategoryColorMap
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexAspect
 import com.ven.app.ui.theme.VexTheme
@@ -61,7 +58,6 @@ data class MediaGridItem(
     val title: String,
     @param:DrawableRes val imageRes: Int? = null,
     val imageUrl: String? = null,
-    val category: String? = null,
     val span: Int = 1,
 )
 
@@ -110,17 +106,6 @@ fun MediaGridTile(
                 contentDescription = item.title,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
-            )
-        }
-
-        if (!item.category.isNullOrBlank()) {
-            VexTagChip(
-                text = item.category,
-                categoryColor = CategoryColorMap[item.category] ?: colors.primary,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(6.dp)
-                    .widthIn(max = 104.dp),
             )
         }
 

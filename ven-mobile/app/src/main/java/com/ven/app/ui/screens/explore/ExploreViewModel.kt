@@ -539,7 +539,6 @@ class ExploreViewModel(
             id = idKarya,
             title = judul,
             imageUrl = fileUrl ?: file,
-            category = kategori?.nama,
         )
     }
 
@@ -553,7 +552,6 @@ class ExploreViewModel(
             userId = pengguna?.idPengguna ?: idPengguna,
             userAvatarUrl = pengguna?.fotoProfil,
             title = judul,
-            category = kategori?.nama,
             timestampText = relativeTime,
             description = deskripsi ?: "",
             imageUrl = fileUrl ?: file,
@@ -568,7 +566,6 @@ class ExploreViewModel(
             id = idPameran.toString(),
             title = judul,
             bannerUrl = banner,
-            category = kategori,
         )
     }
 

@@ -139,7 +139,6 @@ fun HomeScreen(
                         username = post.username,
                         userAvatarUrl = post.userAvatarUrl,
                         title = post.title,
-                        category = post.category,
                         timestampText = post.timestampText,
                         description = post.description,
                         imageUrl = post.imageUrl,

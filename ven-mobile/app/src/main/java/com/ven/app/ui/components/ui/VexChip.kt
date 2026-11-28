@@ -126,25 +126,6 @@ fun VexSelectableChip(
 }
 
 /**
- * Badge pill statis penampil kategori untuk kartu karya dan daftar portofolio.
- */
-@Composable
-fun VexTagChip(
-    text: String,
-    categoryColor: Color,
-    modifier: Modifier = Modifier,
-    @DrawableRes iconRes: Int? = R.drawable.ic_category_star,
-) {
-    VexSkillChip(
-        text = text,
-        categoryColor = categoryColor,
-        modifier = modifier,
-        iconRes = iconRes,
-        onClick = null,
-    )
-}
-
-/**
  * Chip pill keahlian atau kategori karya dengan ikon di sisi kiri.
  */
 @Composable

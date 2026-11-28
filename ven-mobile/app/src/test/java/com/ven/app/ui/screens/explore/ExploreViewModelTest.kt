@@ -60,21 +60,6 @@ class ExploreViewModelTest {
     }
 
     @Test
-    fun discovery_membawa_kategori_karya() = runTest(dispatcher) {
-        val api = FakeApiPencarian()
-        api.karyaResponder = {
-            successKaryaPage(listOf(karya("k1", kategori = "3D")))
-        }
-        val viewModel = viewModel(api)
-
-        viewModel.muatDiscoveryMedia()
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertEquals("3D", state.discoveryMedia.single().category)
-    }
-
-    @Test
     fun pencarian_for_you_mengirim_filter_kategori() = runTest(dispatcher) {
         val api = FakeApiPencarian()
         val viewModel = viewModel(api)

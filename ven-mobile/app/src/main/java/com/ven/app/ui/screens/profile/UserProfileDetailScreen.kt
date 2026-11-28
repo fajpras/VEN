@@ -157,7 +157,6 @@ fun UserProfileDetailScreen(
                         id = k.idKarya,
                         title = k.judul,
                         imageUrl = k.fileUrl ?: k.file,
-                        category = k.kategori?.nama,
                     )
                 } ?: emptyList()
             }
@@ -168,7 +167,6 @@ fun UserProfileDetailScreen(
                         id = p.idPameran.toString(),
                         title = p.judul,
                         imageUrl = p.banner,
-                        category = p.kategori,
                     )
                 } ?: emptyList()
             }

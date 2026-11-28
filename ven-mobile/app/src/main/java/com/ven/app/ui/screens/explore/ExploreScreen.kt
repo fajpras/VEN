@@ -536,7 +536,6 @@ private fun ExploreResults(
                                             title = exhibit.title,
                                             bannerUrl = exhibit.bannerUrl,
                                             imageRes = exhibit.bannerRes,
-                                            category = exhibit.category,
                                             onClick = { onExhibitClick(exhibit) },
                                             modifier = Modifier.padding(horizontal = VexSpace.s6, vertical = VexSpace.s2),
                                         )
@@ -616,7 +615,6 @@ private fun ExploreResults(
                                 title = exhibit.title,
                                 imageRes = exhibit.bannerRes,
                                 bannerUrl = exhibit.bannerUrl,
-                                category = exhibit.category,
                                 onClick = { onExhibitClick(exhibit) },
                             )
                         }
