@@ -3,12 +3,20 @@ package com.ven.app.ui.screens.explore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ven.app.R
+import com.ven.app.VenApplication
 import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiClient
 import com.ven.app.data.api.ApiPencarian
+import com.ven.app.data.api.ApiProfil
 import com.ven.app.data.api.models.KaryaItemModel
+import com.ven.app.data.api.models.PameranItemModel
+import com.ven.app.data.api.models.UserModel
+import com.ven.app.data.preference.ExploreHistoryPreferences
+import com.ven.app.data.preference.ExploreHistoryStore
 import com.ven.app.ui.components.feature.MediaGridItem
 import com.ven.app.util.DateFormatter
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -20,28 +28,47 @@ import kotlinx.coroutines.launch
 
 class ExploreViewModel(
     private val apiPencarian: ApiPencarian = ApiClient.createService(ApiPencarian::class.java),
+    private val historyStore: ExploreHistoryStore = ExploreHistoryPreferences.getInstance(VenApplication.instance),
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val loadCategories: suspend () -> List<String> = {
+        ApiProfil.kategori().getOrNull().orEmpty().map { it.nama }.filter { it.isNotBlank() }
+    },
+    autoLoad: Boolean = true,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ExploreUiState())
     val uiState: StateFlow<ExploreUiState> = _uiState.asStateFlow()
 
     private var searchJob: Job? = null
+    private var discoveryJob: Job? = null
 
     init {
-        muatDiscoveryMedia()
+        val riwayat = historyStore.load()
+            .take(10)
+            .map { RecentSearchItem.Query(id = "query:$it", query = it) }
+
+        _uiState.update {
+            it.copy(
+                recentSearches = riwayat,
+                availableCategories = exploreCategories,
+            )
+        }
+
+        if (autoLoad) {
+            muatKategori()
+            muatDiscoveryMedia()
+        }
     }
 
-    /**
-     * Memuat ulang data Explore secara reaktif (pull-to-refresh & double tap).
-     */
     fun muatUlang(filterSeen: Boolean = true) {
         _uiState.update { it.copy(isRefreshing = true) }
+
         if (_uiState.value.isShowingResults) {
-            val q = _uiState.value.searchQuery
+            val query = _uiState.value.searchQuery
             val tab = _uiState.value.selectedTab
             searchJob?.cancel()
-            searchJob = viewModelScope.launch(Dispatchers.IO) {
-                lakukanPencarian(q, tab)
+            searchJob = viewModelScope.launch(dispatcher) {
+                lakukanPencarian(query, tab)
                 _uiState.update { it.copy(isRefreshing = false) }
             }
         } else {
@@ -49,35 +76,44 @@ class ExploreViewModel(
         }
     }
 
-    /**
-     * Memuat karya awal dari database untuk ditampilkan pada grid Discovery dan Feed detail.
-     * Mendukung filterSeen untuk menampilkan hal baru yang belum pernah dilihat saat refresh.
-     */
     fun muatDiscoveryMedia(isRefresh: Boolean = false, filterSeen: Boolean = false) {
-        viewModelScope.launch(Dispatchers.IO) {
+        discoveryJob?.cancel()
+        discoveryJob = viewModelScope.launch(dispatcher) {
+            _uiState.update { it.copy(isLoadingDiscovery = true, hasDiscoveryError = false) }
+
+            val state = _uiState.value
+            val kategori = state.selectedCategories.toList().ifEmpty { null }
+            val currentSeen = if (filterSeen) {
+                state.seenMediaIds + state.discoveryMedia.map { it.id }.toSet()
+            } else {
+                state.seenMediaIds
+            }
+            val excludeParam = if (filterSeen && currentSeen.isNotEmpty()) {
+                currentSeen.take(30).joinToString(",")
+            } else {
+                null
+            }
+
             try {
-                val currentSeen = if (filterSeen) {
-                    _uiState.value.seenMediaIds + _uiState.value.discoveryMedia.map { it.id }.toSet()
-                } else {
-                    _uiState.value.seenMediaIds
-                }
-
-                val excludeParam = if (filterSeen && currentSeen.isNotEmpty()) {
-                    currentSeen.take(30).joinToString(",")
-                } else null
-
-                // Muat daftar karya dengan exclude param dan refresh flag
-                val res = apiPencarian.searchKarya(
+                val karyaRes = apiPencarian.searchKarya(
                     query = null,
                     tipe = "karya",
                     page = 1,
                     exclude = excludeParam,
                     refresh = if (isRefresh) true else null,
+                    kategori = kategori,
                 )
-                if (res.isSuccessful) {
-                    val paginated = res.body()?.data
-                    val rawKarya = paginated?.data ?: emptyList()
-                    var currentPage = 1
+
+                var items: List<MediaGridItem>? = null
+                var feedList: List<PostsFeedItem>? = null
+                var hasMore: Boolean? = null
+                var currentPage: Int? = null
+                var updatedSeen: Set<String>? = null
+
+                if (karyaRes.isSuccessful) {
+                    val paginated = karyaRes.body()?.data
+                    val rawKarya = paginated?.data.orEmpty()
+                    var page = 1
                     var lastPage = paginated?.lastPage ?: 1
 
                     var filteredKarya = if (filterSeen && currentSeen.isNotEmpty()) {
@@ -86,36 +122,34 @@ class ExploreViewModel(
                         rawKarya
                     }
 
-                    // Jika difilter dan halaman pertama sudah pernah dilihat semua, cari halaman berikutnya
-                    while (filteredKarya.isEmpty() && currentPage < lastPage) {
-                        currentPage++
+                    while (filteredKarya.isEmpty() && page < lastPage) {
+                        page++
                         val nextRes = apiPencarian.searchKarya(
                             query = null,
                             tipe = "karya",
-                            page = currentPage,
+                            page = page,
                             exclude = excludeParam,
                             refresh = if (isRefresh) true else null,
+                            kategori = kategori,
                         )
                         if (nextRes.isSuccessful) {
                             val nextPaginated = nextRes.body()?.data
-                            val nextData = nextPaginated?.data ?: emptyList()
+                            val nextData = nextPaginated?.data.orEmpty()
                             lastPage = nextPaginated?.lastPage ?: lastPage
-                            val fresh = if (filterSeen && currentSeen.isNotEmpty()) {
+                            filteredKarya = if (filterSeen && currentSeen.isNotEmpty()) {
                                 nextData.filterNot { it.idKarya in currentSeen }
                             } else {
                                 nextData
                             }
-                            filteredKarya = fresh
                         } else {
                             break
                         }
                     }
 
-                    // Jika seluruh karya sudah pernah dilihat, acak karya yang ada agar selalu tampil segar
                     val finalKarya = when {
                         filteredKarya.isNotEmpty() -> filteredKarya
                         rawKarya.isNotEmpty() -> {
-                            val currentFirstId = _uiState.value.discoveryMedia.firstOrNull()?.id
+                            val currentFirstId = state.discoveryMedia.firstOrNull()?.id
                             val shuffled = rawKarya.shuffled()
                             if (shuffled.firstOrNull()?.idKarya == currentFirstId && shuffled.size > 1) {
                                 shuffled.drop(1) + shuffled.take(1)
@@ -126,81 +160,84 @@ class ExploreViewModel(
                         else -> emptyList()
                     }
 
-                    val items = finalKarya.map { k ->
-                        MediaGridItem(
-                            id = k.idKarya,
-                            title = k.judul,
-                            imageUrl = k.fileUrl ?: k.file,
-                        )
-                    }
-                    val feedList = finalKarya.map { it.toFeedItem() }
-                    val hasMore = currentPage < lastPage && items.isNotEmpty()
-                    val updatedSeen = if (filteredKarya.isNotEmpty()) {
+                    items = finalKarya.map { it.toMediaGridItem() }
+                    feedList = finalKarya.map { it.toFeedItem() }
+                    hasMore = page < lastPage && items.isNotEmpty()
+                    currentPage = page
+                    updatedSeen = if (filteredKarya.isNotEmpty()) {
                         currentSeen + items.map { it.id }.toSet()
                     } else {
                         items.map { it.id }.toSet()
                     }
-
-                    if (items.isNotEmpty()) {
-                        _uiState.update {
-                            it.copy(
-                                isRefreshing = false,
-                                discoveryMedia = items,
-                                resultPosts = items,
-                                feedPosts = feedList,
-                                currentPostsPage = currentPage,
-                                canLoadMorePosts = hasMore,
-                                seenMediaIds = updatedSeen,
-                            )
-                        }
-                    } else {
-                        _uiState.update { it.copy(isRefreshing = false) }
-                    }
-                } else {
-                    _uiState.update { it.copy(isRefreshing = false) }
                 }
 
-                // Muat data pengguna nyata untuk riwayat pencarian awal (Recents)
-                val userRes = apiPencarian.searchPengguna(null)
-                if (userRes.isSuccessful) {
-                    val users = userRes.body()?.data?.data ?: emptyList()
-                    val realRecents = users.take(6).map { u ->
-                        RecentSearchItem.Account(
-                            id = u.idPengguna ?: "",
-                            username = "@" + (u.namaPanggilan ?: AppStrings.get(R.string.common_user)),
-                            fullName = u.nama ?: "",
-                            avatarUrl = u.fotoProfil,
-                        )
-                    }
-                    if (realRecents.isNotEmpty()) {
-                        _uiState.update { it.copy(recentSearches = realRecents) }
-                    }
+                _uiState.update {
+                    it.copy(
+                        discoveryMedia = items ?: it.discoveryMedia,
+                        resultPosts = items ?: it.resultPosts,
+                        feedPosts = feedList ?: it.feedPosts,
+                        currentPostsPage = currentPage ?: it.currentPostsPage,
+                        canLoadMorePosts = hasMore ?: it.canLoadMorePosts,
+                        seenMediaIds = updatedSeen ?: it.seenMediaIds,
+                        isLoadingDiscovery = false,
+                        isRefreshing = false,
+                        hasDiscoveryError = !karyaRes.isSuccessful && items.isNullOrEmpty(),
+                    )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Exception) {
-                _uiState.update { it.copy(isRefreshing = false) }
-                // Gunakan fallback data jika offline
+                _uiState.update {
+                    it.copy(
+                        isLoadingDiscovery = false,
+                        isRefreshing = false,
+                        hasDiscoveryError = true,
+                    )
+                }
             }
         }
     }
 
     fun setSearchActive(active: Boolean) {
-        _uiState.update {
-            it.copy(
-                isSearchActive = active,
-                searchQuery = if (!active) "" else it.searchQuery,
-            )
-        }
-        if (active && _uiState.value.searchQuery.isNotBlank()) {
-            val q = _uiState.value.searchQuery
+        if (!active) {
             searchJob?.cancel()
-            searchJob = viewModelScope.launch(Dispatchers.IO) {
-                lakukanPencarian(q, _uiState.value.selectedTab)
+            _uiState.update {
+                it.copy(
+                    isSearchActive = false,
+                    searchQuery = "",
+                    isLoading = false,
+                    hasSearchError = false,
+                    resultAccounts = emptyList(),
+                    resultPosts = emptyList(),
+                    resultExhibits = emptyList(),
+                )
+            }
+            return
+        }
+
+        _uiState.update { it.copy(isSearchActive = true) }
+        if (_uiState.value.searchQuery.isNotBlank()) {
+            val query = _uiState.value.searchQuery
+            searchJob?.cancel()
+            searchJob = viewModelScope.launch(dispatcher) {
+                lakukanPencarian(query, _uiState.value.selectedTab)
             }
         }
     }
 
     fun setFilterSheetOpen(isOpen: Boolean) {
         _uiState.update { it.copy(isFilterSheetOpen = isOpen) }
+        if (!isOpen) {
+            val state = _uiState.value
+            if (state.isShowingResults) {
+                searchJob?.cancel()
+                searchJob = viewModelScope.launch(dispatcher) {
+                    lakukanPencarian(state.searchQuery, state.selectedTab)
+                }
+            } else {
+                muatDiscoveryMedia()
+            }
+        }
     }
 
     fun toggleCategory(category: String) {
@@ -210,39 +247,41 @@ class ExploreViewModel(
             }
             state.copy(selectedCategories = updated)
         }
-        val query = _uiState.value.searchQuery
-        searchJob?.cancel()
-        searchJob = viewModelScope.launch(Dispatchers.IO) {
-            lakukanPencarian(query, _uiState.value.selectedTab)
-        }
     }
 
     fun resetFilter() {
         _uiState.update { it.copy(selectedCategories = emptySet()) }
-        val query = _uiState.value.searchQuery
-        searchJob?.cancel()
-        searchJob = viewModelScope.launch(Dispatchers.IO) {
-            lakukanPencarian(query, _uiState.value.selectedTab)
-        }
     }
 
     fun onQueryChange(query: String) {
-        _uiState.update { it.copy(searchQuery = query, isSearchActive = true) }
+        _uiState.update { it.copy(searchQuery = query, isSearchActive = true, hasSearchError = false) }
         searchJob?.cancel()
 
         if (query.isBlank()) {
             _uiState.update {
                 it.copy(
+                    isLoading = false,
                     resultAccounts = emptyList(),
-                    resultPosts = it.discoveryMedia,
+                    resultPosts = emptyList(),
                     resultExhibits = emptyList(),
                 )
             }
             return
         }
 
-        searchJob = viewModelScope.launch(Dispatchers.IO) {
-            delay(350) // Debounce pengetikan
+        searchJob = viewModelScope.launch(dispatcher) {
+            delay(350)
+            lakukanPencarian(query, _uiState.value.selectedTab)
+        }
+    }
+
+    fun onSearchSubmit() {
+        val query = _uiState.value.searchQuery.trim()
+        if (query.isEmpty()) return
+
+        simpanRiwayat(query)
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch(dispatcher) {
             lakukanPencarian(query, _uiState.value.selectedTab)
         }
     }
@@ -250,190 +289,177 @@ class ExploreViewModel(
     fun onTabChange(tab: ExploreSearchTab) {
         _uiState.update { it.copy(selectedTab = tab) }
         val query = _uiState.value.searchQuery
+        if (query.isBlank()) return
+
         searchJob?.cancel()
-        searchJob = viewModelScope.launch(Dispatchers.IO) {
+        searchJob = viewModelScope.launch(dispatcher) {
             lakukanPencarian(query, tab)
         }
     }
 
     private suspend fun lakukanPencarian(query: String, tab: ExploreSearchTab) {
         val qParam = query.trim().ifBlank { null }
+        val kategori = _uiState.value.selectedCategories.toList().ifEmpty { null }
+        _uiState.update { it.copy(isLoading = true, isSearchActive = true, hasSearchError = false) }
+
         try {
-            _uiState.update { it.copy(isLoading = true) }
             when (tab) {
                 ExploreSearchTab.ForYou -> {
-                    val response = apiPencarian.searchSemua(qParam, "semua")
-                    if (response.isSuccessful) {
-                        val body = response.body()?.data
-                        val accounts = body?.pengguna?.map { u ->
-                            ExploreAccountItem(
-                                id = u.idPengguna ?: "",
-                                username = u.namaPanggilan ?: "",
-                                fullName = u.nama ?: "",
-                                avatarUrl = u.fotoProfil,
-                            )
-                        } ?: emptyList()
+                    val response = apiPencarian.searchSemua(qParam, "semua", kategori)
+                    if (!response.isSuccessful) {
+                        _uiState.update { it.copy(hasSearchError = true) }
+                        return
+                    }
 
-                        val rawKarya = body?.karya ?: emptyList()
-                        val posts = rawKarya.map { k ->
-                            MediaGridItem(
-                                id = k.idKarya,
-                                title = k.judul,
-                                imageUrl = k.fileUrl ?: k.file,
-                            )
-                        }
-                        val feedList = rawKarya.map { it.toFeedItem() }
+                    val body = response.body()?.data
+                    val accounts = body?.pengguna.orEmpty().map { it.toAccountItem() }
+                    val rawKarya = body?.karya.orEmpty()
+                    val posts = rawKarya.map { it.toMediaGridItem() }
+                    val feedList = rawKarya.map { it.toFeedItem() }
+                    val exhibits = body?.pameran.orEmpty().map { it.toExhibitItem() }
 
-                        val exhibits = body?.pameran?.map { p ->
-                            ExhibitItem(
-                                id = p.idPameran.toString(),
-                                title = p.judul,
-                                bannerUrl = p.banner,
-                                category = p.tipe ?: "3D",
-                            )
-                        } ?: emptyList()
-
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                isSearchActive = true,
-                                resultAccounts = accounts,
-                                resultPosts = if (posts.isNotEmpty()) posts else it.discoveryMedia,
-                                resultExhibits = exhibits,
-                                feedPosts = if (feedList.isNotEmpty()) feedList else it.feedPosts,
-                                currentPostsPage = 1,
-                            )
-                        }
+                    _uiState.update {
+                        it.copy(
+                            resultAccounts = accounts,
+                            resultPosts = posts,
+                            resultExhibits = exhibits,
+                            feedPosts = if (feedList.isNotEmpty()) feedList else it.feedPosts,
+                            currentPostsPage = 1,
+                            canLoadMorePosts = false,
+                        )
                     }
                 }
+
                 ExploreSearchTab.Accounts -> {
-                    val res = apiPencarian.searchPengguna(qParam)
-                    if (res.isSuccessful) {
-                        val accounts = res.body()?.data?.data?.map { u ->
-                            ExploreAccountItem(
-                                id = u.idPengguna ?: "",
-                                username = u.namaPanggilan ?: "",
-                                fullName = u.nama ?: "",
-                                avatarUrl = u.fotoProfil,
-                            )
-                        } ?: emptyList()
+                    val response = apiPencarian.searchPengguna(qParam)
+                    if (!response.isSuccessful) {
+                        _uiState.update { it.copy(hasSearchError = true) }
+                        return
+                    }
 
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                isSearchActive = true,
-                                resultAccounts = accounts,
-                            )
-                        }
+                    val accounts = response.body()?.data?.data.orEmpty().map { it.toAccountItem() }
+                    _uiState.update {
+                        it.copy(
+                            resultAccounts = accounts,
+                            canLoadMorePosts = false,
+                        )
                     }
                 }
+
                 ExploreSearchTab.Posts -> {
-                    val res = apiPencarian.searchKarya(qParam, page = 1)
-                    if (res.isSuccessful) {
-                        val paginated = res.body()?.data
-                        val rawKarya = paginated?.data ?: emptyList()
-                        val posts = rawKarya.map { k ->
-                            MediaGridItem(
-                                id = k.idKarya,
-                                title = k.judul,
-                                imageUrl = k.fileUrl ?: k.file,
-                            )
-                        }
-                        val feedList = rawKarya.map { it.toFeedItem() }
-                        val hasMore = paginated != null && paginated.currentPage < paginated.lastPage
+                    val response = apiPencarian.searchKarya(qParam, page = 1, kategori = kategori)
+                    if (!response.isSuccessful) {
+                        _uiState.update { it.copy(hasSearchError = true) }
+                        return
+                    }
 
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                isSearchActive = true,
-                                resultPosts = if (posts.isNotEmpty()) posts else it.discoveryMedia,
-                                feedPosts = if (feedList.isNotEmpty()) feedList else it.feedPosts,
-                                currentPostsPage = 1,
-                                canLoadMorePosts = hasMore,
-                            )
-                        }
+                    val paginated = response.body()?.data
+                    val rawKarya = paginated?.data.orEmpty()
+                    val posts = rawKarya.map { it.toMediaGridItem() }
+                    val feedList = rawKarya.map { it.toFeedItem() }
+                    val hasMore = paginated != null && paginated.currentPage < paginated.lastPage
+
+                    _uiState.update {
+                        it.copy(
+                            resultPosts = posts,
+                            feedPosts = if (feedList.isNotEmpty()) feedList else it.feedPosts,
+                            currentPostsPage = 1,
+                            canLoadMorePosts = hasMore,
+                        )
                     }
                 }
-                ExploreSearchTab.Exhibits -> {
-                    val res = apiPencarian.searchPameran(qParam)
-                    if (res.isSuccessful) {
-                        val exhibits = res.body()?.data?.data?.map { p ->
-                            ExhibitItem(
-                                id = p.idPameran.toString(),
-                                title = p.judul,
-                                bannerUrl = p.banner,
-                                category = p.tipe ?: "3D",
-                            )
-                        } ?: emptyList()
 
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                isSearchActive = true,
-                                resultExhibits = exhibits,
-                            )
-                        }
+                ExploreSearchTab.Exhibits -> {
+                    val response = apiPencarian.searchPameran(qParam, kategori = kategori)
+                    if (!response.isSuccessful) {
+                        _uiState.update { it.copy(hasSearchError = true) }
+                        return
+                    }
+
+                    val exhibits = response.body()?.data?.data.orEmpty().map { it.toExhibitItem() }
+                    _uiState.update {
+                        it.copy(
+                            resultExhibits = exhibits,
+                            canLoadMorePosts = false,
+                        )
                     }
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
+            _uiState.update { it.copy(hasSearchError = true) }
+        } finally {
             _uiState.update { it.copy(isLoading = false) }
         }
     }
 
-    /**
-     * Memuat chunk halaman karya berikutnya pada Explore (infinite discovery).
-     */
     fun loadMorePostsChunk() {
         val currentState = _uiState.value
-        if (currentState.isLoading || currentState.isLoadingMorePosts || !currentState.canLoadMorePosts) {
+        if (currentState.isShowingResults ||
+            currentState.isLoading ||
+            currentState.isLoadingMorePosts ||
+            !currentState.canLoadMorePosts
+        ) {
             return
         }
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(dispatcher) {
             _uiState.update { it.copy(isLoadingMorePosts = true) }
             val nextPage = currentState.currentPostsPage + 1
-            val qParam = currentState.searchQuery.trim().ifBlank { null }
             val currentSeen = currentState.seenMediaIds + currentState.discoveryMedia.map { it.id }.toSet()
-            val excludeParam = if (qParam == null && currentSeen.isNotEmpty()) currentSeen.take(50).joinToString(",") else null
+            val excludeParam = if (currentSeen.isNotEmpty()) currentSeen.take(50).joinToString(",") else null
+            val kategori = currentState.selectedCategories.toList().ifEmpty { null }
 
             try {
-                var res = apiPencarian.searchKarya(query = qParam, tipe = "karya", page = nextPage, exclude = excludeParam)
-                var paginated = res.body()?.data
-                var rawKarya = if (res.isSuccessful) paginated?.data ?: emptyList() else emptyList()
+                var response = apiPencarian.searchKarya(
+                    query = null,
+                    tipe = "karya",
+                    page = nextPage,
+                    exclude = excludeParam,
+                    kategori = kategori,
+                )
+                var rawKarya = if (response.isSuccessful) {
+                    response.body()?.data?.data.orEmpty()
+                } else {
+                    emptyList()
+                }
 
-                // Jika halaman paginasi biasa kosong saat discovery, minta batch dengan exclude (kategori lain)
-                if (rawKarya.isEmpty() && qParam == null) {
-                    val fallbackRes = apiPencarian.searchKarya(query = null, tipe = "karya", page = 1, exclude = excludeParam)
+                if (rawKarya.isEmpty()) {
+                    val fallbackRes = apiPencarian.searchKarya(
+                        query = null,
+                        tipe = "karya",
+                        page = 1,
+                        exclude = excludeParam,
+                        kategori = kategori,
+                    )
                     if (fallbackRes.isSuccessful) {
-                        val fbData = fallbackRes.body()?.data
-                        val fbList = fbData?.data ?: emptyList()
-                        if (fbList.isNotEmpty()) {
-                            rawKarya = fbList
-                        }
+                        rawKarya = fallbackRes.body()?.data?.data.orEmpty()
                     }
                 }
 
-                // Jangan sampai konten habis: jika seluruh karya sudah pernah dilihat, ambil rotasi acak
-                if (rawKarya.isEmpty() && qParam == null) {
-                    val freshRes = apiPencarian.searchKarya(query = null, tipe = "karya", page = 1, refresh = true)
+                if (rawKarya.isEmpty()) {
+                    val freshRes = apiPencarian.searchKarya(
+                        query = null,
+                        tipe = "karya",
+                        page = 1,
+                        refresh = true,
+                        kategori = kategori,
+                    )
                     if (freshRes.isSuccessful) {
-                        val freshList = freshRes.body()?.data?.data ?: emptyList()
-                        if (freshList.isNotEmpty()) {
-                            rawKarya = freshList.shuffled()
-                        }
+                        rawKarya = freshRes.body()?.data?.data.orEmpty().shuffled()
                     }
                 }
 
-                if (rawKarya.isNotEmpty()) {
-                    val newMedia = rawKarya.map { k ->
-                        MediaGridItem(
-                            id = k.idKarya,
-                            title = k.judul,
-                            imageUrl = k.fileUrl ?: k.file,
-                        )
-                    }
-                    val newFeed = rawKarya.map { it.toFeedItem() }
+                val existingIds = currentState.discoveryMedia.map { it.id }.toSet()
+                val newMedia = rawKarya
+                    .map { it.toMediaGridItem() }
+                    .filterNot { it.id in existingIds }
+                val newFeed = rawKarya
+                    .filterNot { it.idKarya in existingIds }
+                    .map { it.toFeedItem() }
+
+                if (newMedia.isNotEmpty()) {
                     val updatedSeen = currentState.seenMediaIds + newMedia.map { it.id }.toSet()
 
                     _uiState.update {
@@ -448,8 +474,10 @@ class ExploreViewModel(
                         )
                     }
                 } else {
-                    _uiState.update { it.copy(isLoadingMorePosts = false, canLoadMorePosts = qParam != null) }
+                    _uiState.update { it.copy(isLoadingMorePosts = false, canLoadMorePosts = false) }
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Exception) {
                 _uiState.update { it.copy(isLoadingMorePosts = false) }
             }
@@ -470,9 +498,49 @@ class ExploreViewModel(
     }
 
     fun removeRecentSearch(item: RecentSearchItem) {
-        _uiState.update { state ->
-            state.copy(recentSearches = state.recentSearches.filterNot { it.id == item.id })
+        val remaining = _uiState.value.recentSearches.filterNot { it.id == item.id }
+        _uiState.update { it.copy(recentSearches = remaining) }
+
+        if (item is RecentSearchItem.Query) {
+            historyStore.save(remaining.filterIsInstance<RecentSearchItem.Query>().map { it.query })
         }
+    }
+
+    private fun simpanRiwayat(query: String) {
+        val entry = RecentSearchItem.Query(id = "query:$query", query = query)
+        val updated = (
+            listOf(entry) + _uiState.value.recentSearches.filterNot {
+                it is RecentSearchItem.Query && it.query.equals(query, ignoreCase = true)
+            }
+        ).take(10)
+
+        _uiState.update { it.copy(recentSearches = updated) }
+        historyStore.save(updated.filterIsInstance<RecentSearchItem.Query>().map { it.query })
+    }
+
+    private fun muatKategori() {
+        viewModelScope.launch(dispatcher) {
+            val kategori = try {
+                loadCategories()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                emptyList()
+            }
+
+            if (kategori.isNotEmpty()) {
+                _uiState.update { it.copy(availableCategories = kategori) }
+            }
+        }
+    }
+
+    private fun KaryaItemModel.toMediaGridItem(): MediaGridItem {
+        return MediaGridItem(
+            id = idKarya,
+            title = judul,
+            imageUrl = fileUrl ?: file,
+            category = kategori?.nama,
+        )
     }
 
     private fun KaryaItemModel.toFeedItem(): PostsFeedItem {
@@ -492,6 +560,24 @@ class ExploreViewModel(
             isVideo = videoPost,
             pameranId = idPameran?.toString(),
             aspectRatio = if (videoPost) 16f / 9f else 4f / 5f,
+        )
+    }
+
+    private fun PameranItemModel.toExhibitItem(): ExhibitItem {
+        return ExhibitItem(
+            id = idPameran.toString(),
+            title = judul,
+            bannerUrl = banner,
+            category = kategori,
+        )
+    }
+
+    private fun UserModel.toAccountItem(): ExploreAccountItem {
+        return ExploreAccountItem(
+            id = idPengguna ?: "",
+            username = namaPanggilan ?: "",
+            fullName = nama ?: "",
+            avatarUrl = fotoProfil,
         )
     }
 }

@@ -254,12 +254,15 @@
     <string name="explore_tab_posts">Posts</string>
     <string name="explore_tab_exhibits">Exhibits</string>
     <string name="explore_section_accounts">Accounts</string>
+    <string name="explore_section_exhibits">Exhibits</string>
     <string name="explore_section_posts">Posts</string>
     <string name="explore_filter_title">Category</string>
     <string name="explore_filter_reset">Reset</string>
     <string name="explore_empty_results">No results for \"%1$s\"</string>
     <string name="explore_empty_history">No recent searches</string>
     <string name="explore_empty_discovery">No content to explore yet</string>
+    <string name="explore_error_search">Failed to load results. Please try again.</string>
+    <string name="explore_error_discovery">Failed to load content. Please try again.</string>
     <string name="explore_posts_title">Posts</string>
 
     <!-- AI Chat Strings (§8.12) -->

@@ -13,12 +13,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
@@ -111,6 +113,7 @@ fun ExploreScreen(
                     localUiState = localUiState.copy(searchQuery = query)
                 }
             },
+            onSearchSubmit = { viewModel?.onSearchSubmit() },
             onTabChange = { tab ->
                 if (viewModel != null) {
                     viewModel.onTabChange(tab)
@@ -192,6 +195,7 @@ fun ExploreContent(
     uiState: ExploreUiState,
     onSearchActiveChange: (Boolean) -> Unit,
     onQueryChange: (String) -> Unit,
+    onSearchSubmit: () -> Unit,
     onTabChange: (ExploreSearchTab) -> Unit,
     onOpenFilterSheet: () -> Unit,
     onDismissFilterSheet: () -> Unit,
@@ -219,6 +223,7 @@ fun ExploreContent(
             isSearchActive = uiState.isSearchActive,
             query = uiState.searchQuery,
             onQueryChange = onQueryChange,
+            onSearchSubmit = onSearchSubmit,
             onSearchActivate = { onSearchActiveChange(true) },
             onBackClick = { onSearchActiveChange(false) },
             onFilterClick = onOpenFilterSheet,
@@ -259,6 +264,8 @@ fun ExploreContent(
                         onMediaClick = onMediaClick,
                         onLoadMore = onLoadMore,
                         isLoadingMore = uiState.isLoadingMorePosts,
+                        isLoading = uiState.isLoadingDiscovery,
+                        hasError = uiState.hasDiscoveryError,
                         gridState = gridState,
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -291,6 +298,7 @@ private fun ExploreTopBar(
     isSearchActive: Boolean,
     query: String,
     onQueryChange: (String) -> Unit,
+    onSearchSubmit: () -> Unit,
     onSearchActivate: () -> Unit,
     onBackClick: () -> Unit,
     onFilterClick: () -> Unit,
@@ -321,6 +329,7 @@ private fun ExploreTopBar(
                 query = query,
                 onQueryChange = onQueryChange,
                 placeholder = stringResource(R.string.explore_search_placeholder),
+                onSearch = onSearchSubmit,
                 enabled = isSearchActive,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -340,16 +349,14 @@ private fun ExploreTopBar(
             }
         }
 
-        if (!isSearchActive) {
-            Spacer(modifier = Modifier.width(VexSpace.s2))
-            IconButton(onClick = onFilterClick) {
-                VexIcon(
-                    id = VexIcons.Filter,
-                    contentDescription = stringResource(R.string.explore_filter_action),
-                    size = VexSize.icon,
-                    tint = colors.text,
-                )
-            }
+        Spacer(modifier = Modifier.width(VexSpace.s2))
+        IconButton(onClick = onFilterClick) {
+            VexIcon(
+                id = VexIcons.Filter,
+                contentDescription = stringResource(R.string.explore_filter_action),
+                size = VexSize.icon,
+                tint = colors.text,
+            )
         }
     }
 }
@@ -364,13 +371,22 @@ private fun ExploreDiscovery(
     modifier: Modifier = Modifier,
     onLoadMore: () -> Unit = {},
     isLoadingMore: Boolean = false,
+    isLoading: Boolean = false,
+    hasError: Boolean = false,
     gridState: LazyGridState = rememberLazyGridState(),
 ) {
     if (items.isEmpty()) {
-        EmptyExploreView(
-            message = stringResource(R.string.explore_empty_discovery),
-            modifier = modifier,
-        )
+        when {
+            isLoading -> LoadingExploreView(modifier = modifier)
+            hasError -> EmptyExploreView(
+                message = stringResource(R.string.explore_error_discovery),
+                modifier = modifier,
+            )
+            else -> EmptyExploreView(
+                message = stringResource(R.string.explore_empty_discovery),
+                modifier = modifier,
+            )
+        }
         return
     }
 
@@ -467,53 +483,75 @@ private fun ExploreResults(
             color = colors.border,
         )
 
-        when (uiState.selectedTab) {
-            ExploreSearchTab.ForYou -> {
-                // Grid 2 kolom dengan header seksi Accounts, Exhibits, dan Posts
-                MediaGrid(
-                    items = uiState.resultPosts,
-                    columns = 2,
-                    onItemClick = onMediaClick,
-                    contentPadding = PaddingValues(bottom = VexSpace.s6),
-                    onLoadMore = onLoadMore,
-                    isLoadingMore = uiState.isLoadingMorePosts,
-                    header = {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            if (uiState.resultAccounts.isNotEmpty()) {
-                                VexSectionLabel(
-                                    title = stringResource(R.string.explore_section_accounts),
-                                )
-                                uiState.resultAccounts.take(3).forEach { account ->
-                                    SearchAccountRow(
-                                        account = account,
-                                        onClick = { onAccountClick(account) },
-                                    )
-                                }
-                            }
-                            if (uiState.resultExhibits.isNotEmpty()) {
-                                VexSectionLabel(
-                                    title = stringResource(R.string.explore_tab_exhibits),
-                                )
-                                uiState.resultExhibits.take(3).forEach { exhibit ->
-                                    ExhibitBannerCard(
-                                        title = exhibit.title,
-                                        bannerUrl = exhibit.bannerUrl,
-                                        imageRes = exhibit.bannerRes,
-                                        category = exhibit.category,
-                                        onClick = { onExhibitClick(exhibit) },
-                                        modifier = Modifier.padding(horizontal = VexSpace.s6, vertical = VexSpace.s2),
-                                    )
-                                }
-                            }
-                            if (uiState.resultPosts.isNotEmpty()) {
-                                VexSectionLabel(
-                                    title = stringResource(R.string.explore_section_posts),
-                                )
-                            }
-                        }
-                    },
+        when {
+            uiState.isLoading -> {
+                LoadingExploreView(modifier = Modifier.fillMaxSize())
+            }
+
+            uiState.hasSearchError -> {
+                EmptyExploreView(
+                    message = stringResource(R.string.explore_error_search),
                     modifier = Modifier.fillMaxSize(),
                 )
+            }
+
+            else -> when (uiState.selectedTab) {
+            ExploreSearchTab.ForYou -> {
+                val hasContent = uiState.resultAccounts.isNotEmpty() ||
+                    uiState.resultExhibits.isNotEmpty() ||
+                    uiState.resultPosts.isNotEmpty()
+
+                if (!hasContent) {
+                    EmptyExploreView(
+                        message = stringResource(R.string.explore_empty_results, uiState.searchQuery),
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    MediaGrid(
+                        items = uiState.resultPosts,
+                        columns = 2,
+                        onItemClick = onMediaClick,
+                        contentPadding = PaddingValues(bottom = VexSpace.s6),
+                        onLoadMore = onLoadMore,
+                        isLoadingMore = uiState.isLoadingMorePosts,
+                        header = {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                if (uiState.resultAccounts.isNotEmpty()) {
+                                    VexSectionLabel(
+                                        title = stringResource(R.string.explore_section_accounts),
+                                    )
+                                    uiState.resultAccounts.take(3).forEach { account ->
+                                        SearchAccountRow(
+                                            account = account,
+                                            onClick = { onAccountClick(account) },
+                                        )
+                                    }
+                                }
+                                if (uiState.resultExhibits.isNotEmpty()) {
+                                    VexSectionLabel(
+                                        title = stringResource(R.string.explore_section_exhibits),
+                                    )
+                                    uiState.resultExhibits.take(3).forEach { exhibit ->
+                                        ExhibitBannerCard(
+                                            title = exhibit.title,
+                                            bannerUrl = exhibit.bannerUrl,
+                                            imageRes = exhibit.bannerRes,
+                                            category = exhibit.category,
+                                            onClick = { onExhibitClick(exhibit) },
+                                            modifier = Modifier.padding(horizontal = VexSpace.s6, vertical = VexSpace.s2),
+                                        )
+                                    }
+                                }
+                                if (uiState.resultPosts.isNotEmpty()) {
+                                    VexSectionLabel(
+                                        title = stringResource(R.string.explore_section_posts),
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
 
             ExploreSearchTab.Accounts -> {
@@ -586,6 +624,23 @@ private fun ExploreResults(
                 }
             }
         }
+        }
+    }
+}
+
+@Composable
+private fun LoadingExploreView(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 48.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(24.dp),
+            color = VexTheme.colors.primaryText,
+            strokeWidth = 2.dp,
+        )
     }
 }
 
@@ -625,6 +680,7 @@ private fun ExploreScreenDiscoveryDarkPreview() {
             uiState = dummyExploreUiState,
             onSearchActiveChange = {},
             onQueryChange = {},
+            onSearchSubmit = {},
             onTabChange = {},
             onOpenFilterSheet = {},
             onDismissFilterSheet = {},
@@ -645,6 +701,7 @@ private fun ExploreScreenHistoryDarkPreview() {
             uiState = dummyExploreUiState.copy(isSearchActive = true, searchQuery = ""),
             onSearchActiveChange = {},
             onQueryChange = {},
+            onSearchSubmit = {},
             onTabChange = {},
             onOpenFilterSheet = {},
             onDismissFilterSheet = {},
@@ -665,6 +722,7 @@ private fun ExploreScreenResultsDarkPreview() {
             uiState = dummyExploreUiState.copy(isSearchActive = true, searchQuery = "vex"),
             onSearchActiveChange = {},
             onQueryChange = {},
+            onSearchSubmit = {},
             onTabChange = {},
             onOpenFilterSheet = {},
             onDismissFilterSheet = {},
