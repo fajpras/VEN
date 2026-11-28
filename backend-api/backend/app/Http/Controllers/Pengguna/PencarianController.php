@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Karya;
 use App\Models\Pameran;
 use App\Models\Pengguna;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -14,110 +15,166 @@ class PencarianController extends Controller
 {
     private const PENGGUNA_PUBLIK = 'pengguna:id_pengguna,nama,nama_panggilan,foto_profil';
 
-    /**
-     * Pencarian terpadu (Unified Search) untuk Karya, Pameran, dan Pengguna.
-     */
     public function search(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
             'tipe' => ['nullable', 'string', Rule::in(['semua', 'karya', 'pameran', 'pengguna'])],
+            'kategori' => ['nullable', 'array', 'max:20'],
+            'kategori.*' => ['string', 'max:100', Rule::exists('kategori', 'kategori')],
+            'exclude' => ['nullable', 'string', 'max:4000'],
+            'refresh' => ['nullable', 'boolean'],
         ]);
 
         $keyword = $this->escapeLike(trim($validated['q'] ?? ''));
         $tipe = $validated['tipe'] ?? 'semua';
-        $excludeIds = array_filter(array_map('trim', explode(',', (string) $request->query('exclude', ''))));
-        $refresh = $request->boolean('refresh', false);
+        $kategori = array_values(array_filter($validated['kategori'] ?? []));
+        $excludeIds = array_filter(array_map('trim', explode(',', $validated['exclude'] ?? '')));
+        $refresh = (bool) ($validated['refresh'] ?? false);
 
         if ($tipe === 'karya') {
-            $paginator = $this->queryKarya($request, $keyword, $excludeIds, $refresh)->paginate(24);
+            $paginator = $this->queryKarya($request, $keyword, $excludeIds, $refresh, $kategori)->paginate(24);
             if ($paginator->isEmpty() && !empty($excludeIds)) {
-                $paginator = $this->queryKarya($request, $keyword, [], true)->paginate(24);
+                $paginator = $this->queryKarya($request, $keyword, [], true, $kategori)->paginate(24);
             }
             return $this->ok($paginator);
         }
 
         if ($tipe === 'pameran') {
-            return $this->ok($this->queryPameran($keyword)->paginate(24));
+            return $this->ok($this->queryPameran($request, $keyword, $kategori, $refresh)->paginate(24));
         }
 
         if ($tipe === 'pengguna') {
             return $this->ok($this->queryPengguna($keyword)->paginate(24));
         }
 
-        // Tipe 'semua': ringkasan 8 item teratas per kategori
         return $this->ok([
-            'karya' => $this->queryKarya($request, $keyword, $excludeIds, $refresh)->take(8)->get(),
-            'pameran' => $this->queryPameran($keyword)->take(8)->get(),
+            'karya' => $this->queryKarya($request, $keyword, $excludeIds, $refresh, $kategori)->take(8)->get(),
+            'pameran' => $this->queryPameran($request, $keyword, $kategori, $refresh)->take(8)->get(),
             'pengguna' => $this->queryPengguna($keyword)->take(8)->get(),
         ]);
     }
 
-    private function queryKarya(Request $request, string $keyword, array $excludeIds = [], bool $refresh = false)
+    private function queryKarya(
+        Request $request,
+        string $keyword,
+        array $excludeIds,
+        bool $refresh,
+        array $kategori,
+    ): Builder {
+        $query = Karya::query()->with(['kategori', self::PENGGUNA_PUBLIK]);
+
+        if ($keyword !== '') {
+            $query->where(function (Builder $sub) use ($keyword) {
+                $sub->where('judul', 'like', "%{$keyword}%")
+                    ->orWhere('deskripsi', 'like', "%{$keyword}%")
+                    ->orWhereHas('kategori', fn (Builder $k) => $k->where('kategori', 'like', "%{$keyword}%"));
+            });
+        } else {
+            $this->terapkanDiscoveryKarya($request, $query, $kategori);
+        }
+
+        if (!empty($kategori)) {
+            $query->whereHas('kategori', fn (Builder $k) => $k->whereIn('kategori', $kategori));
+        }
+
+        return $query
+            ->when(!empty($excludeIds), fn (Builder $q) => $q->whereNotIn('karya.id_karya', $excludeIds))
+            ->when(
+                $refresh,
+                fn (Builder $q) => $q->inRandomOrder(),
+                fn (Builder $q) => $q->latest('karya.created_at'),
+            );
+    }
+
+    private function terapkanDiscoveryKarya(Request $request, Builder $query, array $kategori): void
     {
+        if (!empty($kategori)) {
+            return;
+        }
+
         $user = $request->user();
         $userCategories = $user ? $user->kategori()->get() : collect();
         $hasOthers = $userCategories->contains(fn ($k) => strcasecmp($k->kategori, 'others') === 0);
-        $minatIds = $userCategories->pluck('id_kategori')->toArray();
+        $minatIds = $userCategories->pluck('id_kategori')->all();
 
-        // Jika ada keyword pencarian, utamakan pencarian berbasis teks
+        if (empty($minatIds) || $hasOthers) {
+            return;
+        }
+
+        $luarMinat = (clone $query)->whereNotIn('karya.id_kategori', $minatIds);
+        if ((clone $luarMinat)->exists()) {
+            $query->whereNotIn('karya.id_kategori', $minatIds);
+        }
+    }
+
+    private function queryPameran(
+        Request $request,
+        string $keyword,
+        array $kategori,
+        bool $refresh,
+    ): Builder {
+        $query = Pameran::query()
+            ->with(['model3d', self::PENGGUNA_PUBLIK])
+            ->select('pameran.*')
+            ->addSelect([
+                'kategori' => Karya::query()
+                    ->join('kategori', 'kategori.id_kategori', '=', 'karya.id_kategori')
+                    ->whereColumn('karya.id_pameran', 'pameran.id_pameran')
+                    ->orderBy('karya.created_at')
+                    ->select('kategori.kategori')
+                    ->limit(1),
+            ]);
+
         if ($keyword !== '') {
-            return Karya::with(['kategori', self::PENGGUNA_PUBLIK])
-                ->where(function ($sub) use ($keyword) {
-                    $sub->where('judul', 'like', "%{$keyword}%")
-                        ->orWhere('deskripsi', 'like', "%{$keyword}%")
-                        ->orWhereHas('kategori', fn ($k) => $k->where('kategori', 'like', "%{$keyword}%"));
-                })
-                ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
-                ->when($refresh, fn ($q) => $q->inRandomOrder(), fn ($q) => $q->latest('created_at'));
+            $query->where(function (Builder $sub) use ($keyword) {
+                $sub->where('judul', 'like', "%{$keyword}%")
+                    ->orWhere('tipe', 'like', "%{$keyword}%");
+            });
+        } else {
+            $this->terapkanDiscoveryPameran($request, $query, $kategori);
         }
 
-        // Jika tidak mencari keyword (Discovery Feed):
-        // KASUS 1: Pengguna memilih "Others" atau tanpa preferensi -> Tampilkan seluruh kategori
-        if ($hasOthers || empty($minatIds)) {
-            return Karya::with(['kategori', self::PENGGUNA_PUBLIK])
-                ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
-                ->when($refresh, fn ($q) => $q->inRandomOrder(), fn ($q) => $q->latest('created_at'));
+        if (!empty($kategori)) {
+            $query->whereHas('karya.kategori', fn (Builder $k) => $k->whereIn('kategori', $kategori));
         }
 
-        // KASUS 2: Pengguna memilih kategori minat spesifik (misal: 3D) TANPA "Others"
-        $totalMinatTersedia = Karya::whereIn('id_kategori', $minatIds)
-            ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
-            ->count();
-
-        if ($totalMinatTersedia > 0) {
-            // Tampilkan HANYA karya yang sesuai minat pengguna
-            return Karya::with(['kategori', self::PENGGUNA_PUBLIK])
-                ->whereIn('id_kategori', $minatIds)
-                ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
-                ->when($refresh, fn ($q) => $q->inRandomOrder(), fn ($q) => $q->latest('created_at'));
-        }
-
-        // Jika karya minat sudah habis -> Baru tampilkan kategori lain
-        return Karya::with(['kategori', self::PENGGUNA_PUBLIK])
-            ->whereNotIn('id_kategori', $minatIds)
-            ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
-            ->when($refresh, fn ($q) => $q->inRandomOrder(), fn ($q) => $q->latest('created_at'));
+        return $refresh
+            ? $query->inRandomOrder()
+            : $query->latest('pameran.id_pameran');
     }
 
-    private function queryPameran(string $keyword)
+    private function terapkanDiscoveryPameran(Request $request, Builder $query, array $kategori): void
     {
-        return Pameran::with(['model3d', self::PENGGUNA_PUBLIK])
-            ->when($keyword !== '', function ($q) use ($keyword) {
-                $q->where(function ($sub) use ($keyword) {
-                    $sub->where('judul', 'like', "%{$keyword}%")
-                        ->orWhere('tipe', 'like', "%{$keyword}%");
-                });
-            })
-            ->latest('id_pameran');
+        if (!empty($kategori)) {
+            return;
+        }
+
+        $user = $request->user();
+        $userCategories = $user ? $user->kategori()->get() : collect();
+        $hasOthers = $userCategories->contains(fn ($k) => strcasecmp($k->kategori, 'others') === 0);
+        $minatIds = $userCategories->pluck('id_kategori')->all();
+
+        if (empty($minatIds) || $hasOthers) {
+            return;
+        }
+
+        $luarMinat = (clone $query)->whereHas(
+            'karya',
+            fn (Builder $k) => $k->whereNotIn('id_kategori', $minatIds),
+        );
+
+        if ((clone $luarMinat)->exists()) {
+            $query->whereHas('karya', fn (Builder $k) => $k->whereNotIn('id_kategori', $minatIds));
+        }
     }
 
-    private function queryPengguna(string $keyword)
+    private function queryPengguna(string $keyword): Builder
     {
         return Pengguna::query()
             ->where('status', 'aktif')
-            ->when($keyword !== '', function ($q) use ($keyword) {
-                $q->where(function ($sub) use ($keyword) {
+            ->when($keyword !== '', function (Builder $q) use ($keyword) {
+                $q->where(function (Builder $sub) use ($keyword) {
                     $sub->where('nama', 'like', "%{$keyword}%")
                         ->orWhere('nama_panggilan', 'like', "%{$keyword}%");
                 });
@@ -126,4 +183,3 @@ class PencarianController extends Controller
             ->latest('created_at');
     }
 }
-

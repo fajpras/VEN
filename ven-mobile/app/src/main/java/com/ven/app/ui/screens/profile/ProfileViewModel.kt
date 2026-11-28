@@ -66,6 +66,7 @@ class ProfileViewModel : ViewModel() {
                     id = k.idKarya,
                     title = k.judul,
                     imageUrl = k.fileUrl ?: k.file,
+                    category = k.kategori?.nama,
                 )
             }
             val exhibits = rawPameran.map { p ->
@@ -73,6 +74,7 @@ class ProfileViewModel : ViewModel() {
                     id = p.idPameran.toString(),
                     title = p.judul,
                     imageUrl = p.banner,
+                    category = p.kategori,
                 )
             }
             val authorName = pengguna.namaPanggilan.orEmpty().ifBlank { pengguna.nama.orEmpty() }

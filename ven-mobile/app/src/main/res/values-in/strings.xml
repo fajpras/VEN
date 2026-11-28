@@ -245,12 +245,15 @@
     <string name="explore_tab_posts">Postingan</string>
     <string name="explore_tab_exhibits">Pameran</string>
     <string name="explore_section_accounts">Akun</string>
+    <string name="explore_section_exhibits">Pameran</string>
     <string name="explore_section_posts">Postingan</string>
     <string name="explore_filter_title">Kategori</string>
     <string name="explore_filter_reset">Atur Ulang</string>
     <string name="explore_empty_results">Tidak ada hasil untuk \"%1$s\"</string>
     <string name="explore_empty_history">Belum ada riwayat pencarian</string>
     <string name="explore_empty_discovery">Belum ada konten untuk dijelajahi</string>
+    <string name="explore_error_search">Gagal memuat hasil. Silakan coba lagi.</string>
+    <string name="explore_error_discovery">Gagal memuat konten. Silakan coba lagi.</string>
     <string name="explore_posts_title">Postingan</string>
 
     <!-- Create Content Strings (§8.13 Create Post) -->

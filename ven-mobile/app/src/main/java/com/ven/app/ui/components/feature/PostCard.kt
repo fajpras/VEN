@@ -51,9 +51,11 @@ import com.ven.app.R
 import com.ven.app.ui.components.ui.AutoPlayVideoPlayer
 import com.ven.app.ui.components.ui.Avatar
 import com.ven.app.ui.components.ui.AvatarSize
+import com.ven.app.ui.components.ui.VexTagChip
 import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
+import com.ven.app.ui.theme.CategoryColorMap
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
@@ -305,6 +307,7 @@ fun PostCard(
     modifier: Modifier = Modifier,
     userAvatarUrl: String? = null,
     title: String? = null,
+    category: String? = null,
     timestampText: String? = null,
     description: String = "",
     imageUrl: String? = null,
@@ -366,6 +369,13 @@ fun PostCard(
                             color = colors.textSecondary,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    if (!category.isNullOrBlank()) {
+                        VexTagChip(
+                            text = category,
+                            categoryColor = CategoryColorMap[category] ?: colors.primary,
+                            modifier = Modifier.padding(top = 4.dp),
                         )
                     }
                 }

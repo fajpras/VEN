@@ -4,7 +4,23 @@
 >
 > **Branch aktif:** `main`
 >
-> **Commit terakhir:** commit ini (Seeder dummy + aset PNG/MP4, Audit Trail Keamanan & Aktivitas, komponen Blade admin terkategori, video autoplay 16:9 + optimasi bulk data Android, serta dialog suspend bergaya Instagram); baseline sebelumnya `c740a2f`.
+> **Commit terakhir:** commit ini (Discovery Explore di luar kategori minat + filter kategori aktif; melanjutkan perbaikan Penjadwalan 27 Nov); baseline sebelumnya `af32687`.
+>
+> **Perubahan 28 November 2026 (Discovery Explore di Luar Minat + Filter Kategori + Tag Kategori):**
+> - **Backend (`backend-api/backend`):** `PencarianController` memvalidasi `kategori[]`, `exclude`, dan `refresh`; Discovery karya/pameran mendukung konten di luar kategori minat pengguna (fallback semua kategori bila kosong); tanpa filter keyword tetap lintas kategori, dengan filter hasil keyword dibatasi ke kategori terpilih; filter eksplisit mengalahkan aturan luar-minat; `tipe=pameran` mendukung filter kategori melalui karya. Respons pameran kini menyertakan `kategori` perwakilan dari karya pertama (bukan `tipe`).
+> - **Android (`ven-mobile`):** `ExploreViewModel` memuat kategori dari API (fallback 14 kategori), mengirim filter saat sheet ditutup, memuat karya Discovery, menyimpan riwayat query nyata (`ExploreHistoryPreferences`, maks 10), menghapus fallback hasil kosong ke Discovery, serta menampilkan state loading/error/empty. Discovery kembali berupa grid karya 3 kolom tanpa seksi pameran; `MediaGridItem` dan `PostCard` merender chip kategori (`VexTagChip` + `CategoryColorMap`); `ExploreScreen` menambahkan submit keyboard SearchBar dan tombol filter tetap tampil saat pencarian aktif. `selectedCategories` kini dikirim sebagai `kategori[]` (key ber-bracket agar diparse Laravel sebagai array) pada `searchSemua`, `searchKarya`, dan `searchPameran`; menutup sheet saat hasil aktif mengulang pencarian dengan filter terbaru.
+> - **Verifikasi:** PHPUnit `PencarianTest` + `PencarianDiscoveryTest` **19/19 lulus (83 assertions)**; suite penuh backend **149 test (139 lulus, 10 gagal non-Explore)**. Android `:app:testDebugUnitTest --offline` **116/116 lulus**; `:app:compileDebugKotlin` sukses. Smoke emulator: Discovery grid 3 kolom tanpa seksi pameran; filter `3D` dan keyword + filter `3D` hanya menampilkan karya kategori `3D`.
+>
+> **Perubahan 27 November 2026 (Perbaikan Fitur Penjadwalan, Undangan Diskusi, Jendela Sesi 15 Menit & Proteksi Ruangan Privat):**
+> - **Backend (`backend-api/backend`):**
+>   - Timezone & Database: Normalisasi penyimpanan `waktu` undangan ke UTC (`CarbonImmutable::parse()->utc()`) untuk mengatasi pergeseran jam lokal, penambahan kolom `alasan` via migrasi pada `undangan`, validasi `AjukanUndanganRequest` & `TanggapiUndanganRequest` dengan guard jadwal lampau (HTTP 409) dan penolakan bentrok sesi < 60 menit (HTTP 409).
+>   - Jendela Sesi & Otorisasi: Implementasi `JendelaSesi` (-15m s.d. +15m) dan `PenjagaAksesRuangan` untuk `room-dto` dan Edgegap server (`/api/room-server/{roomKey}` & `/api/ruangan/{id}/server`); `LayananTokenVoice` mendukung query `?undangan=` untuk pemilihan sesi spesifik; `PameranController::storeRuangan` idempoten via `firstOrCreate`.
+>   - Scheduled Command: `ven:kedaluwarsakan-undangan` (`KedaluwarsakanUndangan.php`) dijadwalkan tiap 5 menit untuk menandai undangan `diproses` yang terlewat > 15 menit menjadi `ditolak` dengan alasan terstruktur.
+> - **Android (`ven-mobile`):**
+>   - Formatting & Waktu: `DateFormatter` mendukung parsing offset ISO 8601 (`+07:00` / `Z`), utilitas `isPastWithGrace` dan `isWithinSessionWindow`; `RequestMeetingViewModel` mengirim waktu dengan `ISO_OFFSET_DATE_TIME` dan menginjeksi clock; kalender menonaktifkan (`isEnabled = false`) tanggal lampau.
+>   - Schedule State & UI: Paginasi `loadMore()`, sorting berbasis waktu (approved/waiting urut naik, riwayat urut turun), toleransi 15 menit ke tab riwayat, auto-refresh 60 detik & tick 30 detik; Join Room dipagari `isJoinable` (hanya aktif dalam jendela sesi); `EventDetailSheet` menampilkan hint jendela sesi, alasan penolakan/kedaluwarsa, dan tombol salin kode sesi (tautan).
+>   - Integrasi Unity & Voice: `UnityLauncher` me-reset `UnityBridge.currentRoomJson = null` dan menghapus pre-populasi mock; `UnityBridge` mengirim `OnRoomError` jika ruangan privat ditolak (mencegah bypass fallback publik); `VoiceChatViewModel` dan `ApiUndangan` meneruskan `idUndangan` ke endpoint voice token.
+> - **Verifikasi:** PHPUnit backend (`DiskusiUndanganTest`, `DiskusiVoiceTest`, `DiskusiRuanganRoomDtoTest`, `EdgegapServerTest`, `KedaluwarsakanUndanganTest`, `PameranRuanganTest`) **36/36 lulus (104 assertions)**; Android unit tests (`:app:testDebugUnitTest --offline`) **99/99 lulus (0 failure, 0 error)**.
 >
 > **Perubahan 25 November 2026 (Seeder Dummy + Aset, Audit Trail & Komponen Admin, Video Autoplay & Dialog Suspend Android):**
 > - **Fresh DB & Seeder Dummy:** `ven:initialize-db --fresh` pada DB lokal `ven`; `DummyKaryaPameranSeeder` + `GeneratesSeedAssets` + 2 klip MP4 ter-track (`database/seeders/assets/video/`) mengisi **8 kreator**, **10 pameran** (9 aktif, 1 arsip), **72 karya** lintas 14 kategori (**49 poster**, **23 video**, **4 arsip**) secara idempoten (`missing=0`, MIME `image/png` & `video/mp4` valid).
@@ -12,19 +28,7 @@
 > - **Android (`ven-mobile`):** `AutoPlayVideoPlayer` (`TextureView` + `MediaPlayer`, rasio `16:9`, mute/unmute, single-codec debounce `150ms`, `clipToBounds` + `clipToOutline`), optimasi `ImageCacheManager` (`RGB_565`, `MediaMetadataRetriever` thumbnail + semaphore 2, deduplikasi file, LRU disk cache 80 MB, OOM guard) & `HomeViewModel` (`distinctBy`, `takeLast(100)`), serta `AccountSuspendedDialog` bergaya Instagram (EN/ID) dari payload terstruktur `sanksi`.
 > - **Verifikasi:** `vite build` sukses (492 ms); PHPUnit (`AdminListViewTest`, `AdminPanelAksesTest`, `PenanganKesalahanApiTest`) **lulus seluruhnya**; stress test API bulk data (200 OK, 7–49 ms, peak 30 MB); Android `:app:testDebugUnitTest --offline` **89/89 lulus** (termasuk `BulkFeedStabilityTest`).
 >
-> **Perubahan 25 November 2026 (Dashboard Admin Web, i18n API/AI Chat, dan validasi form Android):**
-> - **Backend API & AI Chat:** `SinkronBahasaApi` (`Accept-Language`/`X-App-Language`) + `lang/{id,en}/api.php` menyinkronkan seluruh respons & fallback error (`PenanganKesalahanApi`, `KesalahanOtp`, `KesalahanVoice`, `AuthController`, `ProfilController`) ke ID/EN; `AIChatController` memfilter seluruh simbol Markdown mentah sembari mempertahankan `@username_bergaris_bawah`.
-> - **Dashboard Admin Web:** switcher bahasa `ID | EN` (`SinkronBahasaAdmin`, `lang/{id,en}/admin.php`), panel **Pengaturan Admin** (`/admin/settings` — ubah email & kata sandi dengan toggle mata + validasi 5 aturan), halaman **Arsip & Pemulihan** (`/admin/archive` untuk akun/karya/pameran soft-deleted + modal konfirmasi), filter dropdown modern & pencarian realtime debounced (`app.js`), pemisahan kolom `METHOD`/`ENDPOINT`/`PESAN` (ikon + tooltip)/`AKTOR`/`KLIEN / AGENT` di Security Log, pemindahan Activity & Security Log ke sidebar kiri dengan tooltip, konfirmasi ketik `"delete"` bergaya GitHub pada modal hapus, serta konsistensi desain tabel/kartu dan helper gambar `AdminMedia`.
-> - **Android (`ven-mobile`):** `ApiClient` mengirim header `Accept-Language` dan melokalkan fallback error; `VexTextField` menampilkan outline merah tegas saat `isError = true` pada seluruh layar auth & settings (`Login`, `Register`, `ForgotPassword`, `ResetPassword`, `ChangePassword`, `ChangeEmail`); `ChangePasswordViewModel` menambah validasi 5 aturan sandi + cek tidak sama dengan sandi lama; `VerifyEmailScreen` & `ChangeEmailViewModel` dirapikan (banner sukses/error saling eksklusif).
-> - **Verifikasi:** `vite build` sukses; PHPUnit (`PenanganKesalahanApiTest`, `DiskusiVoiceTest`, `AIChatGeminiTest`, `AdminListViewTest`, `AdminPanelAksesTest`) **lulus seluruhnya**; Android `:app:compileDebugKotlin :app:testDebugUnitTest --offline` **BUILD SUCCESSFUL** (termasuk `ChangePasswordViewModelTest` 4/4 lulus).
->
-> **Perubahan 25 November 2026 (visual Pengaturan Admin):**
-> - **Palet off-white:** token Tailwind baru di `resources/css/app.css` (`--color-canvas` `#F6F6F8`, `--color-surface` `#FBFBFC`, `--color-field` `#F1F1F4`, `--color-line` `#E8E8ED`, `--color-ink` `#1B1B20`, `--color-muted` `#71717C`) menggantikan putih murni `#FFFFFF` pada body, sidebar, dan topbar panel admin. Kartu memakai permukaan hampir putih dengan border lembut dan bayangan halus.
-> - **Komponen bersama:** `app.css` menambahkan `.ven-card`, `.ven-field` (+ `.is-invalid`), `.ven-icon-tile`, `.ven-rule` (+ `.is-met`), dan `.ven-primary-btn` agar gaya input, kartu, checklist kekuatan sandi, dan tombol konsisten serta tidak duplikat di Blade.
-> - **Halaman pengaturan:** `resources/views/admin/settings/index.blade.php` dirapikan (kartu profil dengan avatar + indikator aktif, dua kartu form email/kata sandi, ikon tile, toggle mata, checklist aturan sandi yang berubah jadi centang). Seluruh `name`, `id`, rute, error bag, dan validasi live dipertahankan.
-> - **Verifikasi:** `npm run build` sukses (Vite 8.3.1); `AdminListViewTest` + `AuditKeamananDanViewTest` **10/10 lulus (112 assertion)**, termasuk alur ganti bahasa, email, dan kata sandi. Smoke test visual di browser belum dijalankan pada sesi ini.
->
-> **Lingkungan:** Windows + Laragon, PHP 8.3.33, Laravel 13.34.0, MySQL, Android Gradle 9.6
+> **Lingkungan:** Windows + Laragon, PHP 8.3.30, Laravel 13.34.0, MySQL, Android Gradle 9.6
 
 Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang sudah selesai, apakah benar-benar bisa dijalankan, bagian mana yang masih berupa mock, serta kendala yang ditemukan beserta rekomendasi perbaikannya.
 
@@ -36,9 +40,9 @@ Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang s
 
 | Pemeriksaan | Perintah | Hasil |
 |---|---|---|
-| Konfigurasi backend | `php artisan about` | ✅ Laravel 13.34.0, PHP 8.3.33, DB MySQL, storage link aktif |
+| Konfigurasi backend | `php artisan about` | ✅ Laravel 13.34.0, PHP 8.3.30, DB MySQL, storage link aktif |
 | Daftar route backend | `php artisan route:list` | ✅ 99 route terdaftar |
-| Test backend | `php artisan test` / `phpunit --no-coverage` | ✅ **115 test — 115 lulus** (termasuk 36 test fitur diskusi, edgegap, kedaluwarsa, dan pameran ruangan) |
+| Test backend | `php artisan test` / `phpunit --no-coverage` | ⚠️ **149 test — 139 lulus, 10 gagal** (19/19 test Explore lulus; 10 kegagalan berada di suite Diskusi/Log/Profil/Exhibition yang tidak terkait perubahan ini) |
 | Fallback galat API | `php artisan test --filter=PenanganKesalahanApiTest` | ✅ **9 test lulus** — 401, 403, 404, 405, 422, 500 tanpa kebocoran detail internal + redirect browser & JSON untuk klien API |
 | Halaman galat web | `GET /halaman-tidak-ada` | ✅ Blade 404 minimalis (tanpa kartu/dekorasi), mandiri (tanpa aset Vite), merek "Value Exhibition Network", respons `text/html`, tanpa tautan ke beranda |
 | Akar situs | `GET /` | ✅ HTTP **404** — panel admin tidak terekspos, tidak redirect ke login/beranda |
@@ -48,13 +52,13 @@ Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang s
 | Audit Lighthouse (desktop & mobile) | `npx lighthouse https://VEN.test/ven/backend-api/backend/public/admin/login --preset=desktop` / `--form-factor=mobile` | ✅ **100/100/100/100** (Performance, Accessibility, Best Practices, SEO) pada kedua profil; FCP/LCP 0,23–0,87 s, TBT 0–61 ms, CLS 0; verifikasi 24 November 2026 |
 | Build Android | `.\gradlew.bat :app:testDebugUnitTest :app:assembleDebug` | ✅ **BUILD SUCCESSFUL** (build tanpa `--offline` karena dependensi LiveKit/core-splashscreen diunduh; `ndkVersion` app disamakan ke 27.2 karena NDK 28.2 lokal tidak lengkap) |
 | Artefak APK | `app/build/outputs/apk/debug/app-debug.apk` | ✅ Ada, 135.169.223 byte (~135,2 MB; bertambah karena lib native WebRTC LiveKit + aset splash/intro) |
-| Test Android | `.\gradlew.bat :app:testDebugUnitTest` | ✅ **99 test — 99 lulus** (0 failure, 0 error; verifikasi offline; termasuk test DateFormatter offset/grace, RequestMeeting clock/disabled date, Schedule isJoinable/tick/pagination, dan VoiceChat) |
+| Test Android | `.\gradlew.bat :app:testDebugUnitTest` | ✅ **116 test — 116 lulus** (0 failure, 0 error; termasuk 17 test `ExploreViewModelTest` untuk Discovery luar-minat, filter, riwayat, loading/error, dan load more) |
 | Audit & perapian koding bersih | `git diff --check` + build/test | ✅ Tidak ada `dd/dump`, `!!`, `TODO/FIXME`, import tak terpakai, atau logging debug di rilis; struktur `Route`/`Screen` dipisah sesuai konvensi |
 
 **Catatan lingkungan:** perintah `php` tidak tersedia di PATH. Gunakan path Laragon:
 
 ```powershell
-C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe artisan test
+C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe artisan test
 ```
 
 ---
@@ -89,7 +93,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 | 1 | Splash, Login, Register, OTP, Forgot/Reset Password | `ui/screens/auth/*`, `ApiLogin`, `ApiRegister` | ✅ |
 | 2 | Onboarding minat | `InterestViewModel` → `ApiProfil.kategori()` / `minat()` | ✅ |
 | 3 | Home feed & rekomendasi | `HomeViewModel` → `ApiHome` (`karya/rekomendasi`, `pameran/rekomendasi`), pull-to-refresh, double-tap tab | ✅ |
-| 4 | Explore & pencarian | `ExploreViewModel` → `ApiPencarian`, filter kategori, grid 3 kolom | ✅ |
+| 4 | Explore & pencarian | `ExploreViewModel` → `ApiPencarian`; Discovery hanya karya di luar minat (fallback semua), filter kategori, riwayat query persisten, grid 3 kolom | ✅ |
 | 5 | Profil & User Profile | `ProfileUiState` → `ApiProfil` (profil, jumlah karya/pameran, karya milik) | ✅ |
 | 6 | Settings akun | Ganti email, ganti kata sandi, status akun, tema gelap/terang | ✅ |
 | 7 | Buat pameran (template & info) | `CreateExhibitViewModel`, upload banner via `ApiPameran` | ✅ |
@@ -149,20 +153,20 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 |:--:|---|---|
 | 6 | `BASE_URL` mobile default `http://10.0.2.2:8000/api/` | Hanya untuk emulator; ubah `ven-mobile/.env` untuk perangkat fisik. Pastikan URL HTTPS dipakai saat rilis (release build menolak base URL non-HTTPS) |
 | 7 | APK berukuran ~126 MB karena Unity binary | Pertimbangkan Android App Bundle atau ABI split |
-| 8 | `php` tidak ada di PATH | Gunakan path Laragon (`C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe`) atau tambahkan ke environment variable |
+| 8 | `php` tidak ada di PATH | Gunakan path Laragon (`C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe`) atau tambahkan ke environment variable |
 | 9 | `GOOGLE_SERVER_CLIENT_ID` di `.env` berformat non-standar (`glowing-icon-510605-m1.apps.googleusercontent.com`) | Client ID Google OAuth umumnya berawalan angka; verifikasi nilai Web Client ID di Google Cloud Console agar login Google tidak gagal di produksi |
 
 ---
 
 ## 5. Kesimpulan
 
-- **Backend:** 100% test lulus (**115 test**). Seluruh modul inti (auth, profil, pameran, karya, undangan dengan jendela sesi 15 menit & auto-expire, **voice privat-only + room-dto ruangan privat**, pencarian, admin, audit keamanan, backup/restore, AI live Gemini) merespons normal.
+- **Backend:** Modul inti (auth, profil, pameran, karya, undangan dengan jendela sesi 15 menit & auto-expire, **voice privat-only + room-dto ruangan privat**, pencarian dengan Discovery luar-minat, admin, audit keamanan, backup/restore, AI live Gemini) merespons normal. Suite penuh **149 test (139 lulus, 10 gagal pada Diskusi/Log/Profil/Exhibition yang tidak terkait perubahan Explore)**; seluruh **19/19 test Explore lulus (83 assertions)**.
 - **Android:** alur utama selesai dan berhasil di-build. Autentikasi, home, explore, profil, settings, create exhibit, Create Post, Schedule (dengan paginasi, sorting, gating jendela sesi, dan salin kode sesi), Request Meeting (UC-17, ISO-8601 offset & pembatasan hari lampau), AI Chat live, Multi-bahasa (EN/ID), viewer Unity (anti bypass ruang privat), **voice chat ruangan privat (LiveKit)**, dan **routing ruangan privat** aktif tersambung API. Voice baru bisa live setelah kredensial LiveKit diisi.
 - **Keamanan mobile:** token & data sesi terenkripsi AES-256-GCM (AndroidKeyStore), logging HTTP hanya di debug, release HTTPS-only dengan pengecualian emulator pada debug, prefs sensitif dikecualikan dari backup, activity Unity non-exported, service voice `exported=false` + `foregroundServiceType="microphone"`, `proguard-rules.pro` siap (minify menunggu smoke test perangkat).
 - **Dummy data dihapus total** dari controller web admin (`AdminAccountController`, `AdminPostController`, `AdminExhibitionController`, `AdminLogController`) serta jalur production mobile — seluruh daftar menampilkan empty state asli saat data kosong.
 - **Belum selesai:** kredensial LiveKit (voice belum bisa diuji live), smoke test 2 perangkat untuk voice + ruangan privat, publish pameran dari editor Compose (alur mock `delay(800)`, dikembalikan sesuai keputusan pengguna), dan halaman Privacy Policy / Help yang masih placeholder. **Multiplayer realtime pameran utama** menunggu source Unity `.cs` di repo — rencananya Laravel Reverb untuk presence + posisi avatar; kontrak `UnityBridge` yang ada siap jadi titik sambung.
 - **Catatan integrasi Unity:** UnityPlayerGameActivity terbuka normal; `room-dto` live berjalan (fallback RoomDto hanya untuk pameran publik jika backend bermasalah, ruangan privat mengirim `OnRoomError`). Source `.cs` Unity tidak ada di repo (hanya binary `il2cpp`).
-- **Test Android:** **99/99 lulus** (0 failure, 0 error), termasuk test unit baru `DateFormatterTest`, `RequestMeetingViewModelTest`, `ScheduleViewModelTest`, dan `VoiceChatViewModelTest`.
+- **Test Android:** **116/116 lulus** (0 failure, 0 error), termasuk 17 test baru `ExploreViewModelTest` (Discovery luar-minat, filter kategori, riwayat, loading/error, load more).
 
 ---
 
@@ -171,7 +175,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 ```powershell
 # Backend
 cd backend-api/backend
-$php = "C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe"
+$php = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe"
 & $php artisan about
 & $php artisan route:list
 & $php artisan test

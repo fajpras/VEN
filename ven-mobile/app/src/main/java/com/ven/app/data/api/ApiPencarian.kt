@@ -18,6 +18,7 @@ interface ApiPencarian {
     suspend fun searchSemua(
         @Query("q") query: String? = null,
         @Query("tipe") tipe: String = "semua",
+        @Query("kategori[]") kategori: List<String>? = null,
     ): Response<ApiResponse<SearchSummaryModel>>
 
     @GET("pencarian")
@@ -27,6 +28,7 @@ interface ApiPencarian {
         @Query("page") page: Int = 1,
         @Query("exclude") exclude: String? = null,
         @Query("refresh") refresh: Boolean? = null,
+        @Query("kategori[]") kategori: List<String>? = null,
     ): Response<ApiResponse<PaginatedData<KaryaItemModel>>>
 
     @GET("pencarian")
@@ -34,6 +36,8 @@ interface ApiPencarian {
         @Query("q") query: String? = null,
         @Query("tipe") tipe: String = "pameran",
         @Query("page") page: Int = 1,
+        @Query("refresh") refresh: Boolean? = null,
+        @Query("kategori[]") kategori: List<String>? = null,
     ): Response<ApiResponse<PaginatedData<PameranItemModel>>>
 
     @GET("pencarian")

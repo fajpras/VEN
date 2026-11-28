@@ -82,6 +82,9 @@ data class PameranItemModel(
     @SerializedName("tipe")
     val tipe: String? = null,
 
+    @SerializedName("kategori")
+    val kategori: String? = null,
+
     @SerializedName("warna")
     val warna: String? = null,
 
