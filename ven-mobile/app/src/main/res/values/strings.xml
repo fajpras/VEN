@@ -224,6 +224,7 @@
     <string name="schedule_join_window_warning">Room is only accessible 15 minutes before to 15 minutes after the schedule.</string>
     <string name="schedule_load_more">Load more</string>
     <string name="schedule_retry">Retry</string>
+    <string name="session_kicked_other_device">Your session ended because this account signed in on another device.</string>
 
     <!-- Voice Chat (private room only) Strings -->
     <string name="voice_panel_judul">Private voice chat</string>

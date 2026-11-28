@@ -6,7 +6,6 @@ use App\Console\Commands\InitializeDatabase;
 use App\Console\Commands\KirimPengingatUndanganCommand;
 use App\Console\Commands\RestoreDatabase;
 use App\Console\Commands\SetupDatabase;
-use App\Console\Commands\UjiTransaksiPameran;
 use App\Exceptions\PenanganKesalahanApi;
 use App\Http\Middleware\GunakanKoneksiAdmin;
 use App\Http\Middleware\HanyaAdmin;
@@ -32,9 +31,12 @@ return Application::configure(basePath: dirname(__DIR__))
         InitializeDatabase::class,
         EnkripsiGoogleId::class,
         KirimPengingatUndanganCommand::class,
-        UjiTransaksiPameran::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
+        // Percayai header X-Forwarded-Proto/Host dari reverse proxy (Cloudflare Tunnel / Nginx)
+        // agar signed URL (berkas karya & tautan undangan) selalu konsisten memakai HTTPS.
+        $middleware->trustProxies(at: '*');
+
         // Request API tidak boleh dialihkan ke halaman login web. Bila tidak ada
         // tujuan redirect (null), middleware auth akan melempar 401 yang kemudian
         // dirender sebagai JSON oleh PenanganKesalahanApi.

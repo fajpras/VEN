@@ -41,7 +41,3 @@ Schedule::call(function () {
     }
 })->dailyAt('03:00');
 
-Schedule::command('ven:kedaluwarsakan-undangan')
-    ->everyFiveMinutes()
-    ->withoutOverlapping();
-

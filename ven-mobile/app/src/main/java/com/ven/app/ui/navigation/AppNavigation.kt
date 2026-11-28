@@ -82,6 +82,7 @@ fun AppNavHost(
     showExplore: Boolean = false,
     deepLinkToken: String? = null,
     onDeepLinkConsumed: () -> Unit = {},
+    sessionExpiredTick: Int = 0,
 ) {
     val context = LocalContext.current
     val themePreferences = remember { ThemePreferences.getInstance(context) }
@@ -122,6 +123,15 @@ fun AppNavHost(
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
+            }
+        }
+    }
+
+    LaunchedEffect(sessionExpiredTick) {
+        if (sessionExpiredTick > 0) {
+            navController.navigate(Screen.Login.route) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
             }
         }
     }
@@ -315,7 +325,9 @@ fun AppNavHost(
                     navController.navigate(Screen.ViewExhibit.createRoute(id, roomId))
                 },
                 onNavigateToUserProfile = { userId ->
-                    navController.navigate(Screen.UserProfile.createRoute(userId))
+                    if (userId.isNotBlank()) {
+                        navController.navigate(Screen.UserProfile.createRoute(userId))
+                    }
                 },
                 onNavigateToScheduleHistory = {
                     navController.navigate(Screen.SettingsHistory.route)

@@ -224,6 +224,24 @@ class AuthController extends Controller
             );
         }
 
+        // Single-session security: jika akun sedang aktif di perangkat lain,
+        // cabut seluruh token lama agar perangkat sebelumnya otomatis logout.
+        $sesiAktifSebelumnya = $pengguna->tokens()->count();
+        if ($sesiAktifSebelumnya > 0) {
+            $pengguna->tokens()->delete();
+
+            LogSistem::keamanan(
+                'sesi_digantikan',
+                sprintf(
+                    'Login baru untuk @%s mencabut %d sesi aktif sebelumnya (single-session enforcement).',
+                    $pengguna->nama_panggilan ?: $pengguna->email,
+                    $sesiAktifSebelumnya,
+                ),
+                200,
+                $pengguna->id_pengguna,
+            );
+        }
+
         event(new Login('sanctum', $pengguna, false));
 
         return $this->ok($this->withToken($pengguna), $pesan);

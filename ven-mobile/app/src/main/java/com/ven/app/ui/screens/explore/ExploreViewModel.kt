@@ -550,7 +550,7 @@ class ExploreViewModel(
         return PostsFeedItem(
             id = idKarya,
             username = if (author.startsWith("@")) author else "@$author",
-            userId = pengguna?.idPengguna,
+            userId = pengguna?.idPengguna ?: idPengguna,
             userAvatarUrl = pengguna?.fotoProfil,
             title = judul,
             category = kategori?.nama,

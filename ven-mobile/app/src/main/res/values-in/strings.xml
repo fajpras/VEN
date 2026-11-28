@@ -215,6 +215,7 @@
     <string name="schedule_join_window_warning">Ruangan hanya dapat diakses 15 menit sebelum hingga 15 menit setelah jadwal.</string>
     <string name="schedule_load_more">Muat lebih banyak</string>
     <string name="schedule_retry">Coba lagi</string>
+    <string name="session_kicked_other_device">Sesi Anda berakhir karena akun login di perangkat lain.</string>
 
     <!-- Voice Chat (khusus ruangan privat) Strings -->
     <string name="voice_panel_judul">Voice chat privat</string>

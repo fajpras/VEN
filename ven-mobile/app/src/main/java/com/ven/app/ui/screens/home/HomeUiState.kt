@@ -62,7 +62,7 @@ fun KaryaItemModel.toPostItem(): PostItem {
     return PostItem(
         id = idKarya,
         username = "@$author",
-        userId = pengguna?.idPengguna,
+        userId = pengguna?.idPengguna ?: idPengguna,
         userAvatarUrl = pengguna?.fotoProfil,
         title = judul,
         category = kategori?.nama,

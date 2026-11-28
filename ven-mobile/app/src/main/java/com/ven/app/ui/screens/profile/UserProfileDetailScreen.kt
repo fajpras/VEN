@@ -69,21 +69,31 @@ fun UserProfileDetailScreen(
 
     var isLoading by remember { mutableStateOf(true) }
     var userDetail by remember { mutableStateOf<UserProfileDetailModel?>(null) }
+    var loadError by remember { mutableStateOf<String?>(null) }
+    var reloadTick by remember { mutableStateOf(0) }
     var selectedTab by remember { mutableStateOf(ProfileTab.Posts) }
 
-    LaunchedEffect(userId) {
-        if (userId.isNotBlank()) {
-            isLoading = true
-            withContext(Dispatchers.IO) {
-                try {
-                    val res = apiPencarian.getDetailPengguna(userId)
-                    if (res.isSuccessful) {
-                        userDetail = res.body()?.data
-                    }
-                } catch (_: Exception) {
-                } finally {
-                    isLoading = false
+    LaunchedEffect(userId, reloadTick) {
+        if (userId.isBlank()) {
+            loadError = null
+            userDetail = null
+            isLoading = false
+            return@LaunchedEffect
+        }
+        isLoading = true
+        loadError = null
+        withContext(Dispatchers.IO) {
+            try {
+                val res = apiPencarian.getDetailPengguna(userId)
+                if (res.isSuccessful) {
+                    userDetail = res.body()?.data
+                } else {
+                    loadError = ApiClient.parseError(res.errorBody()?.string())
                 }
+            } catch (e: Exception) {
+                loadError = e.localizedMessage ?: "Connection failed"
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -116,14 +126,29 @@ fun UserProfileDetailScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
+                    .padding(innerPadding)
+                    .padding(horizontal = VexSpace.s6),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = stringResource(R.string.profile_user_not_found),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.textMuted,
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(VexSpace.s3),
+                ) {
+                    Text(
+                        text = loadError ?: stringResource(R.string.profile_user_not_found),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.textMuted,
+                        textAlign = TextAlign.Center,
+                    )
+                    if (userId.isNotBlank()) {
+                        androidx.compose.material3.TextButton(onClick = { reloadTick += 1 }) {
+                            Text(
+                                text = stringResource(R.string.schedule_retry),
+                                color = colors.primaryText,
+                            )
+                        }
+                    }
+                }
             }
         } else {
             val karyaItems = remember(userDetail?.karya) {

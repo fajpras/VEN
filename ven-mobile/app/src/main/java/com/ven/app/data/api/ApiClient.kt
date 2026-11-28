@@ -17,6 +17,9 @@ object ApiClient {
 
     private var currentBaseUrl: String = AppConfig.baseUrl
     private var tokenProvider: (() -> String?)? = null
+    private var onUnauthorizedCallback: (() -> Unit)? = null
+    @Volatile
+    private var lastUnauthorizedTriggerMs: Long = 0L
 
     private val gson: Gson by lazy { Gson() }
 
@@ -50,7 +53,27 @@ object ApiClient {
             requestBuilder.header("Authorization", "Bearer $token")
         }
 
-        chain.proceed(requestBuilder.build())
+        val response = chain.proceed(requestBuilder.build())
+
+        // Jika server mengembalikan 401 saat membawa Bearer token (mis. token dicabut
+        // karena akun login di perangkat lain), picu auto-logout global secara debounced.
+        if (response.code == 401 && !token.isNullOrBlank()) {
+            val path = originalRequest.url.encodedPath.lowercase()
+            val isAuthEndpoint = path.endsWith("/masuk") ||
+                path.endsWith("/daftar") ||
+                path.endsWith("/keluar") ||
+                path.contains("/lupa-kata-sandi") ||
+                path.contains("/reset-kata-sandi")
+            if (!isAuthEndpoint) {
+                val now = System.currentTimeMillis()
+                if (now - lastUnauthorizedTriggerMs > 2_000L) {
+                    lastUnauthorizedTriggerMs = now
+                    onUnauthorizedCallback?.invoke()
+                }
+            }
+        }
+
+        response
     }
 
     private val okHttpClient: OkHttpClient by lazy {
@@ -77,8 +100,12 @@ object ApiClient {
             .build()
     }
 
-    fun init(tokenCallback: (() -> String?)? = null) {
+    fun init(
+        tokenCallback: (() -> String?)? = null,
+        onUnauthorized: (() -> Unit)? = null,
+    ) {
         tokenProvider = tokenCallback
+        onUnauthorizedCallback = onUnauthorized
     }
 
     fun setBaseUrl(newBaseUrl: String) {
